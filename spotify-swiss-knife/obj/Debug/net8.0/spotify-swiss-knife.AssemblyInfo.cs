@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("spotify-swiss-knife")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bc5e30e48bba0e41262e932f0c4f8089d3924d4c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fefac49f7077866952b1b8816231c6c8526cd274")]
 [assembly: System.Reflection.AssemblyProductAttribute("spotify-swiss-knife")]
 [assembly: System.Reflection.AssemblyTitleAttribute("spotify-swiss-knife")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
