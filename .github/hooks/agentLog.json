@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "cat >> ~/Documents/spotify-swiss-knife/hooks/agent_log.txt"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": "cat >> ~/Documents/spotify-swiss-knife/hooks/agent_log.txt"
+      }
+    ]
+  }
+}
