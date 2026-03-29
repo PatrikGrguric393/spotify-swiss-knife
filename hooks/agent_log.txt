@@ -1,1 +1,0 @@
-{"timestamp":"2026-03-15T15:59:14.276Z","hook_event_name":"UserPromptSubmit","session_id":"a4466242-4532-4c73-a328-6351a066a1cc","transcript_path":"/home/pg/.config/Code/User/workspaceStorage/7c854f9fc5b1747b408d7fab3785e629/GitHub.copilot-chat/transcripts/a4466242-4532-4c73-a328-6351a066a1cc.jsonl","prompt":"hello","cwd":"/home/pg/Documents/spotify-swiss-knife"}

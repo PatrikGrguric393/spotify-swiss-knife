@@ -1,0 +1,59 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# User-specific files
+*.user
+*.usercache
+*.userosscache
+.vs/
+.vscode/
+
+# Local environment configuration
+appsettings.Development.json
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Rider
+.idea/
+.rider/
+riderModule.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+dist/
+build/
+
+# Dependencies
+nuget.exe
+.nuget/
+
+# Visual Studio cache/options
+.vs/
+.vscode/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# NuGet
+.nuget/packages/
