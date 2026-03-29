@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/spotify-swiss-knife.props" />
-</Project>
