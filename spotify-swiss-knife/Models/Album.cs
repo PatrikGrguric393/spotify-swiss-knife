@@ -5,38 +5,38 @@ namespace spotify_swiss_knife.Models;
 public class Album
 {
 	[JsonPropertyName("album_type")]
-	public string AlbumType { get; set; } = string.Empty;
+	private string AlbumType { get; set; } = string.Empty;
 
 	[JsonPropertyName("total_tracks")]
-	public int TotalTracks { get; set; }
+	private int TotalTracks { get; set; }
 
 	[JsonPropertyName("external_urls")]
-	public ExternalUrls ExternalUrls { get; set; } = new();
+	private ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("id")]
-	public string Id { get; set; } = string.Empty;
+	private string Id { get; set; } = string.Empty;
 
 	[JsonPropertyName("images")]
-	public List<Image> Images { get; set; } = [];
+	private List<Image> Images { get; set; } = [];
 
 	[JsonPropertyName("name")]
-	public string Name { get; set; } = string.Empty;
+	private string Name { get; set; } = string.Empty;
 
 	[JsonPropertyName("release_date")]
-	public string ReleaseDate { get; set; } = string.Empty;
+	private string ReleaseDate { get; set; } = string.Empty;
 
 	[JsonPropertyName("release_date_precision")]
-	public string ReleaseDatePrecision { get; set; } = string.Empty;
+	private string ReleaseDatePrecision { get; set; } = string.Empty;
 
 	[JsonPropertyName("artists")]
-	public List<Artist> Artists { get; set; } = [];
+	private List<Artist> Artists { get; set; } = [];
 
 	[JsonPropertyName("tracks")]
-	public AlbumTracksPage Tracks { get; set; } = new();
+	private AlbumTracksPage Tracks { get; set; } = new();
 
 	[JsonPropertyName("label")]
-	public string Label { get; set; } = string.Empty;
+	private string Label { get; set; } = string.Empty;
 
 	[JsonPropertyName("popularity")]
-	public int Popularity { get; set; }
+	private int Popularity { get; set; }
 }

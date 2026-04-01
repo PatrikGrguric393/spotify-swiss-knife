@@ -5,38 +5,38 @@ namespace spotify_swiss_knife.Models;
 public class Playlist
 {
 	[JsonPropertyName("description")]
-	public string Description { get; set; } = string.Empty;
+	private string Description { get; set; } = string.Empty;
 
 	[JsonPropertyName("external_urls")]
-	public ExternalUrls ExternalUrls { get; set; } = new();
+	private ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("id")]
-	public string Id { get; set; } = string.Empty;
+	private string Id { get; set; } = string.Empty;
 
 	[JsonPropertyName("images")]
-	public List<Image> Images { get; set; } = [];
+	private List<Image> Images { get; set; } = [];
 
 	[JsonPropertyName("name")]
-	public string Name { get; set; } = string.Empty;
+	private string Name { get; set; } = string.Empty;
 
 	[JsonPropertyName("owner")]
-	public Owner Owner { get; set; } = new();
+	private Owner Owner { get; set; } = new();
 
 	[JsonPropertyName("snapshot_id")]
-	public string SnapshotId { get; set; } = string.Empty;
+	private string SnapshotId { get; set; } = string.Empty;
 
 	[JsonPropertyName("items")]
-	public PlaylistTracksPage Items { get; set; } = new();
+	private PlaylistTracksPage Items { get; set; } = new();
 
 	[JsonPropertyName("tracks")]
-	public PlaylistTracksPage Tracks { get; set; } = new();
+	private PlaylistTracksPage Tracks { get; set; } = new();
 }
 
 public class Owner
 {
 	[JsonPropertyName("external_urls")]
-	public ExternalUrls ExternalUrls { get; set; } = new();
+	private ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("display_name")]
-	public string DisplayName { get; set; } = string.Empty;
+	private string DisplayName { get; set; } = string.Empty;
 }
