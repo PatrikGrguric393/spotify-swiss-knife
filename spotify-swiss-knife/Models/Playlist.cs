@@ -30,6 +30,8 @@ public class Playlist
 
 	[JsonPropertyName("tracks")]
 	private PlaylistTracksPage Tracks { get; set; } = new();
+
+	private DateTime? LastShuffled { get; set; }	
 }
 
 public class Owner
