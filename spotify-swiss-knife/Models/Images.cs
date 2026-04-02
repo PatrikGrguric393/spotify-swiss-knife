@@ -5,11 +5,11 @@ namespace spotify_swiss_knife.Models;
 public class Image
 {
     [JsonPropertyName("url")]
-    private string Url { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 
     [JsonPropertyName("height")]
-    private int? Height { get; set; }
+    public int? Height { get; set; }
 
     [JsonPropertyName("width")]
-    private int? Width { get; set; }
+    public int? Width { get; set; }
 }
