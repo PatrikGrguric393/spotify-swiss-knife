@@ -20,21 +20,18 @@ public class ExampleMusicData
             Name = "Luna Wave",
             ExternalUrls = new ExternalUrls { Spotify = "https://open.spotify.com/artist/artist-luna-wave" }
         };
-
         var neons = new Artist
         {
             Id = "artist-neon-meadow",
             Name = "Neon Meadow",
             ExternalUrls = new ExternalUrls { Spotify = "https://open.spotify.com/artist/artist-neon-meadow" }
         };
-
         var blackbird = new Artist
         {
             Id = "artist-blackbird-theory",
             Name = "Blackbird Theory",
             ExternalUrls = new ExternalUrls { Spotify = "https://open.spotify.com/artist/artist-blackbird-theory" }
         };
-
         var ember = new Artist
         {
             Id = "artist-ember-kite",
