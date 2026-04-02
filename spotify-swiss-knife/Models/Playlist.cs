@@ -40,5 +40,5 @@ public class Owner
 	private ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("display_name")]
-	private string DisplayName { get; set; } = string.Empty;
+	private string? DisplayName { get; set; } = string.Empty;
 }
