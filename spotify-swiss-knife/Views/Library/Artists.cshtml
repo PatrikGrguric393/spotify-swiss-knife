@@ -1,0 +1,36 @@
+@model List<spotify_swiss_knife.Models.Artist>
+
+@{
+    ViewData["Title"] = "Library - Artists";
+}
+
+<section class="library-page">
+    <h1>Library: Artists</h1>
+    <p>All artists from the mock repository.</p>
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Spotify URL</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var artist in Model)
+            {
+                <tr>
+                    <td>@artist.Name</td>
+                    <td>@artist.Id</td>
+                    <td>
+                        <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">
+                            Open
+                        </a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

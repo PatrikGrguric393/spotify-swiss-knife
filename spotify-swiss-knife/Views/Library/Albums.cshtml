@@ -1,0 +1,42 @@
+@model List<spotify_swiss_knife.Models.Album>
+
+@{
+    ViewData["Title"] = "Library - Albums";
+}
+
+<section class="library-page">
+    <h1>Library: Albums</h1>
+    <p>All albums from the mock repository.</p>
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Artists</th>
+                    <th>Type</th>
+                    <th>Release Date</th>
+                    <th>Total Tracks</th>
+                    <th>Label</th>
+                    <th>Popularity</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var album in Model)
+            {
+                var artists = string.Join(", ", album.Artists.Select(artist => artist.Name));
+
+                <tr>
+                    <td>@album.Name</td>
+                    <td>@artists</td>
+                    <td>@album.AlbumType</td>
+                    <td>@album.ReleaseDate</td>
+                    <td>@album.TotalTracks</td>
+                    <td>@album.Label</td>
+                    <td>@album.Popularity</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,36 @@
+@model List<spotify_swiss_knife.Models.Playlist>
+
+@{
+    ViewData["Title"] = "Library - Playlists";
+}
+
+<section class="library-page">
+    <h1>Library: Playlists</h1>
+    <p>All playlists from the mock repository.</p>
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Owner</th>
+                    <th>Description</th>
+                    <th>Tracks</th>
+                    <th>Last Shuffled</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var playlist in Model)
+            {
+                <tr>
+                    <td>@playlist.Name</td>
+                    <td>@(playlist.Owner.DisplayName ?? "Unknown")</td>
+                    <td>@playlist.Description</td>
+                    <td>@playlist.Tracks.Total</td>
+                    <td>@(playlist.LastShuffled?.ToString("yyyy-MM-dd") ?? "Never")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

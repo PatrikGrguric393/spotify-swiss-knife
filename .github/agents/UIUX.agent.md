@@ -54,6 +54,8 @@ On wide screens, The list of sections in the navigation is implemented horizonta
 
 On narrower screens, the navigation is implemented as a collapsible vertical list, with the currently opened section highlighted. The list is hidden by default and can be toggled by a button in the header. When the navigation is open, it should be implemented as a pseudo-popup over the application content, with a clear way to exit the popup (e.g., clicking outside the navigation area or a close button). This popup should be scrollable either using the mouse wheel, by dragging the list with touch input or by using the arrow keys on the keyboard.
 
+Scrollbars should be styled in accordance to the rest of the application.
+
 The application contains these essential sections (with more specified by the developer):
 - Services
   - Playlist shuffler

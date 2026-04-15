@@ -1,0 +1,41 @@
+@model List<spotify_swiss_knife.Models.Track>
+
+@{
+    ViewData["Title"] = "Library - Songs";
+}
+
+<section class="library-page">
+    <h1>Library: Songs</h1>
+    <p>All songs from the mock repository.</p>
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Artists</th>
+                    <th>Duration</th>
+                    <th>Disc</th>
+                    <th>Track #</th>
+                    <th>Local</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var song in Model)
+            {
+                var duration = TimeSpan.FromMilliseconds(song.DurationMs);
+                var artists = string.Join(", ", song.Artists.Select(artist => artist.Name));
+
+                <tr>
+                    <td>@song.Name</td>
+                    <td>@artists</td>
+                    <td>@duration.ToString(@"m\:ss")</td>
+                    <td>@song.DiscNumber</td>
+                    <td>@song.TrackNumber</td>
+                    <td>@(song.IsLocal ? "Yes" : "No")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

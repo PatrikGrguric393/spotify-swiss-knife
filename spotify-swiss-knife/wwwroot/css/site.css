@@ -51,6 +51,69 @@ li {
     padding-left: 1.5rem;
 }
 
+.library-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.table-wrap {
+    margin-top: 1.5rem;
+    border: 1px solid #0f0;
+    background-color: #040404;
+    overflow-x: auto;
+}
+
+.table-wrap::-webkit-scrollbar {
+    height: 9px;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 999px;
+}
+
+.entity-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.entity-table th,
+.entity-table td {
+    text-align: left;
+    padding: 0.8rem 0.75rem;
+    border-bottom: 1px solid #093109;
+    vertical-align: top;
+}
+
+.entity-table th {
+    color: #9cff9c;
+    background-color: #0a0a0a;
+    font-weight: 700;
+}
+
+.entity-table tbody tr:hover {
+    background-color: #082008;
+}
+
+@media (max-width: 768px) {
+    .library-page h1 {
+        font-size: 1.55rem;
+    }
+
+    .library-page p {
+        font-size: 0.95rem;
+    }
+
+    .entity-table {
+        min-width: 640px;
+    }
+}
+
 /* Utility classes */
 .text-center {
     text-align: center;
