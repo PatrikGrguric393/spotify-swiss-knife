@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace spotify_swiss_knife.Controllers;
 
-public class HomeController : Controller
+public class AboutController : Controller
 {
     public IActionResult Index()
     {

@@ -1,22 +1,57 @@
-html {
-  font-size: 14px;
+/* Global styles */
+h1, h2, h3, h4, h5, h6 {
+    color: #0f0;
+    margin: 1.5rem 0 1rem 0;
+    font-weight: bold;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+h1 {
+    font-size: 2rem;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+h2 {
+    font-size: 1.5rem;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+p {
+    margin: 1rem 0;
+    line-height: 1.8;
 }
 
-body {
-  margin-bottom: 60px;
+a {
+    color: #0f0;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+a:hover {
+    color: #fff;
+}
+
+ul, ol {
+    margin: 1rem 0 1rem 2rem;
+    padding-left: 1rem;
+}
+
+li {
+    margin: 0.5rem 0;
+}
+
+/* Container styles */
+.home-container,
+.about-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-section {
+    margin: 2rem 0;
+    padding: 1rem;
+    border-left: 3px solid #0f0;
+    padding-left: 1.5rem;
+}
+
+/* Utility classes */
+.text-center {
+    text-align: center;
 }
