@@ -1,3 +1,4 @@
+@using System.Text.Json
 @model List<spotify_swiss_knife.Models.Playlist>
 
 @{
@@ -14,23 +15,48 @@
                 <tr>
                     <th>Name</th>
                     <th>Owner</th>
-                    <th>Description</th>
                     <th>Tracks</th>
-                    <th>Last Shuffled</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var playlist in Model)
             {
+                var detailsId = $"playlist-details-{playlist.Id}";
+                var detailPayload = new
+                {
+                    playlist.Name,
+                    Owner = playlist.Owner.DisplayName ?? "Unknown",
+                    playlist.Description,
+                    Tracks = playlist.Tracks.Total,
+                    LastShuffled = playlist.LastShuffled?.ToString("yyyy-MM-dd") ?? "Never"
+                };
+
                 <tr>
                     <td>@playlist.Name</td>
                     <td>@(playlist.Owner.DisplayName ?? "Unknown")</td>
-                    <td>@playlist.Description</td>
                     <td>@playlist.Tracks.Total</td>
-                    <td>@(playlist.LastShuffled?.ToString("yyyy-MM-dd") ?? "Never")</td>
+                    <td>
+                        <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Playlist">
+                            View
+                        </button>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
+                    </td>
                 </tr>
             }
             </tbody>
         </table>
     </div>
 </section>
+
+<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
+    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
+        <div class="entity-detail-header">
+            <h2 id="entityDetailTitle">Details</h2>
+            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
+        </div>
+        <div class="entity-detail-body">
+            <div class="entity-detail-content" id="entityDetailContent"></div>
+        </div>
+    </section>
+</div>

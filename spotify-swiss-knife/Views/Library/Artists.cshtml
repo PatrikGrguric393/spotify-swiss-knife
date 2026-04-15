@@ -1,3 +1,4 @@
+@using System.Text.Json
 @model List<spotify_swiss_knife.Models.Artist>
 
 @{
@@ -13,20 +14,33 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>ID</th>
                     <th>Spotify URL</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var artist in Model)
             {
+                var detailsId = $"artist-details-{artist.Id}";
+                var detailPayload = new
+                {
+                    artist.Name,
+                    artist.Id,
+                    SpotifyUrl = artist.ExternalUrls.Spotify
+                };
+
                 <tr>
                     <td>@artist.Name</td>
-                    <td>@artist.Id</td>
                     <td>
                         <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">
                             Open
                         </a>
+                    </td>
+                    <td>
+                        <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Artist">
+                            View
+                        </button>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>
             }
@@ -34,3 +48,15 @@
         </table>
     </div>
 </section>
+
+<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
+    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
+        <div class="entity-detail-header">
+            <h2 id="entityDetailTitle">Details</h2>
+            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
+        </div>
+        <div class="entity-detail-body">
+            <div class="entity-detail-content" id="entityDetailContent"></div>
+        </div>
+    </section>
+</div>

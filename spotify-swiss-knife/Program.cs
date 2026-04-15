@@ -45,6 +45,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<TrackMockRepository>();
+builder.Services.AddSingleton<AlbumMockRepository>();
+builder.Services.AddSingleton<ArtistMockRepository>();
+builder.Services.AddSingleton<PlaylistMockRepository>();
 
 var app = builder.Build();
 
@@ -62,6 +66,31 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "library-songs",
+    pattern: "library/songs",
+    defaults: new { controller = "Library", action = "Songs" });
+
+app.MapControllerRoute(
+    name: "library-albums",
+    pattern: "library/albums",
+    defaults: new { controller = "Library", action = "Albums" });
+
+app.MapControllerRoute(
+    name: "library-artists",
+    pattern: "library/artists",
+    defaults: new { controller = "Library", action = "Artists" });
+
+app.MapControllerRoute(
+    name: "library-playlists",
+    pattern: "library/playlists",
+    defaults: new { controller = "Library", action = "Playlists" });
+
+app.MapControllerRoute(
+    name: "library",
+    pattern: "library",
+    defaults: new { controller = "Library", action = "Index" });
 
 app.MapControllerRoute(
     name: "default",

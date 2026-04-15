@@ -101,13 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    if (libraryDropdown && libraryDropdown.classList.contains('active')) {
-        libraryDropdown.classList.add('open');
-        if (libraryToggle) {
-            libraryToggle.setAttribute('aria-expanded', 'true');
-        }
-    }
-
     // Set active link based on current URL
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll('.nav-link');

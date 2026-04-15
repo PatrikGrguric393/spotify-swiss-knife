@@ -1,3 +1,4 @@
+@using System.Text.Json
 @model List<spotify_swiss_knife.Models.Track>
 
 @{
@@ -15,9 +16,7 @@
                     <th>Name</th>
                     <th>Artists</th>
                     <th>Duration</th>
-                    <th>Disc</th>
-                    <th>Track #</th>
-                    <th>Local</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,17 +24,42 @@
             {
                 var duration = TimeSpan.FromMilliseconds(song.DurationMs);
                 var artists = string.Join(", ", song.Artists.Select(artist => artist.Name));
+                var detailsId = $"track-details-{song.Id}";
+                var detailPayload = new
+                {
+                    song.Name,
+                    Artists = artists,
+                    Duration = duration.ToString(@"m\:ss"),
+                    Disc = song.DiscNumber,
+                    TrackNumber = song.TrackNumber,
+                    Local = song.IsLocal ? "Yes" : "No"
+                };
 
                 <tr>
                     <td>@song.Name</td>
                     <td>@artists</td>
                     <td>@duration.ToString(@"m\:ss")</td>
-                    <td>@song.DiscNumber</td>
-                    <td>@song.TrackNumber</td>
-                    <td>@(song.IsLocal ? "Yes" : "No")</td>
+                    <td>
+                        <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Song">
+                            View
+                        </button>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
+                    </td>
                 </tr>
             }
             </tbody>
         </table>
     </div>
 </section>
+
+<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
+    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
+        <div class="entity-detail-header">
+            <h2 id="entityDetailTitle">Details</h2>
+            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
+        </div>
+        <div class="entity-detail-body">
+            <div class="entity-detail-content" id="entityDetailContent"></div>
+        </div>
+    </section>
+</div>

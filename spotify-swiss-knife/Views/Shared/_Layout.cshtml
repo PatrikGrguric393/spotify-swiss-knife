@@ -16,7 +16,9 @@
 
     <header class="app-header">
         <div class="header-container">
-            <h1 class="app-title">Spotify Swiss Knife</h1>
+            <h1 class="app-title">
+                <a asp-controller="Home" asp-action="Index" class="app-title-link">Spotify Swiss Knife</a>
+            </h1>
             <nav class="app-nav">
                 <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
                     <span></span>
@@ -24,7 +26,6 @@
                     <span></span>
                 </button>
                 <ul class="nav-list" id="navList" tabindex="0" aria-label="Main navigation menu">
-                    <li><a asp-controller="Home" asp-action="Index" class="nav-link @(currentController == "Home" ? "active" : string.Empty)">Home</a></li>
                     <li class="nav-dropdown @(isLibrary ? "active" : string.Empty)" id="libraryDropdown">
                         <button type="button" class="nav-link nav-dropdown-toggle @(isLibrary ? "active" : string.Empty)" id="libraryToggle" aria-expanded="false" aria-controls="libraryMenu">
                             Library
@@ -54,5 +55,6 @@
     </div>
 
     <script src="~/js/layout.js"></script>
+    <script src="~/js/library-details.js"></script>
 </body>
 </html>
