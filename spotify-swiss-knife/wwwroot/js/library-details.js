@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var detailContent = document.getElementById('entityDetailContent');
     var detailClose = document.getElementById('entityDetailClose');
     var detailButtons = document.querySelectorAll('.entity-detail-trigger');
+    var lastTrigger = null;
 
     if (!detailBackdrop || !detailTitle || !detailContent || !detailClose || detailButtons.length === 0) {
         return;
@@ -11,7 +12,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function closeDetails() {
         detailBackdrop.hidden = true;
+        detailBackdrop.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('entity-detail-open');
+
+        if (lastTrigger && typeof lastTrigger.focus === 'function') {
+            lastTrigger.focus();
+        }
     }
 
     function formatLabel(key) {
@@ -22,16 +28,116 @@ document.addEventListener('DOMContentLoaded', function () {
             .trim();
     }
 
+    function isLikelyUrl(value) {
+        return /^(https?:\/\/|www\.)[^\s]+$/i.test(value);
+    }
+
+    function isLikelyIsoDate(value) {
+        if (typeof value !== 'string') {
+            return false;
+        }
+
+        var trimmed = value.trim();
+        if (!/^\d{4}-\d{2}-\d{2}(?:[tT ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.test(trimmed)) {
+            return false;
+        }
+
+        var parsed = Date.parse(trimmed);
+        return !Number.isNaN(parsed);
+    }
+
+    function formatDateValue(value) {
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        var hasTime = /[tT ]\d{2}:\d{2}/.test(String(value));
+        if (hasTime) {
+            return new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            }).format(date);
+        }
+
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium'
+        }).format(date);
+    }
+
     function formatValue(value) {
+        var node = document.createElement('span');
+
         if (value === null || value === undefined || value === '') {
-            return 'N/A';
+            node.textContent = 'N/A';
+            node.className = 'entity-detail-value--empty';
+            return node;
         }
 
         if (Array.isArray(value)) {
-            return value.length > 0 ? value.join(', ') : 'N/A';
+            if (value.length === 0) {
+                node.textContent = 'N/A';
+                node.className = 'entity-detail-value--empty';
+                return node;
+            }
+
+            var list = document.createElement('ul');
+            list.className = 'entity-detail-value-list';
+
+            value.forEach(function (item) {
+                var itemNode = document.createElement('li');
+                itemNode.textContent = String(item);
+                list.appendChild(itemNode);
+            });
+
+            return list;
         }
 
-        return String(value);
+        if (typeof value === 'boolean') {
+            node.textContent = value ? 'Yes' : 'No';
+            node.className = value ? 'entity-detail-value--boolean-true' : 'entity-detail-value--boolean-false';
+            return node;
+        }
+
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            node.textContent = new Intl.NumberFormat().format(value);
+            node.className = 'entity-detail-value--number';
+            return node;
+        }
+
+        if (typeof value === 'object') {
+            node.textContent = JSON.stringify(value, null, 2);
+            node.className = 'entity-detail-value--object';
+            return node;
+        }
+
+        var text = String(value).trim();
+
+        if (text === '') {
+            node.textContent = 'N/A';
+            node.className = 'entity-detail-value--empty';
+            return node;
+        }
+
+        if (isLikelyUrl(text)) {
+            var link = document.createElement('a');
+            var href = /^https?:\/\//i.test(text) ? text : 'https://' + text;
+            link.href = href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = text;
+            link.setAttribute('aria-label', 'Open link: ' + text);
+            return link;
+        }
+
+        if (isLikelyIsoDate(text)) {
+            node.textContent = formatDateValue(text);
+            node.className = 'entity-detail-value--date';
+            return node;
+        }
+
+        node.textContent = text;
+        return node;
     }
 
     function renderDetailList(data) {
@@ -40,12 +146,24 @@ document.addEventListener('DOMContentLoaded', function () {
         var list = document.createElement('dl');
         list.className = 'entity-detail-list';
 
-        Object.keys(data).forEach(function (key) {
+        var keys = Object.keys(data).sort(function (a, b) {
+            if (a === 'Name') {
+                return -1;
+            }
+
+            if (b === 'Name') {
+                return 1;
+            }
+
+            return a.localeCompare(b);
+        });
+
+        keys.forEach(function (key) {
             var label = document.createElement('dt');
             label.textContent = formatLabel(key);
 
             var value = document.createElement('dd');
-            value.textContent = formatValue(data[key]);
+            value.appendChild(formatValue(data[key]));
 
             list.appendChild(label);
             list.appendChild(value);
@@ -72,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderDetailList(parsed);
 
         detailBackdrop.hidden = false;
+        detailBackdrop.setAttribute('aria-hidden', 'false');
         document.body.classList.add('entity-detail-open');
         detailClose.focus();
     }
@@ -85,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            lastTrigger = button;
             openDetails(entityType, detailsId);
         });
     });
