@@ -16,31 +16,24 @@
                     <th>Name</th>
                     <th>Owner</th>
                     <th>Tracks</th>
-                    <th>Details</th>
+                    <th>Last Shuffled</th>
+                    <th>Contents</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var playlist in Model)
             {
-                var detailsId = $"playlist-details-{playlist.Id}";
-                var detailPayload = new
-                {
-                    playlist.Name,
-                    Owner = playlist.Owner.DisplayName ?? "Unknown",
-                    playlist.Description,
-                    Tracks = playlist.Tracks.Total,
-                    LastShuffled = playlist.LastShuffled?.ToString("yyyy-MM-dd") ?? "Never"
-                };
+                var contentsId = $"playlist-contents-{playlist.Id}";
 
                 <tr>
-                    <td>@playlist.Name</td>
-                    <td>@(playlist.Owner.DisplayName ?? "Unknown")</td>
-                    <td>@playlist.Tracks.Total</td>
-                    <td>
-                        <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Playlist">
-                            View
+                    <td data-label="Name">@playlist.Name</td>
+                    <td data-label="Owner">@(playlist.Owner.DisplayName ?? "Unknown")</td>
+                    <td data-label="Tracks">@playlist.Tracks.Total</td>
+                    <td data-label="Last Shuffled">@(playlist.LastShuffled?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
+                    <td data-label="Contents" class="cell-actions">
+                        <button type="button" class="playlist-contents-trigger" data-contents-id="@contentsId">
+                            View Tracks
                         </button>
-                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>
             }
@@ -49,14 +42,78 @@
     </div>
 </section>
 
-<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
-    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
-        <div class="entity-detail-header">
-            <h2 id="entityDetailTitle">Details</h2>
-            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
+<div class="playlist-contents-backdrop" id="playlistContentsBackdrop" hidden>
+    <section class="playlist-contents-modal" role="dialog" aria-modal="true" aria-labelledby="playlistContentsTitle">
+        <div class="playlist-contents-header">
+            <h2 id="playlistContentsTitle">Playlist Contents</h2>
+            <button type="button" class="playlist-contents-close" id="playlistContentsClose" aria-label="Close">Close</button>
         </div>
-        <div class="entity-detail-body">
-            <div class="entity-detail-content" id="entityDetailContent"></div>
+        <div class="playlist-contents-body">
+            <table class="entity-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Song</th>
+                        <th>Artist(s)</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody id="playlistContentsTable">
+                </tbody>
+            </table>
         </div>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var backdrop = document.getElementById('playlistContentsBackdrop');
+    var closeBtn = document.getElementById('playlistContentsClose');
+    var table = document.getElementById('playlistContentsTable');
+    var triggers = document.querySelectorAll('.playlist-contents-trigger');
+    var playlists = @Html.Raw(JsonSerializer.Serialize(Model));
+
+    triggers.forEach(function (trigger) {
+        trigger.addEventListener('click', function () {
+            var playlistId = this.dataset.contentsId.replace('playlist-contents-', '');
+            var playlist = playlists.find(p => p.id === playlistId);
+
+            if (playlist) {
+                document.getElementById('playlistContentsTitle').textContent = playlist.name + ' - ' + playlist.tracks.items.length + ' tracks';
+                table.innerHTML = '';
+
+                playlist.tracks.items.forEach(function (item, index) {
+                    var track = item.track;
+                    var artists = track.artists.map(a => a.name).join(', ');
+                    var duration = formatDuration(track.duration_ms);
+                    var row = '<tr><td data-label="#">' + (index + 1) + '</td><td data-label="Song">' + track.name + '</td><td data-label="Artist(s)">' + artists + '</td><td data-label="Duration">' + duration + '</td></tr>';
+                    table.innerHTML += row;
+                });
+
+                backdrop.hidden = false;
+                backdrop.setAttribute('aria-hidden', 'false');
+                closeBtn.focus();
+            }
+        });
+    });
+
+    closeBtn.addEventListener('click', function () {
+        backdrop.hidden = true;
+        backdrop.setAttribute('aria-hidden', 'true');
+    });
+
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) {
+            backdrop.hidden = true;
+            backdrop.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+    function formatDuration(ms) {
+        var seconds = Math.floor(ms / 1000);
+        var minutes = Math.floor(seconds / 60);
+        var secs = seconds % 60;
+        return minutes + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+});
+</script>

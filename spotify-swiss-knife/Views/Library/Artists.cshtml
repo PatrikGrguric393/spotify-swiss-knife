@@ -30,13 +30,13 @@
                 };
 
                 <tr>
-                    <td>@artist.Name</td>
-                    <td>
+                    <td data-label="Name">@artist.Name</td>
+                    <td data-label="Spotify URL">
                         <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">
                             Open
                         </a>
                     </td>
-                    <td>
+                    <td data-label="Details" class="cell-actions">
                         <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Artist">
                             View
                         </button>

@@ -36,10 +36,10 @@
                 };
 
                 <tr>
-                    <td>@album.Name</td>
-                    <td>@artists</td>
-                    <td>@album.ReleaseDate</td>
-                    <td>
+                    <td data-label="Name">@album.Name</td>
+                    <td data-label="Artists">@artists</td>
+                    <td data-label="Release Date">@album.ReleaseDate</td>
+                    <td data-label="Details" class="cell-actions">
                         <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Album">
                             View
                         </button>
