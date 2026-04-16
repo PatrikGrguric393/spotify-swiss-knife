@@ -3,13 +3,13 @@
     "UserPromptSubmit": [
       {
         "type": "command",
-        "command": "cat >> ~/Documents/spotify-swiss-knife/lab-1/agent_log.txt; echo >> ~/Documents/spotify-swiss-knife/lab-1/agent_log.txt"
+        "command": "cat >> ~/Documents/spotify-swiss-knife/agent_log/agent_log.txt; echo >> ~/Documents/spotify-swiss-knife/agent_log/agent_log.txt"
       }
     ],
     "preToolUse": [
       {
         "type": "command",
-        "command": "cat >> ~/Documents/spotify-swiss-knife/lab-1/agent_log.txt; echo >> ~/Documents/spotify-swiss-knife/lab-1/agent_log.txt"
+        "command": "cat >> ~/Documents/spotify-swiss-knife/agent_log/agent_log.txt; echo >> ~/Documents/spotify-swiss-knife/agent_log/agent_log.txt"
       }
     ]
   }
