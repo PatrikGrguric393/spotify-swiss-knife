@@ -1,6 +1,6 @@
 ---
 name: UI/UX
-description: "Use when working on UI/UX architecture, HTML/CSS implementation, Razor View files, design-system planning, and complex visual/interaction design decisions."
+description: "Use when working on visual elements and UI/UX architecture. This includes HTML/CSS/JS implementation and changes, Razor View files and complex visual/interaction design decisions."
 argument-hint: "Describe the UI/UX goal"
 tools: [read, edit, search, web, todo]
 ---
