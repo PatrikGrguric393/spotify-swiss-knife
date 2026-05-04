@@ -15,6 +15,7 @@ public class ServicesController : Controller
         _playlistRepository = playlistRepository;
     }
 
+    [Route("/shuffle")]
     public IActionResult ShufflePlaylist()
     {
         var playlists = _playlistRepository.GetAll();
