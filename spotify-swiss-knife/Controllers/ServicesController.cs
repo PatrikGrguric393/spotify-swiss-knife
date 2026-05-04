@@ -7,14 +7,12 @@ namespace spotify_swiss_knife.Controllers;
 public class ServicesController : Controller
 {
     private readonly PlaylistMockRepository _playlistRepository;
-    private readonly ShuffleSchedulerService _shuffleScheduler;
 
     public ServicesController(
-        PlaylistMockRepository playlistRepository,
-        ShuffleSchedulerService shuffleScheduler)
+        PlaylistMockRepository playlistRepository
+    )
     {
         _playlistRepository = playlistRepository;
-        _shuffleScheduler = shuffleScheduler;
     }
 
     public IActionResult ShufflePlaylist()
@@ -36,52 +34,17 @@ public class ServicesController : Controller
             ModelState.AddModelError(nameof(input.PlaylistId), "Please select a valid playlist.");
         }
 
-        if (!input.StartImmediately && !input.StartAt.HasValue)
-        {
-            ModelState.AddModelError(nameof(input.StartAt), "Choose a start time or start immediately.");
-        }
+        // Scheduling removed: always run immediate shuffle when valid
 
         var statusMessage = string.Empty;
 
         if (ModelState.IsValid && selectedPlaylist is not null)
         {
-            if (input.StartAt.HasValue)
-            {
-                var scheduledForUtc = input.StartAt.Value.ToUniversalTime();
-                input.StartImmediately = false;
-
-                _shuffleScheduler.ScheduleShuffle(input.PlaylistId, input.RandomnessLevel, scheduledForUtc);
-                statusMessage = $"Shuffle scheduled for '{selectedPlaylist.Name}' at {input.StartAt:yyyy-MM-dd HH:mm} (randomness: {input.RandomnessLevel}). Page will auto-refresh when complete.";
-            }
-            else if (input.StartImmediately)
-            {
-                statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
-            }
+            statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
         }
 
         var viewModel = ShufflePlaylistPage.Create(playlists, input, statusMessage);
         return View(viewModel);
-    }
-
-    [HttpGet]
-    public IActionResult CheckScheduledShuffle(string playlistId)
-    {
-        var (shouldExecute, pending) = _shuffleScheduler.CheckAndGetDueShuffle(playlistId);
-
-        if (shouldExecute && pending is not null)
-        {
-            var playlists = _playlistRepository.GetAll();
-            var playlist = playlists.FirstOrDefault(p => p.Id == playlistId);
-
-            if (playlist is not null)
-            {
-                var message = ExecuteShuffle(playlist, pending.RandomnessLevel);
-                _shuffleScheduler.MarkExecuted(playlistId, message);
-                return Json(new { executed = true, message });
-            }
-        }
-
-        return Json(new { executed = false, message = "No shuffle due." });
     }
 
     private string ExecuteShuffle(Playlist playlist, ShuffleRandomnessLevel randomnessLevel)
