@@ -49,7 +49,6 @@ builder.Services.AddSingleton<TrackMockRepository>();
 builder.Services.AddSingleton<AlbumMockRepository>();
 builder.Services.AddSingleton<ArtistMockRepository>();
 builder.Services.AddSingleton<PlaylistMockRepository>();
-builder.Services.AddSingleton<ShuffleSchedulerService>();
 
 var app = builder.Build();
 

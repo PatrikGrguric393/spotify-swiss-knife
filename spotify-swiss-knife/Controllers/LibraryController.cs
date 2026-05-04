@@ -3,6 +3,7 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+[Route("lib")]
 public class LibraryController : Controller
 {
     private readonly TrackMockRepository _trackRepository;
@@ -27,24 +28,28 @@ public class LibraryController : Controller
         return RedirectToAction(nameof(Songs));
     }
 
+    [HttpGet("songs")]
     public IActionResult Songs()
     {
         var songs = _trackRepository.GetAll();
         return View(songs);
     }
 
+    [HttpGet("albums")]
     public IActionResult Albums()
     {
         var albums = _albumRepository.GetAll();
         return View(albums);
     }
 
+    [HttpGet("artists")]
     public IActionResult Artists()
     {
         var artists = _artistRepository.GetAll();
         return View(artists);
     }
 
+    [HttpGet("playlists")]
     public IActionResult Playlists()
     {
         var playlists = _playlistRepository.GetAll();

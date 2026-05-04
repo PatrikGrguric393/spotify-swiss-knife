@@ -8,10 +8,6 @@ public class ShufflePlaylistFormInput
     public string PlaylistId { get; set; } = string.Empty;
 
     public ShuffleRandomnessLevel RandomnessLevel { get; set; } = ShuffleRandomnessLevel.Medium;
-
-    public bool StartImmediately { get; set; } = true;
-
-    public DateTime? StartAt { get; set; }
 }
 
 public class ShufflePlaylistPage

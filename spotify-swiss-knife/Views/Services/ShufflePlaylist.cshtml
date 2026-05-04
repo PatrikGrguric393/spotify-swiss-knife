@@ -7,7 +7,7 @@
 
 <section class="library-page shuffle-page">
     <h1>Shuffle Playlist</h1>
-    <p>Select a playlist, choose randomness, and start the shuffle now or at a scheduled time.</p>
+    <p>Select a playlist, choose randomness, and start the shuffle immediately.</p>
 
     <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
         <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
@@ -46,21 +46,7 @@
                 </button>
             </div>
 
-            <div class="shuffle-form-row">
-                <label class="shuffle-checkbox">
-                    <input asp-for="Input.StartImmediately" type="checkbox" />
-                    Start immediately
-                </label>
-            </div>
-
-            <div class="shuffle-form-row shuffle-start-time-row">
-                <label asp-for="Input.StartAt">Start time (if not immediate)</label>
-                <div class="shuffle-time-input-wrapper">
-                    <input asp-for="Input.StartAt" type="datetime-local" class="shuffle-input" />
-                    <button type="button" id="startNowBtn" class="shuffle-time-now-button" title="Set to current date and time">Now</button>
-                </div>
-                <span class="shuffle-validation" asp-validation-for="Input.StartAt"></span>
-            </div>
+                <!-- Immediate shuffle only: scheduling removed -->
 
             <div class="shuffle-form-actions">
                 <button type="submit" class="shuffle-submit">Start shuffle</button>
@@ -70,12 +56,6 @@
                 @(string.IsNullOrWhiteSpace(Model.StatusMessage) ? "No shuffle has been run yet." : Model.StatusMessage)
             </p>
 
-            @if (!Model.Input.StartImmediately && Model.Input.StartAt.HasValue)
-            {
-                <p class="shuffle-scheduled-notice">
-                    <strong>Scheduled shuffle:</strong> This page will automatically refresh when your shuffle executes.
-                </p>
-            }
         </form>
     </section>
 
@@ -104,8 +84,6 @@
         const playlists = @Html.Raw(playlistsJson);
         const playlistSelect = document.querySelector('[name="Input.PlaylistId"]');
         const randomnessSelect = document.querySelector('[name="Input.RandomnessLevel"]');
-        const startImmediately = document.querySelector('[name="Input.StartImmediately"]');
-        const startAtInput = document.querySelector('[name="Input.StartAt"]');
         const viewPlaylistBtn = document.getElementById('viewPlaylistBtn');
         const playlistBackdrop = document.getElementById('playlistContentsBackdrop');
         const playlistClose = document.getElementById('playlistContentsClose');
@@ -113,7 +91,6 @@
         const beforeContent = document.getElementById('beforeShuffleContent');
         const afterContent = document.getElementById('afterShuffleContent');
         const tabButtons = document.querySelectorAll('.playlist-tab-button');
-        const startNowBtn = document.getElementById('startNowBtn');
 
         if (!playlistSelect || !randomnessSelect || !playlistBackdrop || !playlistClose || !beforeContent || !afterContent) {
             return;
@@ -312,24 +289,6 @@
             }
         });
 
-        startNowBtn?.addEventListener('click', function (event) {
-            event.preventDefault();
-            const now = new Date();
-            const offset = now.getTimezoneOffset();
-            const adjustedNow = new Date(now.getTime() - offset * 60 * 1000);
-            startAtInput.value = adjustedNow.toISOString().slice(0, 16);
-
-            if (startImmediately) {
-                startImmediately.checked = false;
-            }
-        });
-
-        startAtInput?.addEventListener('change', function () {
-            if (this.value && startImmediately) {
-                startImmediately.checked = false;
-            }
-        });
-
         updateViewButton();
 
         if (playlistSelect.value) {
@@ -338,35 +297,4 @@
     });
     </script>
 
-    @if (!string.IsNullOrEmpty(Model.Input.PlaylistId))
-    {
-        <script>
-        (function () {
-            var playlistId = '@Model.Input.PlaylistId';
-            var scheduledFor = new Date('@Model.Input.StartAt?.ToString("O")').getTime();
-            var checkInterval = 5000;
-
-            if (isNaN(scheduledFor)) {
-                return;
-            }
-
-            function checkAndRefresh() {
-                var now = new Date().getTime();
-                if (now >= scheduledFor) {
-                    fetch('@Url.Action("CheckScheduledShuffle", "Services")' + '?playlistId=' + encodeURIComponent(playlistId))
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.executed) {
-                                location.reload();
-                            }
-                        })
-                        .catch(() => {});
-                }
-            }
-
-            var pollTimer = setInterval(checkAndRefresh, checkInterval);
-            window.addEventListener('beforeunload', function () { clearInterval(pollTimer); });
-        })();
-        </script>
-    }
 </section>
