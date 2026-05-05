@@ -57,3 +57,6 @@ nuget.exe
 
 # NuGet
 .nuget/packages/
+
+# Lab files
+lab/*
