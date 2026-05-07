@@ -59,15 +59,38 @@ public class PlaylistMockRepository
         return GetAll().FirstOrDefault(playlist => playlist.Id == id);
     }
 
-    public void Update(Playlist playlist)
+    public int Update(Playlist playlist)
     {
         if (_context is null)
         {
-            return;
+            return 0;
         }
 
-        SyncTrackEntries(playlist);
-        _context.SaveChanges();
+        var orderedTrackIds = playlist.Tracks.Items.Select(item => item.Track.Id).ToList();
+        if (orderedTrackIds.Count == 0)
+        {
+            return _context.SaveChanges();
+        }
+
+        var hasUniqueTrackIds = orderedTrackIds.Distinct().Count() == orderedTrackIds.Count;
+        var existingEntryCount = _context.PlaylistTrackEntries.Count(entry => entry.PlaylistId == playlist.Id);
+
+        if (!hasUniqueTrackIds || existingEntryCount != orderedTrackIds.Count)
+        {
+            SyncTrackEntries(playlist);
+            return _context.SaveChanges();
+        }
+
+        var affectedRows = 0;
+        for (var index = 0; index < orderedTrackIds.Count; index++)
+        {
+            var trackId = orderedTrackIds[index];
+            affectedRows += _context.PlaylistTrackEntries
+                .Where(entry => entry.PlaylistId == playlist.Id && entry.TrackId == trackId && entry.SortOrder != index)
+                .ExecuteUpdate(setters => setters.SetProperty(entry => entry.SortOrder, index));
+        }
+
+        return affectedRows + _context.SaveChanges();
     }
 
     private static void SyncPlaylistWrappers(Playlist playlist)
@@ -94,9 +117,30 @@ public class PlaylistMockRepository
 
     private static void SyncTrackEntries(Playlist playlist)
     {
+        var tracks = playlist.Tracks.Items;
+        var hasUniqueTrackIds = tracks.Select(item => item.Track.Id).Distinct().Count() == tracks.Count;
+
+        if (hasUniqueTrackIds)
+        {
+            var desiredOrder = tracks
+                .Select((item, index) => new { item.Track.Id, SortOrder = index })
+                .ToDictionary(entry => entry.Id, entry => entry.SortOrder);
+
+            var existingEntries = playlist.TrackEntries.ToDictionary(entry => entry.TrackId);
+
+            if (existingEntries.Count == desiredOrder.Count && desiredOrder.Keys.All(existingEntries.ContainsKey))
+            {
+                foreach (var entry in desiredOrder)
+                {
+                    existingEntries[entry.Key].SortOrder = entry.Value;
+                }
+
+                return;
+            }
+        }
+
         playlist.TrackEntries.Clear();
 
-        var tracks = playlist.Tracks.Items;
         for (var index = 0; index < tracks.Count; index++)
         {
             var track = tracks[index].Track;

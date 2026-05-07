@@ -12,7 +12,7 @@
     <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
         <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
 
-        <form asp-action="ShufflePlaylist" asp-controller="Services" method="post" class="shuffle-form">
+        <form action="/shuffle" method="post" class="shuffle-form">
             @Html.AntiForgeryToken()
 
             <div class="shuffle-form-pair">
