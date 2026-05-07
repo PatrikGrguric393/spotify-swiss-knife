@@ -1,9 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace spotify_swiss_knife.Models;
 
 public class Album
 {
+	[Key]
+	[JsonPropertyName("id")]
+	public string Id { get; set; } = string.Empty;
+
 	[JsonPropertyName("album_type")]
 	public string AlbumType { get; set; } = string.Empty;
 
@@ -12,9 +18,6 @@ public class Album
 
 	[JsonPropertyName("external_urls")]
 	public ExternalUrls ExternalUrls { get; set; } = new();
-
-	[JsonPropertyName("id")]
-	public string Id { get; set; } = string.Empty;
 
 	[JsonPropertyName("images")]
 	public List<Image> Images { get; set; } = [];
@@ -31,6 +34,10 @@ public class Album
 	[JsonPropertyName("artists")]
 	public List<Artist> Artists { get; set; } = [];
 
+	[JsonIgnore]
+	public ICollection<Track> TrackList { get; set; } = [];
+
+	[NotMapped]
 	[JsonPropertyName("tracks")]
 	public AlbumTracksPage Tracks { get; set; } = new();
 

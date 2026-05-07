@@ -42,6 +42,7 @@ public class ServicesController : Controller
         if (ModelState.IsValid && selectedPlaylist is not null)
         {
             statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
+            _playlistRepository.Update(selectedPlaylist);
         }
 
         var viewModel = ShufflePlaylistPage.Create(playlists, input, statusMessage);
