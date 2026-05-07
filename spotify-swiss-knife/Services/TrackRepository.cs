@@ -4,22 +4,22 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
-public class TrackMockRepository
+public class TrackRepository
 {
     private readonly SpotifyDbContext? _context;
-    private readonly MockMusicDataSnapshot _snapshot;
+    private readonly MusicDataSnapshot _snapshot;
 
-    public TrackMockRepository() : this(MockMusicDataStore.GetSnapshot())
+    public TrackRepository() : this(MusicDataStore.GetSnapshot())
     {
     }
 
-    public TrackMockRepository(SpotifyDbContext context)
+    public TrackRepository(SpotifyDbContext context)
     {
         _context = context;
-        _snapshot = MockMusicDataStore.GetSnapshot();
+        _snapshot = MusicDataStore.GetSnapshot();
     }
 
-    public TrackMockRepository(MockMusicDataSnapshot snapshot)
+    public TrackRepository(MusicDataSnapshot snapshot)
     {
         _snapshot = snapshot;
     }

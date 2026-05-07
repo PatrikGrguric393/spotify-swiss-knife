@@ -9,10 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<SpotifyDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SpotifyDbContext")));
-builder.Services.AddScoped<TrackMockRepository>();
-builder.Services.AddScoped<AlbumMockRepository>();
-builder.Services.AddScoped<ArtistMockRepository>();
-builder.Services.AddScoped<PlaylistMockRepository>();
+builder.Services.AddScoped<TrackRepository>();
+builder.Services.AddScoped<AlbumRepository>();
+builder.Services.AddScoped<ArtistRepository>();
+builder.Services.AddScoped<PlaylistRepository>();
 
 var app = builder.Build();
 

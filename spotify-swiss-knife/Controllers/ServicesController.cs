@@ -6,10 +6,10 @@ namespace spotify_swiss_knife.Controllers;
 
 public class ServicesController : Controller
 {
-    private readonly PlaylistMockRepository _playlistRepository;
+    private readonly PlaylistRepository _playlistRepository;
 
     public ServicesController(
-        PlaylistMockRepository playlistRepository
+        PlaylistRepository playlistRepository
     )
     {
         _playlistRepository = playlistRepository;

@@ -6,16 +6,16 @@ namespace spotify_swiss_knife.Controllers;
 [Route("lib")]
 public class LibraryController : Controller
 {
-    private readonly TrackMockRepository _trackRepository;
-    private readonly AlbumMockRepository _albumRepository;
-    private readonly ArtistMockRepository _artistRepository;
-    private readonly PlaylistMockRepository _playlistRepository;
+    private readonly TrackRepository _trackRepository;
+    private readonly AlbumRepository _albumRepository;
+    private readonly ArtistRepository _artistRepository;
+    private readonly PlaylistRepository _playlistRepository;
 
     public LibraryController(
-        TrackMockRepository trackRepository,
-        AlbumMockRepository albumRepository,
-        ArtistMockRepository artistRepository,
-        PlaylistMockRepository playlistRepository)
+        TrackRepository trackRepository,
+        AlbumRepository albumRepository,
+        ArtistRepository artistRepository,
+        PlaylistRepository playlistRepository)
     {
         _trackRepository = trackRepository;
         _albumRepository = albumRepository;

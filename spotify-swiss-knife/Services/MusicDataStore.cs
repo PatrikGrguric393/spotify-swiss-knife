@@ -2,13 +2,13 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
-public static class MockMusicDataStore
+public static class MusicDataStore
 {
-    private static readonly MockMusicDataSnapshot Snapshot = CreateSnapshot();
+    private static readonly MusicDataSnapshot Snapshot = CreateSnapshot();
 
-    public static MockMusicDataSnapshot GetSnapshot() => Snapshot;
+    public static MusicDataSnapshot GetSnapshot() => Snapshot;
 
-    private static MockMusicDataSnapshot CreateSnapshot()
+    private static MusicDataSnapshot CreateSnapshot()
     {
         var luna = new Artist
         {
@@ -301,11 +301,11 @@ public static class MockMusicDataStore
             }
         };
 
-        return new MockMusicDataSnapshot([luna, neons, blackbird, ember], albums, tracks, playlists);
+        return new MusicDataSnapshot([luna, neons, blackbird, ember], albums, tracks, playlists);
     }
 }
 
-public sealed class MockMusicDataSnapshot(
+public sealed class MusicDataSnapshot(
     List<Artist> artists,
     List<Album> albums,
     List<Track> tracks,
