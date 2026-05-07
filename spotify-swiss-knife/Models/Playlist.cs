@@ -19,7 +19,7 @@ public class Playlist
 	public ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("images")]
-	public List<Image> Images { get; set; } = [];
+	public virtual ICollection<Image> Images { get; set; } = new HashSet<Image>();
 
 	[JsonPropertyName("name")]
 	public string Name { get; set; } = string.Empty;
@@ -33,7 +33,7 @@ public class Playlist
     
 
 	[JsonIgnore]
-	public ICollection<PlaylistTrackEntry> TrackEntries { get; set; } = [];
+	public virtual ICollection<PlaylistTrackEntry> TrackEntries { get; set; } = new HashSet<PlaylistTrackEntry>();
 
 	[NotMapped]
 	[JsonPropertyName("items")]

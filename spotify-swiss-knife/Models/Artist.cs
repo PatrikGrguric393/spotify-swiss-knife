@@ -9,14 +9,15 @@ public class Artist
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
 
+    [JsonPropertyName("external_urls")]
     public ExternalUrls ExternalUrls { get; set; } = new();
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
     [JsonIgnore]
-    public ICollection<Album> Albums { get; set; } = [];
+    public virtual ICollection<Album> Albums { get; set; } = new HashSet<Album>();
 
     [JsonIgnore]
-    public ICollection<Track> Tracks { get; set; } = [];
+    public virtual ICollection<Track> Tracks { get; set; } = new HashSet<Track>();
 }

@@ -20,7 +20,7 @@ public class Album
 	public ExternalUrls ExternalUrls { get; set; } = new();
 
 	[JsonPropertyName("images")]
-	public List<Image> Images { get; set; } = [];
+	public virtual ICollection<Image> Images { get; set; } = new HashSet<Image>();
 
 	[JsonPropertyName("name")]
 	public string Name { get; set; } = string.Empty;
@@ -32,10 +32,10 @@ public class Album
 	public string ReleaseDatePrecision { get; set; } = string.Empty;
 
 	[JsonPropertyName("artists")]
-	public List<Artist> Artists { get; set; } = [];
+	public virtual ICollection<Artist> Artists { get; set; } = new HashSet<Artist>();
 
 	[JsonIgnore]
-	public ICollection<Track> TrackList { get; set; } = [];
+	public virtual ICollection<Track> TrackList { get; set; } = new HashSet<Track>();
 
 	[NotMapped]
 	[JsonPropertyName("tracks")]
