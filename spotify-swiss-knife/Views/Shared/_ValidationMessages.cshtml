@@ -1,0 +1,21 @@
+@{
+    // Display validation messages for a specific property
+    var modelState = ViewData.ModelState;
+    var propertyName = ViewBag.PropertyName as string ?? string.Empty;
+}
+
+@if (!string.IsNullOrEmpty(propertyName) && modelState.TryGetValue(propertyName, out var entry))
+{
+    var errors = entry.Errors;
+    if (errors.Count > 0)
+    {
+        <div class="validation-error" role="alert" aria-live="polite">
+            @foreach (var error in errors)
+            {
+                <div class="validation-error-message">
+                    @error.ErrorMessage
+                </div>
+            }
+        </div>
+    }
+}

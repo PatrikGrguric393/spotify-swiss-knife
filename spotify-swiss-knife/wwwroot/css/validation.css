@@ -1,0 +1,266 @@
+/* ============================================ */
+/* Validation Styles - Matrix Theme            */
+/* ============================================ */
+
+/* Form control focus and error state */
+.form-control {
+	background: #000;
+	border: 2px solid #0f0;
+	color: #0f0;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	padding: 8px 12px;
+	transition: all 0.2s ease;
+}
+
+.form-container {
+	max-width: 600px;
+	margin: 20px auto;
+	padding: 20px;
+	border: 2px solid #0f0;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.form-container h2 {
+	color: #0f0;
+	margin-bottom: 20px;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+}
+
+.form-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+}
+
+.btn {
+	/* Match the .entity-detail-trigger exactly for consistent sizing */
+	padding: 0.38rem 0.6rem;
+	line-height: 1.15;
+	font-size: 0.92rem;
+	border: 1px solid #0f0;
+	background: #000;
+	color: #0f0;
+	font-family: inherit;
+	cursor: pointer;
+	transition: background-color 0.12s ease, color 0.12s ease;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	margin: 0 0.5rem 0 0; /* spacing between buttons and other elements */
+}
+
+.btn:hover {
+	background: #0f0;
+	color: #000;
+}
+
+.btn-primary {
+	flex: 1;
+}
+
+.btn-secondary {
+	flex: 1;
+	border-color: #666;
+	color: #666;
+}
+
+.btn-secondary:hover {
+	background: #666;
+	color: #fff;
+}
+
+.btn-danger {
+	border-color: #ff0000;
+	color: #ff0000;
+}
+
+.btn-danger:hover {
+	background: #ff0000;
+	color: #000;
+}
+
+.form-control:focus {
+	outline: none;
+	border-color: #00ff00;
+	box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.form-control.field-error {
+	border-color: #ff0000;
+	box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.form-control.field-error:focus {
+	border-color: #ff0000;
+	box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+
+/* Validation messages */
+.validation-error {
+	margin-top: 4px;
+	padding: 8px;
+	background: rgba(255, 0, 0, 0.1);
+	border-left: 3px solid #ff0000;
+	display: none;
+}
+
+.validation-error.show {
+	display: block;
+	animation: slideIn 0.2s ease;
+}
+
+.validation-error-message {
+	color: #ff0000;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.validation-error-message + .validation-error-message {
+	margin-top: 4px;
+}
+
+/* Form groups with validation */
+.form-group {
+	margin-bottom: 16px;
+}
+
+.form-group label {
+	color: #0f0;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	font-weight: 500;
+	display: block;
+	margin-bottom: 6px;
+	font-size: 0.95rem;
+}
+
+.form-group label.required::after {
+	content: ' *';
+	color: #ff0000;
+}
+
+/* Validation summary */
+.validation-summary {
+	background: rgba(255, 0, 0, 0.1);
+	border: 2px solid #ff0000;
+	border-radius: 4px;
+	padding: 12px;
+	margin-bottom: 20px;
+	display: none;
+}
+
+.validation-summary.show {
+	display: block;
+}
+
+.validation-summary-title {
+	color: #ff0000;
+	font-weight: bold;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	margin-bottom: 8px;
+}
+
+.validation-summary-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.validation-summary-list li {
+	color: #ff0000;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	font-size: 0.9rem;
+	padding: 4px 0;
+	padding-left: 16px;
+	position: relative;
+}
+
+.validation-summary-list li::before {
+	content: '✕';
+	position: absolute;
+	left: 0;
+	color: #ff0000;
+}
+
+/* Success state */
+.form-control.field-success {
+	border-color: #00ff00;
+	box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
+}
+
+.validation-success {
+	color: #0f0;
+	font-size: 0.85rem;
+	margin-top: 4px;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+	display: none;
+}
+
+.validation-success.show {
+	display: block;
+}
+
+/* Animations */
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideOut {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+
+/* Disabled form controls */
+.form-control:disabled {
+	background: #0a0a0a;
+	border-color: #005500;
+	color: #005500;
+	cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.validation-error {
+		font-size: 0.85rem;
+		padding: 6px;
+	}
+
+	.validation-error-message {
+		font-size: 0.8rem;
+	}
+
+	.form-control {
+		padding: 6px 10px;
+	}
+
+	/* Ensure .btn matches .entity-detail-trigger on mobile */
+	.btn {
+		width: 100%;
+		max-width: 12rem;
+		padding: 0.32rem 0.5rem;
+		font-size: 0.84rem;
+		margin: 0 0 0.5rem 0; /* stacked spacing */
+	}
+
+	/* When buttons are inline (e.g., actions row), restore left/right spacing
+	   by using gap on the container rather than margins on buttons */
+	.form-actions {
+		gap: 0.5rem;
+	}
+}

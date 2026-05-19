@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - Spotify Swiss Knife</title>
     <link rel="stylesheet" href="~/css/site.css">
     <link rel="stylesheet" href="~/css/layout.css">
+    <link rel="stylesheet" href="~/css/validation.css">
 </head>
 <body>
     @{
@@ -66,5 +67,8 @@
 
     <script src="~/js/layout.js"></script>
     <script src="~/js/library-details.js"></script>
+    <script src="~/js/validation.js"></script>
+
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

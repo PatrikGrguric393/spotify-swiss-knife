@@ -7,7 +7,19 @@
 
 <section class="library-page">
     <h1>Library: Artists</h1>
+    <div class="library-actions">
+        <div class="search-box">
+            <label for="artistSearch">Search</label>
+            <input id="artistSearch" name="q" type="search" placeholder="Search artists..." />
+            <span class="search-status" aria-live="polite"></span>
+        </div>
+    </div>
+
     <p>All artists from the mock repository.</p>
+
+    <div class="table-actions">
+        <a class="btn btn-primary" href="@Url.Action("CreateArtist", "Library")">Create Artist</a>
+    </div>
 
     <div class="table-wrap">
         <table class="entity-table">
@@ -16,6 +28,7 @@
                     <th>Name</th>
                     <th>Spotify URL</th>
                     <th>Details</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,10 +50,14 @@
                         </a>
                     </td>
                     <td data-label="Details" class="cell-actions">
-                        <button type="button" class="entity-detail-trigger" data-details-id="@detailsId" data-entity-type="Artist">
+                        <button type="button" class="entity-detail-trigger btn" data-details-id="@detailsId" data-entity-type="Artist">
                             View
                         </button>
                         <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
+                    </td>
+                    <td data-label="Actions" class="cell-actions">
+                        <a class="btn" href="@Url.Action("EditArtist", "Library", new { id = artist.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("DeleteArtist", "Library", new { id = artist.Id })">Delete</a>
                     </td>
                 </tr>
             }
@@ -60,3 +77,8 @@
         </div>
     </section>
 </div>
+
+@section Scripts {
+    <script src="~/js/library-artists.js" asp-append-version="true"></script>
+    <script src="~/js/library-details.js" asp-append-version="true"></script>
+}

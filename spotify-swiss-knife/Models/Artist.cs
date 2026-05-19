@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -20,4 +21,7 @@ public class Artist
 
     [JsonIgnore]
     public virtual ICollection<Track> Tracks { get; set; } = new HashSet<Track>();
+
+    [JsonIgnore]
+    public DateTime? DeletedAt { get; set; }
 }

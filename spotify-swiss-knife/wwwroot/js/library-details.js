@@ -3,10 +3,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var detailTitle = document.getElementById('entityDetailTitle');
     var detailContent = document.getElementById('entityDetailContent');
     var detailClose = document.getElementById('entityDetailClose');
-    var detailButtons = document.querySelectorAll('.entity-detail-trigger');
     var lastTrigger = null;
 
-    if (!detailBackdrop || !detailTitle || !detailContent || !detailClose || detailButtons.length === 0) {
+    if (!detailBackdrop || !detailTitle || !detailContent || !detailClose) {
         return;
     }
 
@@ -195,18 +194,17 @@ document.addEventListener('DOMContentLoaded', function () {
         detailClose.focus();
     }
 
-    detailButtons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            var detailsId = button.getAttribute('data-details-id');
-            var entityType = button.getAttribute('data-entity-type') || 'Entity';
+    // Use event delegation so dynamically-rendered buttons work
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.entity-detail-trigger');
+        if (!btn) return;
 
-            if (!detailsId) {
-                return;
-            }
+        var detailsId = btn.getAttribute('data-details-id');
+        var entityType = btn.getAttribute('data-entity-type') || 'Entity';
+        if (!detailsId) return;
 
-            lastTrigger = button;
-            openDetails(entityType, detailsId);
-        });
+        lastTrigger = btn;
+        openDetails(entityType, detailsId);
     });
 
     detailClose.addEventListener('click', closeDetails);
