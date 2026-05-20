@@ -1,0 +1,107 @@
+// Lightweight form validation utilities for shared inputs
+(function () {
+    window.FormValidation = window.FormValidation || {};
+
+    function debounce(fn, delay) {
+        var timer = null;
+        return function () {
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(null, args); }, delay);
+        };
+    }
+
+    function attachNameValidatorTo(input, options) {
+        options = options || {};
+        var url = options.validateUrl || input.getAttribute('data-validate-url');
+        var errorEl = document.getElementById(input.getAttribute('aria-describedby')) || document.querySelector('#error-Name');
+        var excludeSelector = input.getAttribute('data-exclude-id-selector') || options.excludeIdSelector;
+
+        var doCheck = function () {
+            var val = input.value.trim();
+            if (!val) return;
+            var q = encodeURIComponent(val);
+            var finalUrl = url + '?q=' + q;
+            if (excludeSelector) {
+                var excl = document.querySelector(excludeSelector);
+                if (excl && excl.value) finalUrl += '&excludeId=' + encodeURIComponent(excl.value);
+            }
+
+            fetch(finalUrl).then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.isUnique) {
+                        if (errorEl) {
+                            errorEl.classList.add('show');
+                            errorEl.innerHTML = '<div class="validation-error-message">An artist with this name already exists.</div>';
+                        }
+                        input.classList.add('field-error');
+                    } else {
+                        if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
+                        input.classList.remove('field-error');
+                    }
+                }).catch(function () { /* ignore network errors silently */ });
+        };
+
+        var handler = debounce(doCheck, options.debounce || 150);
+        input.addEventListener('blur', handler);
+    }
+
+    window.FormValidation.attachNameValidators = function (opts) {
+        var inputs = document.querySelectorAll('[data-validate-name="true"]');
+        Array.prototype.forEach.call(inputs, function (input) {
+            attachNameValidatorTo(input, opts || {});
+        });
+    };
+
+    function attachSpotifyValidatorTo(input, options) {
+        options = options || {};
+        var errorEl = document.getElementById(input.getAttribute('aria-describedby')) || document.querySelector('#error-SpotifyUrl');
+
+        var doCheck = function () {
+            var val = input.value.trim();
+            if (!val) { // empty is allowed
+                if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
+                input.classList.remove('field-error');
+                return;
+            }
+            // basic host check
+            try {
+                var u = new URL(val);
+                if (!u.hostname.includes('spotify.com')) {
+                    if (errorEl) {
+                        errorEl.classList.add('show');
+                        errorEl.innerHTML = '<div class="validation-error-message">Spotify URL must be a spotify.com link.</div>';
+                    }
+                    input.classList.add('field-error');
+                    return;
+                }
+            } catch (e) {
+                if (errorEl) {
+                    errorEl.classList.add('show');
+                    errorEl.innerHTML = '<div class="validation-error-message">Invalid URL format.</div>';
+                }
+                input.classList.add('field-error');
+                return;
+            }
+
+            if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
+            input.classList.remove('field-error');
+        };
+
+        var handler = debounce(doCheck, options.debounce || 150);
+        input.addEventListener('blur', handler);
+    }
+
+    window.FormValidation.attachSpotifyValidators = function (opts) {
+        var inputs = document.querySelectorAll('[data-validate-spotify="true"]');
+        Array.prototype.forEach.call(inputs, function (input) {
+            attachSpotifyValidatorTo(input, opts || {});
+        });
+    };
+
+    // Auto attach on DOM ready
+    document.addEventListener('DOMContentLoaded', function () {
+        try { window.FormValidation.attachNameValidators(); } catch (e) { }
+        try { window.FormValidation.attachSpotifyValidators(); } catch (e) { }
+    });
+})();

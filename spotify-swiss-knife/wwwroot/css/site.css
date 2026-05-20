@@ -93,30 +93,6 @@ li {
     font-weight: 700;
 }
 
-/* Library actions layout: space Create button and search box */
-.library-actions {
-    display: flex;
-    gap: 1.2rem;
-    align-items: center;
-    margin-bottom: 0.6rem;
-}
-
-/* Create button placed above the table */
-.table-actions {
-    margin: 0.6rem 0 0.4rem 0;
-}
-
-.table-actions .btn {
-    margin: 0; /* button spacing handled horizontally in table rows; keep single button flush */
-}
-
-.search-status {
-    display: inline-block;
-    margin-left: 0.6rem;
-    color: #b6ffb6;
-    font-size: 0.92rem;
-}
-
 .shuffle-input {
     width: 100%;
     background-color: #000;
@@ -176,26 +152,11 @@ li {
     font-size: 0.92rem;
 }
 
-.shuffle-scheduled-notice {
-    margin: 0.75rem 0 0;
-    padding: 0.6rem 0.75rem;
-    background-color: #011201;
-    border-left: 3px solid #0f0;
-    color: #a9f2a9;
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
 .shuffle-empty-state {
     margin: 0.75rem 0 0;
     color: #9cff9c;
 }
 
-.shuffle-selected-caption {
-    margin: 0.5rem 0 0.75rem;
-    color: #c0ffc0;
-    line-height: 1.45;
-}
 
 .playlist-contents-backdrop {
     position: fixed;

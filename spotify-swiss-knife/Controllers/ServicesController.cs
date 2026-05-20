@@ -6,16 +6,13 @@ namespace spotify_swiss_knife.Controllers;
 
 public class ServicesController : Controller
 {
-    private readonly PlaylistRepository _playlistRepository;
+    private readonly PlaylistMockRepository _playlistRepository;
 
-    public ServicesController(
-        PlaylistRepository playlistRepository
-    )
+    public ServicesController(PlaylistMockRepository playlistRepository)
     {
         _playlistRepository = playlistRepository;
     }
 
-    [Route("/shuffle")]
     public IActionResult ShufflePlaylist()
     {
         var playlists = _playlistRepository.GetAll();
@@ -23,9 +20,9 @@ public class ServicesController : Controller
         return View(viewModel);
     }
 
-    [HttpPost("/shuffle")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ShufflePlaylist([Bind(Prefix = "Input")] ShufflePlaylistFormInput input)
+    public IActionResult ShufflePlaylist(ShufflePlaylistFormInput input)
     {
         var playlists = _playlistRepository.GetAll();
         var selectedPlaylist = playlists.FirstOrDefault(playlist => playlist.Id == input.PlaylistId);
@@ -40,7 +37,6 @@ public class ServicesController : Controller
         if (ModelState.IsValid && selectedPlaylist is not null)
         {
             statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
-            _playlistRepository.Update(selectedPlaylist);
         }
 
         var viewModel = ShufflePlaylistPage.Create(playlists, input, statusMessage);
@@ -51,11 +47,6 @@ public class ServicesController : Controller
     {
         var originalItems = playlist.Tracks.Items.ToList();
         var shuffledItems = ShuffleTracks(originalItems, randomnessLevel);
-
-        if (originalItems.Count > 1 && HasSameOrder(originalItems, shuffledItems))
-        {
-            shuffledItems = RotateLeft(shuffledItems);
-        }
 
         var originalPositions = originalItems
             .Select((item, index) => new { item.Track.Id, index })
@@ -101,36 +92,6 @@ public class ServicesController : Controller
         return shuffled;
     }
 
-    private static bool HasSameOrder(List<PlaylistTrack> original, List<PlaylistTrack> candidate)
-    {
-        if (original.Count != candidate.Count)
-        {
-            return false;
-        }
-
-        for (var index = 0; index < original.Count; index++)
-        {
-            if (original[index].Track.Id != candidate[index].Track.Id)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static List<PlaylistTrack> RotateLeft(List<PlaylistTrack> tracks)
-    {
-        if (tracks.Count <= 1)
-        {
-            return tracks;
-        }
-
-        var rotated = tracks.Skip(1).ToList();
-        rotated.Add(tracks[0]);
-        return rotated;
-    }
-
     private static void FisherYatesShuffle(List<PlaylistTrack> tracks)
     {
         for (var index = tracks.Count - 1; index > 0; index--)
@@ -140,4 +101,3 @@ public class ServicesController : Controller
         }
     }
 }
-

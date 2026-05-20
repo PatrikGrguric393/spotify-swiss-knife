@@ -124,4 +124,27 @@ public class ArtistRepository
         _context.Artists.Update(artist);
         _context.SaveChanges();
     }
+
+    public bool ExistsByName(string name, string? excludeId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        var normalized = name.Trim();
+
+        if (_context is null)
+        {
+            return _snapshot.Artists.Any(a => !string.IsNullOrWhiteSpace(a.Name)
+                && string.Equals(a.Name.Trim(), normalized, StringComparison.OrdinalIgnoreCase)
+                && (excludeId == null || a.Id != excludeId)
+                && a.DeletedAt == null);
+        }
+
+        var query = _context.Artists.AsQueryable();
+        query = query.Where(a => a.DeletedAt == null && a.Name != null);
+        if (!string.IsNullOrEmpty(excludeId))
+        {
+            query = query.Where(a => a.Id != excludeId);
+        }
+
+        return query.Any(a => EF.Functions.ILike(a.Name.Trim(), normalized));
+    }
 }

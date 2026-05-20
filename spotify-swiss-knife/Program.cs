@@ -1,18 +1,54 @@
-using Microsoft.EntityFrameworkCore;
-using spotify_swiss_knife.DAL;
+using System.Formats.Tar;
+using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
+
+var playlistRepository = new PlaylistMockRepository();
+var musicData = playlistRepository.GetAll();
+
+
+
+// Find all songs that aren't local, will be used for downloading playlists
+var nonLocalTracks = musicData.First()
+    .Tracks
+    .Items
+    .Where(i => !i.Track.IsLocal)
+    .Select(i => i.Track)
+    .ToList();
+
+// The complement: used for letting the user know which songs won't be downloaded
+var localTracks = musicData.First()
+    .Tracks
+    .Items
+    .Where(i => i.Track.IsLocal)
+    .Select(i => i.Track)
+    .ToList();
+var localTrackCount = musicData.First()
+    .Tracks
+    .Items
+    .Count(i => i.Track.IsLocal);
+
+// Get song count, maybe will be needed for shuffling
+var songCount = musicData.First().Tracks.Items.Count();
+
+
+Console.WriteLine(nonLocalTracks.Count());
+Console.WriteLine(localTracks.Count());
+Console.WriteLine(songCount);
+
+
+
+
+
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<SpotifyDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SpotifyDbContext")));
-builder.Services.AddScoped<TrackRepository>();
-builder.Services.AddScoped<AlbumRepository>();
-builder.Services.AddScoped<ArtistRepository>();
-builder.Services.AddScoped<PlaylistRepository>();
+builder.Services.AddSingleton<TrackMockRepository>();
+builder.Services.AddSingleton<AlbumMockRepository>();
+builder.Services.AddSingleton<ArtistMockRepository>();
+builder.Services.AddSingleton<PlaylistMockRepository>();
 
 var app = builder.Build();
 

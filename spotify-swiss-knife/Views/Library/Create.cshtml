@@ -12,23 +12,8 @@
     <form method="post" id="createArtistForm" data-validate="true">
         @Html.AntiForgeryToken()
 
-        <div class="form-group">
-            <label for="Name" class="required">Artist Name</label>
-            <input
-                type="text"
-                id="Name"
-                name="Name"
-                class="form-control"
-                value="@Model?.Name"
-                required
-                maxlength="300"
-                data-val-length-max="300"
-                data-val-length-min="1"
-                placeholder="Enter artist name"
-                aria-label="Artist Name"
-                aria-describedby="error-Name"
-            />
-        </div>
+        @Html.Partial("_NameInput", Model)
+        @Html.Partial("_SpotifyUrlInput", Model)
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Artist</button>
@@ -36,3 +21,7 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script src="~/js/form-validation.js"></script>
+}

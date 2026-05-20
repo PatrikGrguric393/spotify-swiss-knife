@@ -1,0 +1,40 @@
+@model dynamic
+
+@{
+    var value = Model?.Name ?? "";
+    var excludeIdSelector = ViewData["ExcludeIdSelector"] as string ?? string.Empty;
+}
+
+<div class="form-group">
+    <label for="Name" class="required">Artist Name</label>
+    <input
+        type="text"
+        id="Name"
+        name="Name"
+        class="form-control"
+        value="@value"
+        required
+        maxlength="300"
+        data-val-length-max="300"
+        data-val-length-min="1"
+        placeholder="Enter artist name"
+        aria-label="Artist Name"
+        aria-describedby="error-Name"
+        data-validate-name="true"
+        data-validate-url="/lib/artists/validate-name"
+        @Html.Raw(string.IsNullOrWhiteSpace(excludeIdSelector) ? string.Empty : $" data-exclude-id-selector=\"{excludeIdSelector}\"")
+    />
+
+    @{ 
+        var nameErrors = ViewData.ModelState["Name"]?.Errors;
+        if (nameErrors != null && nameErrors.Count > 0)
+        {
+            <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
+                <div class="validation-error-message">@nameErrors[0].ErrorMessage</div>
+            </div>
+        }
+        else
+        {
+            <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
+        }
+    }
