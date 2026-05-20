@@ -10,8 +10,8 @@
     <div class="library-actions">
         <div class="search-box">
             <label for="artistSearch">Search</label>
-            <input id="artistSearch" name="q" type="search" placeholder="Search artists..." />
-            <span class="search-status" aria-live="polite"></span>
+            <input id="artistSearch" name="q" type="search" placeholder="Search artists..." aria-describedby="artistSearchStatus" />
+            <span class="search-status" id="artistSearchStatus" role="status" aria-live="polite" aria-atomic="true"></span>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
     </div>
 
     <div class="table-wrap">
-        <table class="entity-table">
+        <table class="entity-table" aria-busy="false">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -31,7 +31,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="artistResultsBody">
             @foreach (var artist in Model)
             {
                 var detailsId = $"artist-details-{artist.Id}";

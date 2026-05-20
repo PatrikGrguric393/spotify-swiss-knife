@@ -122,6 +122,7 @@ public class LibraryController : Controller
     [HttpGet("artists/search")]
     public IActionResult SearchArtists(string q)
     {
+        q = q?.Trim() ?? string.Empty;
         var all = _artistRepository.GetAll();
         if (string.IsNullOrWhiteSpace(q))
         {
