@@ -1,8 +1,9 @@
-using System.Formats.Tar;
+using Microsoft.EntityFrameworkCore;
+using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 
-var playlistRepository = new PlaylistMockRepository();
+var playlistRepository = new PlaylistRepository();
 var musicData = playlistRepository.GetAll();
 
 
@@ -45,10 +46,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<TrackMockRepository>();
-builder.Services.AddSingleton<AlbumMockRepository>();
-builder.Services.AddSingleton<ArtistMockRepository>();
-builder.Services.AddSingleton<PlaylistMockRepository>();
+builder.Services.AddDbContext<SpotifyDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SpotifyDbContext")));
+builder.Services.AddScoped<TrackRepository>();
+builder.Services.AddScoped<AlbumRepository>();
+builder.Services.AddScoped<ArtistRepository>();
+builder.Services.AddScoped<PlaylistRepository>();
 
 var app = builder.Build();
 

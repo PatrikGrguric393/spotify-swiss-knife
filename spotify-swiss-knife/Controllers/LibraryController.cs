@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
@@ -40,6 +41,169 @@ public class LibraryController : Controller
     {
         var albums = _albumRepository.GetAll();
         return View(albums);
+    }
+
+    [HttpGet("albums/create")]
+    public IActionResult CreateAlbum()
+    {
+        var model = new Models.FormModels.AlbumCreateModel();
+        PopulateTrackOptions(model.TrackIds);
+        return View("CreateAlbum", model);
+    }
+
+    [HttpPost("albums/create")]
+    [ValidateAntiForgeryToken]
+    public IActionResult CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateModel model)
+    {
+        if (model.TrackIds.Count == 0)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "Select at least one track.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            PopulateTrackOptions(model.TrackIds);
+            return View("CreateAlbum", model);
+        }
+
+        if (_albumRepository.ExistsByName(model.Name))
+        {
+            ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("CreateAlbum", model);
+        }
+
+        var selectedTracks = GetSelectedTracks(model.TrackIds);
+        if (selectedTracks.Count != model.TrackIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("CreateAlbum", model);
+        }
+
+        var album = new Models.Album
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = model.Name.Trim(),
+            AlbumType = (model.AlbumType ?? string.Empty).Trim(),
+            TotalTracks = selectedTracks.Count,
+            Label = (model.Label ?? string.Empty).Trim(),
+            Popularity = model.Popularity,
+            ReleaseDate = (model.ReleaseDate ?? string.Empty).Trim(),
+            ReleaseDatePrecision = string.IsNullOrWhiteSpace(model.ReleaseDatePrecision) ? "day" : model.ReleaseDatePrecision.Trim(),
+            ExternalUrls = new Models.ExternalUrls()
+        };
+
+        _albumRepository.Add(album);
+
+        foreach (var track in selectedTracks)
+        {
+            track.AlbumId = album.Id;
+            _trackRepository.Update(track);
+        }
+        return RedirectToAction(nameof(Albums));
+    }
+
+    [HttpGet("albums/edit/{id}")]
+    public IActionResult EditAlbum(string id)
+    {
+        var album = _albumRepository.GetById(id);
+        if (album is null)
+        {
+            return NotFound();
+        }
+
+        var albumTracks = album.TrackList.Any() ? album.TrackList : album.Tracks.Items;
+        var trackIds = albumTracks.Select(track => track.Id).ToList();
+        PopulateTrackOptions(trackIds);
+
+        var model = new Models.FormModels.AlbumEditModel
+        {
+            Id = album.Id,
+            Name = album.Name,
+            AlbumType = album.AlbumType,
+            Label = album.Label,
+            Popularity = album.Popularity,
+            ReleaseDate = album.ReleaseDate,
+            ReleaseDatePrecision = string.IsNullOrWhiteSpace(album.ReleaseDatePrecision) ? "day" : album.ReleaseDatePrecision,
+            TrackIds = trackIds
+        };
+
+        return View("EditAlbum", model);
+    }
+
+    [HttpPost("albums/edit/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditModel model)
+    {
+        var album = _albumRepository.GetById(id);
+        if (album is null)
+        {
+            return NotFound();
+        }
+
+        if (model.TrackIds.Count == 0)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "Select at least one track.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            PopulateTrackOptions(model.TrackIds);
+            return View("EditAlbum", model);
+        }
+
+        if (_albumRepository.ExistsByName(model.Name, model.Id))
+        {
+            ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("EditAlbum", model);
+        }
+
+        var selectedTracks = GetSelectedTracks(model.TrackIds);
+        if (selectedTracks.Count != model.TrackIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("EditAlbum", model);
+        }
+
+        album.Name = model.Name.Trim();
+        album.AlbumType = (model.AlbumType ?? string.Empty).Trim();
+        album.TotalTracks = selectedTracks.Count;
+        album.Label = (model.Label ?? string.Empty).Trim();
+        album.Popularity = model.Popularity;
+        album.ReleaseDate = (model.ReleaseDate ?? string.Empty).Trim();
+        album.ReleaseDatePrecision = string.IsNullOrWhiteSpace(model.ReleaseDatePrecision) ? "day" : model.ReleaseDatePrecision.Trim();
+
+        _albumRepository.Update(album);
+
+        foreach (var track in selectedTracks)
+        {
+            track.AlbumId = album.Id;
+            _trackRepository.Update(track);
+        }
+        return RedirectToAction(nameof(Albums));
+    }
+
+    [HttpGet("albums/delete/{id}")]
+    public IActionResult DeleteAlbum(string id)
+    {
+        var album = _albumRepository.GetById(id);
+        if (album is null)
+        {
+            return NotFound();
+        }
+
+        return View("DeleteAlbum", album);
+    }
+
+    [HttpPost("albums/delete/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteAlbumConfirmed(string id)
+    {
+        _albumRepository.Delete(id);
+        return RedirectToAction(nameof(Albums));
     }
 
     [HttpGet("artists")]
@@ -89,7 +253,7 @@ public class LibraryController : Controller
         var artist = _artistRepository.GetById(id);
         if (artist is null) return NotFound();
 
-        var model = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name, SpotifyUrl = artist.ExternalUrls?.Spotify };
+        var model = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name ?? string.Empty, SpotifyUrl = artist.ExternalUrls?.Spotify ?? string.Empty };
         return View("Edit", model);
     }
 
@@ -103,7 +267,7 @@ public class LibraryController : Controller
         var ok = await TryUpdateModelAsync<Models.Artist>(artist, "", a => a.Name);
         if (!ok)
         {
-            var vm = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name };
+            var vm = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name ?? string.Empty };
             return View("Edit", vm);
         }
         // Bind Spotify URL from form and validate
@@ -113,7 +277,7 @@ public class LibraryController : Controller
             if (!Uri.TryCreate(spotifyVal, UriKind.Absolute, out var tmp) || !tmp.Host.Contains("spotify.com"))
             {
                 ModelState.AddModelError("SpotifyUrl", "Spotify URL must be a valid spotify.com link.");
-                var vmErr = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name, SpotifyUrl = spotifyVal };
+                var vmErr = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name ?? string.Empty, SpotifyUrl = spotifyVal };
                 return View("Edit", vmErr);
             }
         }
@@ -125,7 +289,7 @@ public class LibraryController : Controller
         {
             var safe = (artist.Name ?? string.Empty).Trim();
             ModelState.AddModelError("Name", $"An artist named '{safe}' already exists.");
-            var vm = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name, SpotifyUrl = artist.ExternalUrls?.Spotify };
+            var vm = new Models.FormModels.ArtistEditModel { Id = artist.Id, Name = artist.Name ?? string.Empty, SpotifyUrl = artist.ExternalUrls?.Spotify ?? string.Empty };
             return View("Edit", vm);
         }
 
@@ -180,5 +344,33 @@ public class LibraryController : Controller
     {
         var playlists = _playlistRepository.GetAll();
         return View(playlists);
+    }
+
+    private void PopulateTrackOptions(IEnumerable<string> selectedTrackIds)
+    {
+        var selected = new HashSet<string>(selectedTrackIds ?? []);
+        var trackOptions = _trackRepository.GetAll()
+            .Select(track => new SelectListItem
+            {
+                Value = track.Id,
+                Text = $"{track.Name} ({track.Id})",
+                Selected = selected.Contains(track.Id)
+            })
+            .ToList();
+
+        ViewBag.TrackOptions = trackOptions;
+    }
+
+    private List<Models.Track> GetSelectedTracks(IEnumerable<string> trackIds)
+    {
+        var wanted = new HashSet<string>(trackIds ?? []);
+        if (wanted.Count == 0)
+        {
+            return [];
+        }
+
+        return _trackRepository.GetAll()
+            .Where(track => wanted.Contains(track.Id))
+            .ToList();
     }
 }

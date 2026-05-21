@@ -68,4 +68,77 @@ public class AlbumRepository
 
         return GetAll().FirstOrDefault(album => album.Id == id);
     }
+
+    public void Add(Album album)
+    {
+        if (_context is null)
+        {
+            _snapshot.Albums.Add(album);
+            return;
+        }
+
+        _context.Albums.Add(album);
+        _context.SaveChanges();
+    }
+
+    public void Update(Album album)
+    {
+        if (_context is null)
+        {
+            var index = _snapshot.Albums.FindIndex(existing => existing.Id == album.Id);
+            if (index >= 0)
+            {
+                _snapshot.Albums[index] = album;
+            }
+
+            return;
+        }
+
+        _context.Albums.Update(album);
+        _context.SaveChanges();
+    }
+
+    public void Delete(string id)
+    {
+        if (_context is null)
+        {
+            _snapshot.Albums.RemoveAll(album => album.Id == id);
+            return;
+        }
+
+        var album = _context.Albums.FirstOrDefault(existing => existing.Id == id);
+        if (album is null)
+        {
+            return;
+        }
+
+        _context.Albums.Remove(album);
+        _context.SaveChanges();
+    }
+
+    public bool ExistsByName(string name, string? excludeId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        var normalized = name.Trim();
+
+        if (_context is null)
+        {
+            return _snapshot.Albums.Any(album =>
+                !string.IsNullOrWhiteSpace(album.Name) &&
+                string.Equals(album.Name.Trim(), normalized, StringComparison.OrdinalIgnoreCase) &&
+                (excludeId == null || album.Id != excludeId));
+        }
+
+        var query = _context.Albums.AsQueryable().Where(album => album.Name != null);
+        if (!string.IsNullOrWhiteSpace(excludeId))
+        {
+            query = query.Where(album => album.Id != excludeId);
+        }
+
+        return query.Any(album => EF.Functions.ILike(album.Name!.Trim(), normalized));
+    }
 }

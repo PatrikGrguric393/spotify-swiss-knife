@@ -50,4 +50,21 @@ public class TrackRepository
             .Include(track => track.Images)
             .FirstOrDefault(track => track.Id == id);
     }
+
+    public void Update(Track track)
+    {
+        if (_context is null)
+        {
+            var index = _snapshot.Tracks.FindIndex(existing => existing.Id == track.Id);
+            if (index >= 0)
+            {
+                _snapshot.Tracks[index] = track;
+            }
+
+            return;
+        }
+
+        _context.Tracks.Update(track);
+        _context.SaveChanges();
+    }
 }
