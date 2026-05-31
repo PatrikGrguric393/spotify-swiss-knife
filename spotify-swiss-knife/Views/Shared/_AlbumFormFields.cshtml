@@ -1,6 +1,11 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model spotify_swiss_knife.Models.FormModels.AlbumFormModel
 
 <input asp-for="ReleaseDatePrecision" type="hidden" />
+@{
+    var normalizedAlbumType = (Model.AlbumType ?? string.Empty).Trim().ToLowerInvariant();
+    var hasSelectedAlbumType = normalizedAlbumType == "album" || normalizedAlbumType == "single" || normalizedAlbumType == "compilation";
+}
 
 <div class="form-group">
     <label asp-for="Name" class="required"></label>
@@ -25,7 +30,12 @@
 
 <div class="form-group">
     <label asp-for="AlbumType" class="required"></label>
-    <input asp-for="AlbumType" class="form-control" maxlength="50" placeholder="album, single, compilation..." aria-describedby="error-AlbumType" />
+    <select asp-for="AlbumType" class="form-control" aria-describedby="error-AlbumType" data-album-type-select onchange="(function(select){var picker=document.querySelector('[data-album-track-picker]');if(!picker){return;}var enabled=!!select.value.trim();picker.querySelectorAll('[data-album-track-search],[data-album-track-checkbox]').forEach(function(el){el.disabled=!enabled;});picker.classList.toggle('album-track-picker-locked', !enabled);if(window.albumTrackPickerApplyAlbumType){window.albumTrackPickerApplyAlbumType();}})(this);">
+        <option value="">Select album type</option>
+        <option value="album" selected="@(normalizedAlbumType == "album")">Album</option>
+        <option value="single" selected="@(normalizedAlbumType == "single")">Single</option>
+        <option value="compilation" selected="@(normalizedAlbumType == "compilation")">Compilation</option>
+    </select>
     @{
         var albumTypeErrors = ViewData.ModelState["AlbumType"]?.Errors;
         if (albumTypeErrors != null && albumTypeErrors.Count > 0)
@@ -44,25 +54,50 @@
     }
 </div>
 
-<div class="form-group">
-    <label asp-for="TrackIds" class="required"></label>
-    <select asp-for="TrackIds" asp-items="ViewBag.TrackOptions" class="form-control" multiple size="8" aria-describedby="error-TrackIds"></select>
-    @{
-        var trackIdErrors = ViewData.ModelState["TrackIds"]?.Errors;
-        if (trackIdErrors != null && trackIdErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-TrackIds" role="alert" aria-live="polite">
-                @foreach (var error in trackIdErrors)
+<div class="form-group album-track-picker @(hasSelectedAlbumType ? string.Empty : "album-track-picker-locked")" data-album-track-picker>
+    <fieldset class="album-track-picker-fieldset">
+        <legend asp-for="TrackIds" class="required"></legend>
+        <p class="album-track-picker-rule" data-album-track-constraint role="status" aria-live="polite"></p>
+        <label class="album-track-picker-search-label" for="albumTrackSearch">Search songs</label>
+        <input id="albumTrackSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by song name" autocomplete="off" data-album-track-search aria-describedby="albumTrackPickerStatus error-TrackIds" @(hasSelectedAlbumType ? null : "disabled") />
+        <div class="album-track-picker-status" id="albumTrackPickerStatus" role="status" aria-live="polite"></div>
+
+        <div class="album-track-picker-list" role="group" aria-label="Available songs">
+            @{
+                var selectedTrackIds = new HashSet<string>(Model.TrackIds ?? []);
+                var trackOptions = ViewBag.TrackOptions as IEnumerable<SelectListItem> ?? [];
+                foreach (var trackOption in trackOptions)
                 {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
+                    var optionId = $"track-option-{trackOption.Value}";
+                    var optionText = trackOption.Text ?? string.Empty;
+                    var searchValue = optionText.ToLowerInvariant();
+                    var isSelected = selectedTrackIds.Contains(trackOption.Value ?? string.Empty) || trackOption.Selected;
+
+                    <label class="album-track-picker-item" data-album-track-row data-search-text="@searchValue">
+                        <input id="@optionId" type="checkbox" name="TrackIds" value="@trackOption.Value" @(isSelected ? "checked" : null) data-album-track-checkbox @(hasSelectedAlbumType ? null : "disabled") />
+                        <span class="album-track-picker-item-text">@optionText</span>
+                    </label>
                 }
-            </div>
+            }
+        </div>
+
+        @{
+            var trackIdErrors = ViewData.ModelState["TrackIds"]?.Errors;
+            if (trackIdErrors != null && trackIdErrors.Count > 0)
+            {
+                <div class="validation-error show" id="error-TrackIds" role="alert" aria-live="polite">
+                    @foreach (var error in trackIdErrors)
+                    {
+                        <div class="validation-error-message">@error.ErrorMessage</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="validation-error" id="error-TrackIds" role="alert" aria-live="polite"></div>
+            }
         }
-        else
-        {
-            <div class="validation-error" id="error-TrackIds" role="alert" aria-live="polite"></div>
-        }
-    }
+    </fieldset>
 </div>
 
 <div class="form-group">

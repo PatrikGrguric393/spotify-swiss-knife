@@ -115,5 +115,16 @@ document.addEventListener('DOMContentLoaded', function () {
         var secs = seconds % 60;
         return minutes + ':' + (secs < 10 ? '0' : '') + secs;
     }
+
+    var selectedId = new URLSearchParams(window.location.search).get('selected');
+    if (selectedId) {
+        var selectedTrigger = Array.prototype.find.call(triggers, function (trigger) {
+            return trigger.dataset.contentsId === 'playlist-contents-' + selectedId;
+        });
+
+        if (selectedTrigger) {
+            selectedTrigger.click();
+        }
+    }
 });
 </script>

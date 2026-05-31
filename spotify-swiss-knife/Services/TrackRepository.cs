@@ -32,6 +32,7 @@ public class TrackRepository
         }
 
         return _context.Tracks
+            .Include(track => track.Album)
             .Include(track => track.Artists)
             .Include(track => track.Images)
             .AsTracking()
@@ -46,6 +47,7 @@ public class TrackRepository
         }
 
         return _context.Tracks
+            .Include(track => track.Album)
             .Include(track => track.Artists)
             .Include(track => track.Images)
             .FirstOrDefault(track => track.Id == id);

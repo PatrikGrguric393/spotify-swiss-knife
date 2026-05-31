@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using spotify_swiss_knife.Services;
+using System.Globalization;
 
 namespace spotify_swiss_knife.Controllers;
 
 [Route("lib")]
 public class LibraryController : Controller
 {
+    private static readonly HashSet<string> AllowedAlbumTypes = ["album", "single", "compilation"];
+
     private readonly TrackRepository _trackRepository;
     private readonly AlbumRepository _albumRepository;
     private readonly ArtistRepository _artistRepository;
@@ -55,10 +58,7 @@ public class LibraryController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateModel model)
     {
-        if (model.TrackIds.Count == 0)
-        {
-            ModelState.AddModelError(nameof(model.TrackIds), "Select at least one track.");
-        }
+        ValidateAlbumTypeAndTrackCount(model);
 
         if (!ModelState.IsValid)
         {
@@ -84,8 +84,8 @@ public class LibraryController : Controller
         var album = new Models.Album
         {
             Id = Guid.NewGuid().ToString("N"),
-            Name = model.Name.Trim(),
-            AlbumType = (model.AlbumType ?? string.Empty).Trim(),
+            Name = ToTitleCase(model.Name.Trim()),
+            AlbumType = model.AlbumType,
             TotalTracks = selectedTracks.Count,
             Label = (model.Label ?? string.Empty).Trim(),
             Popularity = model.Popularity,
@@ -120,8 +120,8 @@ public class LibraryController : Controller
         var model = new Models.FormModels.AlbumEditModel
         {
             Id = album.Id,
-            Name = album.Name,
-            AlbumType = album.AlbumType,
+            Name = ToTitleCase(album.Name),
+            AlbumType = NormalizeAlbumType(album.AlbumType),
             Label = album.Label,
             Popularity = album.Popularity,
             ReleaseDate = album.ReleaseDate,
@@ -142,10 +142,7 @@ public class LibraryController : Controller
             return NotFound();
         }
 
-        if (model.TrackIds.Count == 0)
-        {
-            ModelState.AddModelError(nameof(model.TrackIds), "Select at least one track.");
-        }
+        ValidateAlbumTypeAndTrackCount(model);
 
         if (!ModelState.IsValid)
         {
@@ -168,8 +165,8 @@ public class LibraryController : Controller
             return View("EditAlbum", model);
         }
 
-        album.Name = model.Name.Trim();
-        album.AlbumType = (model.AlbumType ?? string.Empty).Trim();
+        album.Name = ToTitleCase(model.Name.Trim());
+        album.AlbumType = model.AlbumType;
         album.TotalTracks = selectedTracks.Count;
         album.Label = (model.Label ?? string.Empty).Trim();
         album.Popularity = model.Popularity;
@@ -353,12 +350,38 @@ public class LibraryController : Controller
             .Select(track => new SelectListItem
             {
                 Value = track.Id,
-                Text = $"{track.Name} ({track.Id})",
+                Text = track.Name,
                 Selected = selected.Contains(track.Id)
             })
             .ToList();
 
         ViewBag.TrackOptions = trackOptions;
+    }
+
+    private void ValidateAlbumTypeAndTrackCount(Models.FormModels.AlbumFormModel model)
+    {
+        model.AlbumType = NormalizeAlbumType(model.AlbumType);
+        if (!AllowedAlbumTypes.Contains(model.AlbumType))
+        {
+            ModelState.AddModelError(nameof(model.AlbumType), "Album type must be one of: album, single, compilation.");
+            return;
+        }
+
+        if (model.TrackIds.Count == 0)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "Select at least one track.");
+            return;
+        }
+
+        if (model.AlbumType == "single" && model.TrackIds.Count != 1)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "Singles must contain exactly one track.");
+        }
+    }
+
+    private static string NormalizeAlbumType(string? albumType)
+    {
+        return (albumType ?? string.Empty).Trim().ToLowerInvariant();
     }
 
     private List<Models.Track> GetSelectedTracks(IEnumerable<string> trackIds)
@@ -372,5 +395,19 @@ public class LibraryController : Controller
         return _trackRepository.GetAll()
             .Where(track => wanted.Contains(track.Id))
             .ToList();
+    }
+
+    private static string ToTitleCase(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var text = input.Trim();
+        try
+        {
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLowerInvariant());
+        }
+        catch
+        {
+            return text;
+        }
     }
 }

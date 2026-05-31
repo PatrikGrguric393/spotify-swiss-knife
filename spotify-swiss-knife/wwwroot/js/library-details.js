@@ -9,6 +9,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    function openSelectedEntityFromQuery() {
+        var selectedId = new URLSearchParams(window.location.search).get('selected');
+        if (!selectedId) {
+            return;
+        }
+
+        var trigger = Array.prototype.find.call(document.querySelectorAll('.entity-detail-trigger'), function (button) {
+            var detailsId = button.getAttribute('data-details-id') || '';
+            return detailsId.endsWith(selectedId);
+        });
+
+        if (trigger) {
+            trigger.click();
+        }
+    }
+
     function closeDetails() {
         detailBackdrop.hidden = true;
         detailBackdrop.setAttribute('aria-hidden', 'true');
@@ -220,4 +236,6 @@ document.addEventListener('DOMContentLoaded', function () {
             closeDetails();
         }
     });
+
+    openSelectedEntityFromQuery();
 });

@@ -86,8 +86,10 @@
         max-width: 100%;
         padding: 0 0.75rem;
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
+        gap: 0.45rem 0.75rem;
     }
 
     .app-title {
@@ -130,6 +132,7 @@
     /* Navigation */
     .app-nav {
         position: relative;
+        margin-left: auto;
     }
 
     .nav-toggle {
@@ -269,6 +272,22 @@
         .app-title {
             display: block;
             font-size: 1.1rem;
+            flex: 1 1 auto;
+        }
+
+        .global-search-shell {
+            order: 3;
+            flex: 1 1 100%;
+            max-width: none;
+            margin: 0;
+        }
+
+        .global-search-panel {
+            position: fixed;
+            top: 3.35rem;
+            left: 0.5rem;
+            right: 0.5rem;
+            max-height: 70vh;
         }
 
         .nav-toggle {
@@ -417,6 +436,10 @@
         .nav-link:hover {
             background-color: #0f0;
             color: #000;
+        }
+
+        .header-container {
+            align-items: flex-start;
         }
 
         .header-container {
