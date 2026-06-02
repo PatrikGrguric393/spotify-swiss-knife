@@ -22,7 +22,7 @@ jobs:
       - name: Build image and push it to the registry
         run: |
           docker buildx create --name container --driver=docker-container
-          docker buildx build --builder container --platform linux/amd64,linux/arm64 -t ${REGISTRY_URL}/${IMAGE}:${{ gitea.ref_name }} -t latest --push .          
+          docker buildx build --builder container --platform linux/amd64,linux/arm64 -t ${REGISTRY_URL}/${IMAGE}:${{ gitea.ref_name }} -t ${REGISTRY_URL}/${IMAGE}:latest --push .          
       - name: Restart deployment rollout in Kubernetes to apply new image version
         uses: actions-hub/kubectl@master
         env:
