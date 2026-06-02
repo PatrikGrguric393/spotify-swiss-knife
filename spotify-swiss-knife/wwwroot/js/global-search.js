@@ -10,15 +10,48 @@ document.addEventListener('DOMContentLoaded', function () {
     var panel = shell.querySelector('[data-search-panel]');
     var status = shell.querySelector('[data-search-status]');
     var results = shell.querySelector('[data-search-results]');
+    var placeholder = shell.querySelector('[data-search-placeholder]');
+    var placeholderText = shell.querySelector('[data-search-placeholder-text]');
     var endpoint = shell.getAttribute('data-search-endpoint') || '/search';
     var minLength = 2;
     var debounceTimer = 0;
     var controller = null;
     var links = [];
     var activeIndex = -1;
+    var resizeObserver = null;
 
     if (!input || !clearButton || !panel || !status || !results) {
         return;
+    }
+
+    function updatePlaceholderVisibility() {
+        if (!placeholder) {
+            return;
+        }
+
+        placeholder.hidden = input.value.length > 0;
+    }
+
+    function updatePlaceholderOverflow() {
+        if (!placeholder || !placeholderText) {
+            return;
+        }
+
+        if (placeholder.hidden) {
+            placeholder.classList.remove('is-overflowing');
+            placeholderText.style.removeProperty('--global-search-overflow-distance');
+            return;
+        }
+
+        var overflowDistance = placeholderText.scrollWidth - placeholderText.clientWidth;
+        var isOverflowing = overflowDistance > 1;
+        placeholder.classList.toggle('is-overflowing', isOverflowing);
+
+        if (isOverflowing) {
+            placeholderText.style.setProperty('--global-search-overflow-distance', overflowDistance + 'px');
+        } else {
+            placeholderText.style.removeProperty('--global-search-overflow-distance');
+        }
     }
 
     function setPanelVisible(visible) {
@@ -39,6 +72,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateClearButton() {
         clearButton.hidden = input.value.length === 0;
+    }
+
+    function updateSearchBarHint() {
+        updateClearButton();
+        updatePlaceholderVisibility();
+        updatePlaceholderOverflow();
     }
 
     function renderLoading() {
@@ -172,8 +211,8 @@ document.addEventListener('DOMContentLoaded', function () {
         abortPendingRequest();
 
         if (query.length < minLength) {
-            setStatus('Type at least 2 characters to search the library.');
-            renderMessage('Search artists, albums, tracks, and playlists from the header.');
+            setStatus('Type 2+ characters to search.');
+            renderMessage('Search library from the header.');
             setPanelVisible(true);
             return;
         }
@@ -212,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function scheduleSearch() {
         clearTimeout(debounceTimer);
-        updateClearButton();
+        updateSearchBarHint();
 
         debounceTimer = window.setTimeout(function () {
             fetchResults(input.value.trim());
@@ -221,8 +260,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     input.addEventListener('focus', function () {
         if (input.value.trim().length < minLength) {
-            setStatus('Type at least 2 characters to search the library.');
-            renderMessage('Search artists, albums, tracks, and playlists from the header.');
+            setStatus('Type 2+ characters to search.');
+            renderMessage('Search library from the header.');
             setPanelVisible(true);
         }
     });
@@ -258,9 +297,9 @@ document.addEventListener('DOMContentLoaded', function () {
     clearButton.addEventListener('click', function () {
         abortPendingRequest();
         input.value = '';
-        updateClearButton();
-        setStatus('Type at least 2 characters to search the library.');
-        renderMessage('Search artists, albums, tracks, and playlists from the header.');
+        updateSearchBarHint();
+        setStatus('Type 2+ characters to search.');
+        renderMessage('Search library from the header.');
         setPanelVisible(true);
         input.focus();
     });
@@ -271,5 +310,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    updateClearButton();
+    if ('ResizeObserver' in window && placeholder) {
+        resizeObserver = new ResizeObserver(updatePlaceholderOverflow);
+        resizeObserver.observe(placeholder);
+    } else {
+        window.addEventListener('resize', updatePlaceholderOverflow);
+    }
+
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(updatePlaceholderOverflow);
+    }
+
+    window.requestAnimationFrame(function () {
+        updateSearchBarHint();
+    });
+
+    updateSearchBarHint();
 });

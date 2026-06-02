@@ -378,6 +378,7 @@ public class LibraryController : Controller
     {
         var selected = new HashSet<string>(selectedTrackIds ?? []);
         var trackOptions = _trackRepository.GetAll()
+            .OrderBy(track => track.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(track => new SelectListItem
             {
                 Value = track.Id,
@@ -393,6 +394,7 @@ public class LibraryController : Controller
     {
         var selected = new HashSet<string>(selectedArtistIds ?? []);
         var artistOptions = _artistRepository.GetAll()
+            .OrderBy(artist => artist.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(artist => new SelectListItem
             {
                 Value = artist.Id,

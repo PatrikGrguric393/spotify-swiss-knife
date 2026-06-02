@@ -3,23 +3,28 @@
 }
 
 <form class="global-search-shell" data-global-search data-search-endpoint="@searchEndpoint" role="search" autocomplete="off" novalidate>
-    <label for="globalSearchInput" class="visually-hidden">Search library</label>
     <div class="global-search-field">
-        <input id="globalSearchInput"
-               class="global-search-input"
-               type="search"
-               inputmode="search"
-               placeholder="Search artists, albums, tracks, playlists"
-               aria-autocomplete="list"
-               aria-expanded="false"
-               aria-controls="globalSearchPanel"
-               aria-describedby="globalSearchHint"
-               data-search-input />
+        <label for="globalSearchInput" class="visually-hidden">Search the library</label>
+        <div class="global-search-input-shell">
+            <div class="global-search-placeholder" data-search-placeholder aria-hidden="true">
+                <span class="global-search-placeholder-text" data-search-placeholder-text>Search artists, albums, tracks, and playlists</span>
+            </div>
+            <input id="globalSearchInput"
+                   class="global-search-input"
+                   type="search"
+                   inputmode="search"
+                   placeholder=""
+                   aria-autocomplete="list"
+                   aria-expanded="false"
+                   aria-controls="globalSearchPanel"
+                   aria-describedby="globalSearchHint"
+                   data-search-input />
+        </div>
         <button type="button" class="global-search-clear" data-search-clear hidden aria-label="Clear search">Clear</button>
     </div>
 
     <div class="global-search-panel" id="globalSearchPanel" data-search-panel hidden>
-        <div class="global-search-hint visually-hidden" id="globalSearchHint" data-search-status aria-live="polite">Type at least 2 characters to search the library.</div>
+        <div class="global-search-hint visually-hidden" id="globalSearchHint" data-search-status aria-live="polite">Type 2+ characters to search.</div>
         <div class="global-search-results" data-search-results></div>
     </div>
 </form>

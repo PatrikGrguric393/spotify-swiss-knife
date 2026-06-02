@@ -443,6 +443,12 @@
     @media (min-width: 769px) {
         .app-title {
             display: block;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .header-container {
+            flex-wrap: nowrap;
         }
 
         .app-content {
@@ -450,6 +456,11 @@
             margin: 0 auto;
             width: 100%;
             padding: 2rem;
+        }
+
+        .global-search-shell {
+            max-width: none;
+            width: auto;
         }
     }
 

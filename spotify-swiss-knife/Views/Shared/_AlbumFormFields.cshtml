@@ -62,7 +62,7 @@
         <input id="albumArtistSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by artist name" autocomplete="off" data-album-artist-search aria-describedby="albumArtistPickerStatus error-ArtistIds" />
         <div class="album-track-picker-status" id="albumArtistPickerStatus" role="status" aria-live="polite"></div>
 
-        <div class="album-track-picker-list" role="group" aria-label="Available artists">
+        <div class="album-track-picker-list entity-selection-list" role="group" aria-label="Available artists">
             @{
                 var selectedArtistIds = new HashSet<string>(Model.ArtistIds ?? []);
                 var artistOptions = ViewBag.ArtistOptions as IEnumerable<SelectListItem> ?? [];
@@ -73,7 +73,7 @@
                     var searchValue = optionText.ToLowerInvariant();
                     var isSelected = selectedArtistIds.Contains(artistOption.Value ?? string.Empty) || artistOption.Selected;
 
-                    <label class="album-track-picker-item" data-album-artist-row data-search-text="@searchValue">
+                    <label class="album-track-picker-item entity-selection-item" data-album-artist-row data-search-text="@searchValue">
                         <input id="@optionId" type="checkbox" name="ArtistIds" value="@artistOption.Value" @(isSelected ? "checked" : null) data-album-artist-checkbox />
                         <span class="album-track-picker-item-text">@optionText</span>
                     </label>
@@ -108,7 +108,7 @@
         <input id="albumTrackSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by song name" autocomplete="off" data-album-track-search aria-describedby="albumTrackPickerStatus error-TrackIds" @(hasSelectedAlbumType ? null : "disabled") />
         <div class="album-track-picker-status" id="albumTrackPickerStatus" role="status" aria-live="polite"></div>
 
-        <div class="album-track-picker-list" role="group" aria-label="Available songs">
+        <div class="album-track-picker-list entity-selection-list" role="group" aria-label="Available songs">
             @{
                 var selectedTrackIds = new HashSet<string>(Model.TrackIds ?? []);
                 var trackOptions = ViewBag.TrackOptions as IEnumerable<SelectListItem> ?? [];
@@ -119,7 +119,7 @@
                     var searchValue = optionText.ToLowerInvariant();
                     var isSelected = selectedTrackIds.Contains(trackOption.Value ?? string.Empty) || trackOption.Selected;
 
-                    <label class="album-track-picker-item" data-album-track-row data-search-text="@searchValue">
+                    <label class="album-track-picker-item entity-selection-item" data-album-track-row data-search-text="@searchValue">
                         <input id="@optionId" type="checkbox" name="TrackIds" value="@trackOption.Value" @(isSelected ? "checked" : null) data-album-track-checkbox @(hasSelectedAlbumType ? null : "disabled") />
                         <span class="album-track-picker-item-text">@optionText</span>
                     </label>
