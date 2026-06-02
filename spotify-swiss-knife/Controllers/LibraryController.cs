@@ -51,6 +51,7 @@ public class LibraryController : Controller
     {
         var model = new Models.FormModels.AlbumCreateModel();
         PopulateTrackOptions(model.TrackIds);
+        PopulateArtistOptions(model.ArtistIds);
         return View("CreateAlbum", model);
     }
 
@@ -63,6 +64,7 @@ public class LibraryController : Controller
         if (!ModelState.IsValid)
         {
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("CreateAlbum", model);
         }
 
@@ -70,6 +72,7 @@ public class LibraryController : Controller
         {
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("CreateAlbum", model);
         }
 
@@ -78,6 +81,16 @@ public class LibraryController : Controller
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
+            return View("CreateAlbum", model);
+        }
+
+        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+        if (selectedArtists.Count != model.ArtistIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("CreateAlbum", model);
         }
 
@@ -93,6 +106,8 @@ public class LibraryController : Controller
             ReleaseDatePrecision = string.IsNullOrWhiteSpace(model.ReleaseDatePrecision) ? "day" : model.ReleaseDatePrecision.Trim(),
             ExternalUrls = new Models.ExternalUrls()
         };
+
+        album.Artists = selectedArtists;
 
         _albumRepository.Add(album);
 
@@ -115,7 +130,9 @@ public class LibraryController : Controller
 
         var albumTracks = album.TrackList.Any() ? album.TrackList : album.Tracks.Items;
         var trackIds = albumTracks.Select(track => track.Id).ToList();
+        var artistIds = album.Artists.Select(artist => artist.Id).ToList();
         PopulateTrackOptions(trackIds);
+        PopulateArtistOptions(artistIds);
 
         var model = new Models.FormModels.AlbumEditModel
         {
@@ -126,7 +143,8 @@ public class LibraryController : Controller
             Popularity = album.Popularity,
             ReleaseDate = album.ReleaseDate,
             ReleaseDatePrecision = string.IsNullOrWhiteSpace(album.ReleaseDatePrecision) ? "day" : album.ReleaseDatePrecision,
-            TrackIds = trackIds
+            TrackIds = trackIds,
+            ArtistIds = artistIds
         };
 
         return View("EditAlbum", model);
@@ -147,6 +165,7 @@ public class LibraryController : Controller
         if (!ModelState.IsValid)
         {
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("EditAlbum", model);
         }
 
@@ -154,6 +173,7 @@ public class LibraryController : Controller
         {
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("EditAlbum", model);
         }
 
@@ -162,6 +182,16 @@ public class LibraryController : Controller
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
             PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
+            return View("EditAlbum", model);
+        }
+
+        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+        if (selectedArtists.Count != model.ArtistIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            PopulateArtistOptions(model.ArtistIds);
             return View("EditAlbum", model);
         }
 
@@ -172,6 +202,7 @@ public class LibraryController : Controller
         album.Popularity = model.Popularity;
         album.ReleaseDate = (model.ReleaseDate ?? string.Empty).Trim();
         album.ReleaseDatePrecision = string.IsNullOrWhiteSpace(model.ReleaseDatePrecision) ? "day" : model.ReleaseDatePrecision.Trim();
+        album.Artists = selectedArtists;
 
         _albumRepository.Update(album);
 
@@ -358,6 +389,21 @@ public class LibraryController : Controller
         ViewBag.TrackOptions = trackOptions;
     }
 
+    private void PopulateArtistOptions(IEnumerable<string> selectedArtistIds)
+    {
+        var selected = new HashSet<string>(selectedArtistIds ?? []);
+        var artistOptions = _artistRepository.GetAll()
+            .Select(artist => new SelectListItem
+            {
+                Value = artist.Id,
+                Text = artist.Name,
+                Selected = selected.Contains(artist.Id)
+            })
+            .ToList();
+
+        ViewBag.ArtistOptions = artistOptions;
+    }
+
     private void ValidateAlbumTypeAndTrackCount(Models.FormModels.AlbumFormModel model)
     {
         model.AlbumType = NormalizeAlbumType(model.AlbumType);
@@ -394,6 +440,19 @@ public class LibraryController : Controller
 
         return _trackRepository.GetAll()
             .Where(track => wanted.Contains(track.Id))
+            .ToList();
+    }
+
+    private List<Models.Artist> GetSelectedArtists(IEnumerable<string> artistIds)
+    {
+        var wanted = new HashSet<string>(artistIds ?? []);
+        if (wanted.Count == 0)
+        {
+            return [];
+        }
+
+        return _artistRepository.GetAll()
+            .Where(artist => wanted.Contains(artist.Id))
             .ToList();
     }
 

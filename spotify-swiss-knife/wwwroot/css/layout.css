@@ -282,14 +282,6 @@
             margin: 0;
         }
 
-        .global-search-panel {
-            position: fixed;
-            top: 3.35rem;
-            left: 0.5rem;
-            right: 0.5rem;
-            max-height: 70vh;
-        }
-
         .nav-toggle {
             display: block;
         }

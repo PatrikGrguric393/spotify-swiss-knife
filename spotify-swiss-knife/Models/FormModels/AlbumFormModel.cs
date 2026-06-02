@@ -39,4 +39,8 @@ public abstract class AlbumFormModel
 	[MinLength(1, ErrorMessage = "Select at least one track")]
 	[Display(Name = "Select Songs")]
 	public List<string> TrackIds { get; set; } = [];
+
+	[MinLength(1, ErrorMessage = "Select at least one artist")]
+	[Display(Name = "Select Artists")]
+	public List<string> ArtistIds { get; set; } = [];
 }

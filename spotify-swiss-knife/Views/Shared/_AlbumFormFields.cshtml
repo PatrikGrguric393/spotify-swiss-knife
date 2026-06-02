@@ -54,6 +54,52 @@
     }
 </div>
 
+<div class="form-group album-track-picker album-artist-picker" data-album-artist-picker>
+    <fieldset class="album-track-picker-fieldset">
+        <legend asp-for="ArtistIds" class="required"></legend>
+        <p class="album-track-picker-help" data-album-artist-help>Search artists, then check every artist on this album.</p>
+        <label class="album-track-picker-search-label" for="albumArtistSearch">Search artists</label>
+        <input id="albumArtistSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by artist name" autocomplete="off" data-album-artist-search aria-describedby="albumArtistPickerStatus error-ArtistIds" />
+        <div class="album-track-picker-status" id="albumArtistPickerStatus" role="status" aria-live="polite"></div>
+
+        <div class="album-track-picker-list" role="group" aria-label="Available artists">
+            @{
+                var selectedArtistIds = new HashSet<string>(Model.ArtistIds ?? []);
+                var artistOptions = ViewBag.ArtistOptions as IEnumerable<SelectListItem> ?? [];
+                foreach (var artistOption in artistOptions)
+                {
+                    var optionId = $"artist-option-{artistOption.Value}";
+                    var optionText = artistOption.Text ?? string.Empty;
+                    var searchValue = optionText.ToLowerInvariant();
+                    var isSelected = selectedArtistIds.Contains(artistOption.Value ?? string.Empty) || artistOption.Selected;
+
+                    <label class="album-track-picker-item" data-album-artist-row data-search-text="@searchValue">
+                        <input id="@optionId" type="checkbox" name="ArtistIds" value="@artistOption.Value" @(isSelected ? "checked" : null) data-album-artist-checkbox />
+                        <span class="album-track-picker-item-text">@optionText</span>
+                    </label>
+                }
+            }
+        </div>
+
+        @{
+            var artistIdErrors = ViewData.ModelState["ArtistIds"]?.Errors;
+            if (artistIdErrors != null && artistIdErrors.Count > 0)
+            {
+                <div class="validation-error show" id="error-ArtistIds" role="alert" aria-live="polite">
+                    @foreach (var error in artistIdErrors)
+                    {
+                        <div class="validation-error-message">@error.ErrorMessage</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="validation-error" id="error-ArtistIds" role="alert" aria-live="polite"></div>
+            }
+        }
+    </fieldset>
+</div>
+
 <div class="form-group album-track-picker @(hasSelectedAlbumType ? string.Empty : "album-track-picker-locked")" data-album-track-picker>
     <fieldset class="album-track-picker-fieldset">
         <legend asp-for="TrackIds" class="required"></legend>
