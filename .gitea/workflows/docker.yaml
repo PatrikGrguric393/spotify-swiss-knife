@@ -9,7 +9,7 @@ jobs:
       image: ghcr.io/catthehacker/ubuntu:act-latest
     env:
       REGISTRY_URL: ${{ vars.GIT_DOMAIN }}
-      IMAGE: ${{ vars.GIT_USER }}/${{ vars.IMAGE_NAME }}
+      IMAGE: ${{ vars.GIT_REGISTRY_USER }}/${{ vars.IMAGE_NAME }}
     steps:
       - name: Log in to registry
         uses: docker/login-action@v3
