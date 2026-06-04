@@ -1,4 +1,3 @@
-// Lightweight form validation utilities for shared inputs
 (function () {
     window.FormValidation = window.FormValidation || {};
 
@@ -39,7 +38,7 @@
                         if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
                         input.classList.remove('field-error');
                     }
-                }).catch(function () { /* ignore network errors silently */ });
+                }).catch(function () { });
         };
 
         var handler = debounce(doCheck, options.debounce || 150);
@@ -59,12 +58,11 @@
 
         var doCheck = function () {
             var val = input.value.trim();
-            if (!val) { // empty is allowed
+            if (!val) {
                 if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
                 input.classList.remove('field-error');
                 return;
             }
-            // basic host check
             try {
                 var u = new URL(val);
                 if (!u.hostname.includes('spotify.com')) {
@@ -99,7 +97,6 @@
         });
     };
 
-    // Auto attach on DOM ready
     document.addEventListener('DOMContentLoaded', function () {
         try { window.FormValidation.attachNameValidators(); } catch (e) { }
         try { window.FormValidation.attachSpotifyValidators(); } catch (e) { }

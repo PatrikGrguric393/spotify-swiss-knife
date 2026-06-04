@@ -1,0 +1,99 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Spotify Swiss Knife" [level=1] [ref=e4]:
+        - link "Spotify Swiss Knife" [ref=e5] [cursor=pointer]:
+          - /url: /
+      - search [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: Search the library
+          - generic [ref=e9]:
+            - generic:
+              - generic:
+                - generic: Search artists, albums, tracks, and playlists
+            - searchbox "Search the library" [ref=e10]
+      - navigation [ref=e11]:
+        - list "Main navigation menu" [ref=e12]:
+          - listitem [ref=e13]:
+            - button "Services" [ref=e14] [cursor=pointer]
+          - listitem [ref=e15]:
+            - button "Library" [ref=e16] [cursor=pointer]
+          - listitem [ref=e17]:
+            - link "About" [ref=e18] [cursor=pointer]:
+              - /url: /description
+          - listitem [ref=e19]:
+            - link "Settings" [ref=e20] [cursor=pointer]:
+              - /url: "#"
+  - generic [ref=e21]:
+    - main [ref=e22]:
+      - generic [ref=e23]:
+        - heading "Edit Album" [level=2] [ref=e24]
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]: Album Name *
+            - textbox "Album Name *" [ref=e28]:
+              - /placeholder: Enter album name
+              - text: Cloud Garden Ep
+          - generic [ref=e29]:
+            - generic [ref=e30]: Album Type *
+            - combobox "Album Type *" [ref=e31]:
+              - option "Select album type"
+              - option "Album"
+              - option "Single" [selected]
+              - option "Compilation"
+          - group [ref=e33]:
+            - paragraph [ref=e34]: Search artists, then check every artist on this album.
+            - generic [ref=e35]: Search artists
+            - searchbox "Search artists" [ref=e36]
+            - status [ref=e37]: 4 artists shown, 1 selected.
+            - group "Available artists" [ref=e38]:
+              - generic [ref=e39] [cursor=pointer]:
+                - checkbox "Blackbird Theory" [ref=e40]
+                - text: Blackbird Theory
+              - generic [ref=e41] [cursor=pointer]:
+                - checkbox "Ember Kite" [ref=e42]
+                - text: Ember Kite
+              - generic [ref=e43] [cursor=pointer]:
+                - checkbox "Luna Wave" [ref=e44]
+                - text: Luna Wave
+              - generic [ref=e45] [cursor=pointer]:
+                - checkbox "Neon Meadow" [checked] [ref=e46]
+                - text: Neon Meadow
+          - group [ref=e48]:
+            - status [ref=e49]: Only one song can be selected for a single.
+            - generic [ref=e50]: Search songs
+            - searchbox "Search songs" [ref=e51]
+            - status [ref=e52]: "Single mode: 5 songs shown, 1 selected."
+            - group "Available songs" [ref=e53]:
+              - generic [ref=e54] [cursor=pointer]:
+                - checkbox "Gravity Bloom" [ref=e55]
+                - text: Gravity Bloom
+              - generic [ref=e56] [cursor=pointer]:
+                - checkbox "Midnight Circuit" [ref=e57]
+                - text: Midnight Circuit
+              - generic [ref=e58] [cursor=pointer]:
+                - checkbox "River in Binary" [ref=e59]
+                - text: River in Binary
+              - generic [ref=e60] [cursor=pointer]:
+                - checkbox "Solar Echo" [checked] [ref=e61]
+                - text: Solar Echo
+              - generic [ref=e62] [cursor=pointer]:
+                - checkbox "Static Sunrise" [ref=e63]
+                - text: Static Sunrise
+          - generic [ref=e64]:
+            - generic [ref=e65]: Label
+            - textbox "Label" [ref=e66]:
+              - /placeholder: Enter label (optional)
+              - text: Mirrorline
+          - generic [ref=e67]:
+            - generic [ref=e68]: Popularity (0-100)
+            - spinbutton "Popularity (0-100)" [ref=e69]: "58"
+          - generic [ref=e70]:
+            - generic [ref=e71]: Release Date *
+            - textbox "Release Date *" [ref=e72]: 2024-02-02
+          - generic [ref=e73]:
+            - button "Save Changes" [ref=e74] [cursor=pointer]
+            - link "Cancel" [ref=e75] [cursor=pointer]:
+              - /url: /lib/albums
+    - contentinfo [ref=e76]:
+      - paragraph [ref=e77]: © 2026 Spotify Swiss Knife. All rights reserved.

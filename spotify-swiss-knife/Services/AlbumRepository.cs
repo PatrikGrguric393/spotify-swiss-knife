@@ -34,25 +34,19 @@ public class AlbumRepository
         var albums = _context.Albums
             .Include(album => album.Artists)
             .Include(album => album.Images)
+            .Include(album => album.TrackList).ThenInclude(track => track.Artists)
+            .Include(album => album.TrackList).ThenInclude(track => track.Images)
             .AsTracking()
             .ToList();
 
         foreach (var album in albums)
         {
-            var tracks = _context.Tracks
-                .Where(track => track.AlbumId == album.Id)
-                .Include(track => track.Artists)
-                .Include(track => track.Images)
-                .AsTracking()
-                .ToList();
-
-            album.TrackList = tracks;
             album.Tracks = new AlbumTracksPage
             {
-                Total = tracks.Count,
-                Limit = tracks.Count,
+                Total = album.TrackList.Count,
+                Limit = album.TrackList.Count,
                 Offset = 0,
-                Items = tracks
+                Items = album.TrackList.ToList()
             };
         }
 
@@ -123,13 +117,13 @@ public class AlbumRepository
             return false;
         }
 
-        var normalized = name.Trim();
+        var normalized = name.Trim().ToLowerInvariant();
 
         if (_context is null)
         {
             return _snapshot.Albums.Any(album =>
                 !string.IsNullOrWhiteSpace(album.Name) &&
-                string.Equals(album.Name.Trim(), normalized, StringComparison.OrdinalIgnoreCase) &&
+                album.Name.Trim().Equals(normalized, StringComparison.OrdinalIgnoreCase) &&
                 (excludeId == null || album.Id != excludeId));
         }
 
@@ -139,6 +133,6 @@ public class AlbumRepository
             query = query.Where(album => album.Id != excludeId);
         }
 
-        return query.Any(album => EF.Functions.ILike(album.Name!.Trim(), normalized));
+        return query.Any(album => album.Name!.Trim().ToLower() == normalized);
     }
 }

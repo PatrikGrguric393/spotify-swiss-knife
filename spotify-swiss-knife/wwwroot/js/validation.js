@@ -1,9 +1,3 @@
-/**
- * Client-side form validation framework
- * Provides real-time field validation and error display
- * Works with server-side validation via ASP.NET Core data annotations
- */
-
 class FormValidator {
 	constructor(formSelector) {
 		this.form = document.querySelector(formSelector);
@@ -21,9 +15,6 @@ class FormValidator {
 		this.init();
 	}
 
-	/**
-	 * Initialize validation for all form fields
-	 */
 	init() {
 		this.form.dataset.validationInitialized = 'true';
 		const inputs = this.form.querySelectorAll('input, textarea, select');
@@ -36,25 +27,21 @@ class FormValidator {
 					errorContainer: null,
 				};
 
-				// Attach blur event for real-time validation
 				input.addEventListener('blur', () => this.validateField(fieldName));
-
-				// Attach input event to clear error when user starts typing
 				input.addEventListener('input', () => this.clearFieldError(fieldName));
-
-				// Create error container for this field
 				this.createErrorContainer(input, fieldName);
 			}
 		});
 
-		// Attach form submit handler
 		this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 	}
 
-	/**
-	 * Create error message container for a field
-	 */
 	createErrorContainer(input, fieldName) {
+		const existing = this.form.querySelector(`#error-${fieldName}`);
+		if (existing) {
+			this.fields[fieldName].errorContainer = existing;
+			return;
+		}
 		const container = document.createElement('div');
 		container.className = 'validation-error';
 		container.setAttribute('role', 'alert');
@@ -64,9 +51,6 @@ class FormValidator {
 		this.fields[fieldName].errorContainer = container;
 	}
 
-	/**
-	 * Validate a single field based on data attributes
-	 */
 	validateField(fieldName) {
 		const field = this.fields[fieldName];
 		if (!field) return true;
@@ -74,18 +58,14 @@ class FormValidator {
 		const input = field.element;
 		const value = input.value.trim();
 
-		// Validate based on input type and attributes
 		let errors = [];
 
-		// Required validation
 		if (input.hasAttribute('required') && !value) {
 			const label = this.getFieldLabel(input);
 			errors.push(`${label} is required`);
 		}
 
-		// For non-empty values, validate other constraints
 		if (value) {
-			// Length validation
 			if (input.hasAttribute('data-val-length-max')) {
 				const maxLength = parseInt(input.getAttribute('data-val-length-max'));
 				const minLength = input.getAttribute('data-val-length-min')
@@ -102,7 +82,6 @@ class FormValidator {
 				}
 			}
 
-			// Range validation (for numbers)
 			if (input.type === 'number') {
 				const numValue = parseFloat(value);
 				if (input.hasAttribute('min')) {
@@ -121,7 +100,6 @@ class FormValidator {
 				}
 			}
 
-			// Pattern validation (regex)
 			if (input.hasAttribute('pattern')) {
 				const pattern = new RegExp(`^${input.getAttribute('pattern')}$`);
 				if (!pattern.test(value)) {
@@ -131,7 +109,6 @@ class FormValidator {
 				}
 			}
 
-			// Email validation
 			if (input.type === 'email') {
 				const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 				if (!emailPattern.test(value)) {
@@ -141,16 +118,12 @@ class FormValidator {
 			}
 		}
 
-		// Update field state
 		const isValid = errors.length === 0;
 		this.displayFieldErrors(fieldName, errors, isValid);
 
 		return isValid;
 	}
 
-	/**
-	 * Display or clear field errors
-	 */
 	displayFieldErrors(fieldName, errors, isValid) {
 		const field = this.fields[fieldName];
 		const input = field.element;
@@ -159,13 +132,11 @@ class FormValidator {
 		field.isValid = isValid;
 
 		if (isValid) {
-			// Clear errors
 			input.classList.remove('field-error');
 			input.classList.add('field-success');
 			container.classList.remove('show');
 			container.innerHTML = '';
 		} else {
-			// Show errors
 			input.classList.remove('field-success');
 			input.classList.add('field-error');
 			container.classList.add('show');
@@ -175,9 +146,6 @@ class FormValidator {
 		}
 	}
 
-	/**
-	 * Clear error for a field (user started typing)
-	 */
 	clearFieldError(fieldName) {
 		const field = this.fields[fieldName];
 		if (field && !field.isValid) {
@@ -187,21 +155,14 @@ class FormValidator {
 		}
 	}
 
-	/**
-	 * Get field label for error messages
-	 */
 	getFieldLabel(input) {
 		const labelElement = document.querySelector(`label[for="${input.id}"]`);
 		if (labelElement) {
-			// Remove asterisk from label
 			return labelElement.textContent.replace(/\s*\*\s*$/, '').trim();
 		}
 		return input.name || 'Field';
 	}
 
-	/**
-	 * Validate all fields
-	 */
 	validateAll() {
 		let allValid = true;
 		Object.keys(this.fields).forEach((fieldName) => {
@@ -211,14 +172,9 @@ class FormValidator {
 		return allValid;
 	}
 
-	/**
-	 * Handle form submission
-	 */
 	handleSubmit(e) {
-		// Check if form is valid before allowing submission
 		if (!this.validateAll()) {
 			e.preventDefault();
-			// Focus on first invalid field
 			for (const fieldName in this.fields) {
 				if (!this.fields[fieldName].isValid) {
 					this.fields[fieldName].element.focus();
@@ -228,9 +184,6 @@ class FormValidator {
 		}
 	}
 
-	/**
-	 * Escape HTML to prevent XSS
-	 */
 	escapeHtml(text) {
 		const div = document.createElement('div');
 		div.textContent = text;
@@ -238,18 +191,11 @@ class FormValidator {
 	}
 }
 
-/**
- * Initialize validation when DOM is ready
- */
 document.addEventListener('DOMContentLoaded', () => {
-	// Auto-initialize validation for forms with data-validate attribute
 	const forms = document.querySelectorAll('form[data-validate="true"]');
 	forms.forEach((form) => {
 		new FormValidator(`#${form.id || ''}`);
 	});
-
-	// Or manually initialize by calling: new FormValidator('#form-id')
 });
 
-// Export for use in other scripts
 window.FormValidator = FormValidator;

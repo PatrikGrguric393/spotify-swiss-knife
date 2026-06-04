@@ -1,4 +1,3 @@
-// Mobile navigation toggle
 document.addEventListener('DOMContentLoaded', function() {
     const navToggle = document.getElementById('navToggle');
     const navList = document.getElementById('navList');
@@ -33,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         libraryToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
-    // Create backdrop if it doesn't exist
     if (!backdrop) {
         backdrop = document.createElement('div');
         backdrop.id = 'navBackdrop';
@@ -47,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
             backdrop.classList.toggle('active');
         });
 
-        // Close menu when clicking on the backdrop
         backdrop.addEventListener('click', function() {
             closeMobileNav();
             closeLibraryDropdown();
@@ -101,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Set active link based on current URL
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {

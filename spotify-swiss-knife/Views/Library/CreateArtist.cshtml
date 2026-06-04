@@ -12,8 +12,8 @@
     <form method="post" id="createArtistForm" data-validate="true">
         @Html.AntiForgeryToken()
 
-        @Html.Partial("_NameInput", Model)
-        @Html.Partial("_SpotifyUrlInput", Model)
+        <partial name="_NameInput" model="Model" />
+        <partial name="_SpotifyUrlInput" model="Model" />
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Artist</button>

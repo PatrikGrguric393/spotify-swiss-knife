@@ -39,19 +39,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (placeholder.hidden) {
             placeholder.classList.remove('is-overflowing');
-            placeholderText.style.removeProperty('--global-search-overflow-distance');
             return;
         }
 
-        var overflowDistance = placeholderText.scrollWidth - placeholderText.clientWidth;
-        var isOverflowing = overflowDistance > 1;
-        placeholder.classList.toggle('is-overflowing', isOverflowing);
+        // The track is max-content, so compare the first copy's natural width
+        // to the visible field. Distance is now handled purely in CSS (-50%).
+        var copyWidth = placeholderText.getBoundingClientRect().width;
+        var fieldWidth = placeholder.getBoundingClientRect().width;
+        var isOverflowing = copyWidth > fieldWidth - 8;
 
-        if (isOverflowing) {
-            placeholderText.style.setProperty('--global-search-overflow-distance', overflowDistance + 'px');
-        } else {
-            placeholderText.style.removeProperty('--global-search-overflow-distance');
-        }
+        placeholder.classList.toggle('is-overflowing', isOverflowing);
     }
 
     function setPanelVisible(visible) {

@@ -1,7 +1,6 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model spotify_swiss_knife.Models.FormModels.AlbumFormModel
 
-<input asp-for="ReleaseDatePrecision" type="hidden" />
 @{
     var normalizedAlbumType = (Model.AlbumType ?? string.Empty).Trim().ToLowerInvariant();
     var hasSelectedAlbumType = normalizedAlbumType == "album" || normalizedAlbumType == "single" || normalizedAlbumType == "compilation";
@@ -30,11 +29,11 @@
 
 <div class="form-group">
     <label asp-for="AlbumType" class="required"></label>
-    <select asp-for="AlbumType" class="form-control" aria-describedby="error-AlbumType" data-album-type-select onchange="(function(select){var picker=document.querySelector('[data-album-track-picker]');if(!picker){return;}var enabled=!!select.value.trim();picker.querySelectorAll('[data-album-track-search],[data-album-track-checkbox]').forEach(function(el){el.disabled=!enabled;});picker.classList.toggle('album-track-picker-locked', !enabled);if(window.albumTrackPickerApplyAlbumType){window.albumTrackPickerApplyAlbumType();}})(this);">
+    <select asp-for="AlbumType" class="form-control" aria-describedby="error-AlbumType" data-album-type-select>
         <option value="">Select album type</option>
-        <option value="album" selected="@(normalizedAlbumType == "album")">Album</option>
-        <option value="single" selected="@(normalizedAlbumType == "single")">Single</option>
-        <option value="compilation" selected="@(normalizedAlbumType == "compilation")">Compilation</option>
+        <option value="album">Album</option>
+        <option value="single">Single</option>
+        <option value="compilation">Compilation</option>
     </select>
     @{
         var albumTypeErrors = ViewData.ModelState["AlbumType"]?.Errors;

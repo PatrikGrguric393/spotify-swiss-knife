@@ -14,21 +14,13 @@ public abstract class AlbumFormModel
 	[Display(Name = "Album Type")]
 	public string AlbumType { get; set; } = string.Empty;
 
-	[Range(0, 500, ErrorMessage = "Total tracks must be between 0 and 500")]
-	[Display(Name = "Total Tracks")]
-	public int TotalTracks { get; set; }
-
 	[StringLength(100, ErrorMessage = "Label must not exceed 100 characters")]
 	[Display(Name = "Label")]
-	public string Label { get; set; } = string.Empty;
+	public string? Label { get; set; }
 
 	[Range(0, 100, ErrorMessage = "Popularity must be between 0 and 100")]
 	[Display(Name = "Popularity (0-100)")]
 	public int Popularity { get; set; }
-
-	[StringLength(10, ErrorMessage = "Release date precision must not exceed 10 characters")]
-	[Display(Name = "Release Date Precision")]
-	public string ReleaseDatePrecision { get; set; } = "day";
 
 	[Required(ErrorMessage = "Release date is required")]
 	[RegularExpression(@"^\d{4}-\d{2}-\d{2}$", ErrorMessage = "Release date must be in YYYY-MM-DD format")]

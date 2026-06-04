@@ -1,7 +1,7 @@
 @{
-    // Display validation messages for a specific property
     var modelState = ViewData.ModelState;
     var propertyName = ViewBag.PropertyName as string ?? string.Empty;
+    var errorId = string.IsNullOrEmpty(propertyName) ? string.Empty : $"error-{propertyName}";
 }
 
 @if (!string.IsNullOrEmpty(propertyName) && modelState.TryGetValue(propertyName, out var entry))
@@ -9,7 +9,7 @@
     var errors = entry.Errors;
     if (errors.Count > 0)
     {
-        <div class="validation-error" role="alert" aria-live="polite">
+        <div class="validation-error show" id="@errorId" role="alert" aria-live="polite">
             @foreach (var error in errors)
             {
                 <div class="validation-error-message">
@@ -17,5 +17,8 @@
                 </div>
             }
         </div>
+        return;
     }
 }
+
+<div class="validation-error" id="@errorId" role="alert" aria-live="polite"></div>

@@ -12,12 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = picker.querySelector('.album-track-picker-list');
         const allowedTypes = new Set(['album', 'single', 'compilation']);
 
-        // Minimal requirements: we need an album type select, a search input and a container list.
         if (!albumTypeSelect || !searchInput || !list) {
             return;
         }
 
-        // If a picker rule/help node is missing, create a lightweight one so code can safely update it.
         if (!pickerRule) {
             pickerRule = document.createElement('p');
             pickerRule.setAttribute('data-album-track-constraint', '');
@@ -59,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const updateTypeHelp = (type) => {
-            // Update album-type help if present.
             if (albumTypeHelp) {
                 if (type === 'single') {
                     albumTypeHelp.textContent = 'Single mode requires exactly one song.';
@@ -70,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Update picker-level help if present.
             if (pickerHelp) {
                 // Only reveal an existing picker help that was present in the DOM originally.
                 if (hadPickerHelp) {

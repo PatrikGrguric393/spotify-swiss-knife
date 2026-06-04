@@ -20,10 +20,12 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // small animation on submit
-            document.getElementById('deleteArtistForm').addEventListener('submit', function () {
-                this.querySelector('button[type=submit]').disabled = true;
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('deleteArtistForm');
+            if (!form) return;
+            form.addEventListener('submit', function () {
+                var button = form.querySelector('button[type=submit]');
+                if (button) button.disabled = true;
             });
         });
     </script>

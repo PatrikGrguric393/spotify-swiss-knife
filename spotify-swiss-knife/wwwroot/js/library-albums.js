@@ -10,14 +10,13 @@
             tdName.setAttribute('data-label', 'Name');
             tdName.textContent = r.name;
 
-            const tdUrl = document.createElement('td');
-            tdUrl.setAttribute('data-label', 'Spotify URL');
-            const a = document.createElement('a');
-            a.href = r.spotifyUrl || '#';
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = 'Open';
-            tdUrl.appendChild(a);
+            const tdArtists = document.createElement('td');
+            tdArtists.setAttribute('data-label', 'Artists');
+            tdArtists.textContent = r.artists;
+
+            const tdDate = document.createElement('td');
+            tdDate.setAttribute('data-label', 'Release Date');
+            tdDate.textContent = r.releaseDate;
 
             const tdDetails = document.createElement('td');
             tdDetails.setAttribute('data-label', 'Details');
@@ -27,14 +26,14 @@
             btn.className = 'entity-detail-trigger btn';
             btn.textContent = 'View';
 
-            const detailsId = 'artist-details-' + r.id;
+            const detailsId = 'album-details-' + r.id;
             btn.setAttribute('data-details-id', detailsId);
-            btn.setAttribute('data-entity-type', 'Artist');
+            btn.setAttribute('data-entity-type', 'Album');
 
             const script = document.createElement('script');
             script.type = 'application/json';
             script.id = detailsId;
-            script.textContent = JSON.stringify({ Name: r.name, Id: r.id, SpotifyUrl: r.spotifyUrl });
+            script.textContent = JSON.stringify({ Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate });
 
             tdDetails.appendChild(btn);
             tdDetails.appendChild(script);
@@ -44,17 +43,18 @@
             tdActions.className = 'cell-actions';
             const edit = document.createElement('a');
             edit.className = 'btn';
-            edit.href = '/lib/artists/edit/' + encodeURIComponent(r.id);
+            edit.href = '/lib/albums/edit/' + encodeURIComponent(r.id);
             edit.textContent = 'Edit';
             const del = document.createElement('a');
             del.className = 'btn btn-danger';
-            del.href = '/lib/artists/delete/' + encodeURIComponent(r.id);
+            del.href = '/lib/albums/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
 
             tr.appendChild(tdName);
-            tr.appendChild(tdUrl);
+            tr.appendChild(tdArtists);
+            tr.appendChild(tdDate);
             tr.appendChild(tdDetails);
             tr.appendChild(tdActions);
 
@@ -63,7 +63,7 @@
         if (rows.length === 0) {
             const empty = document.createElement('tr');
             const td = document.createElement('td');
-            td.setAttribute('colspan', '4');
+            td.setAttribute('colspan', '5');
             td.style.padding = '0.6rem 0.75rem';
             td.style.color = '#b6ffb6';
             td.textContent = 'No results';
@@ -82,32 +82,41 @@
             tbody.innerHTML = '';
             const loadingRow = document.createElement('tr');
             const td = document.createElement('td');
-            td.setAttribute('colspan', '4');
+            td.setAttribute('colspan', '5');
             td.style.padding = '0.6rem 0.75rem';
             td.style.color = '#b6ffb6';
             td.textContent = 'Loading...';
             loadingRow.appendChild(td);
             tbody.appendChild(loadingRow);
         }
-        const url = '/lib/artists/search?q=' + encodeURIComponent(q || '');
-        fetch(url, { headers: { 'Accept': 'application/json' } })
+
+        const params = new URLSearchParams();
+        params.set('q', q || '');
+
+        const dateFrom = document.getElementById('albumDateFrom');
+        const dateTo = document.getElementById('albumDateTo');
+        if (dateFrom && dateFrom.value) params.set('dateFrom', dateFrom.value);
+        if (dateTo && dateTo.value) params.set('dateTo', dateTo.value);
+
+        fetch('/lib/albums/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(r => r.json())
             .then(data => {
-                renderRows(data.map(item => ({ id: item.id, name: item.name, spotifyUrl: item.spotifyUrl })));
+                renderRows(data.map(item => ({ id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate })));
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
                 const firstDetail = document.querySelector('.entity-table tbody .entity-detail-trigger');
                 if (firstDetail) {
                     firstDetail.setAttribute('tabindex', '0');
                 }
             })
-            .catch(err => console.error('Artist search failed', err));
+            .catch(err => console.error('Album search failed', err));
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        const input = document.getElementById('artistSearch');
+        const input = document.getElementById('albumSearch');
         if (!input) return;
 
         let timer = 0;
+
         input.addEventListener('input', function () {
             clearTimeout(timer);
             timer = setTimeout(() => fetchSearch(input.value), 250);
@@ -120,6 +129,33 @@
                 if (first && typeof first.focus === 'function') first.focus();
             }
         });
+
+        const dateFrom = document.getElementById('albumDateFrom');
+        const dateTo = document.getElementById('albumDateTo');
+        const clearBtn = document.getElementById('albumDateClear');
+
+        if (dateFrom) {
+            dateFrom.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(() => fetchSearch(input.value), 250);
+            });
+        }
+
+        if (dateTo) {
+            dateTo.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(() => fetchSearch(input.value), 250);
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                if (dateFrom) dateFrom.value = '';
+                if (dateTo) dateTo.value = '';
+                clearTimeout(timer);
+                fetchSearch(input.value);
+            });
+        }
 
         fetchSearch('');
     });

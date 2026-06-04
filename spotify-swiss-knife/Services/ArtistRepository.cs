@@ -128,12 +128,12 @@ public class ArtistRepository
     public bool ExistsByName(string name, string? excludeId = null)
     {
         if (string.IsNullOrWhiteSpace(name)) return false;
-        var normalized = name.Trim();
+        var normalized = name.Trim().ToLowerInvariant();
 
         if (_context is null)
         {
             return _snapshot.Artists.Any(a => !string.IsNullOrWhiteSpace(a.Name)
-                && string.Equals(a.Name.Trim(), normalized, StringComparison.OrdinalIgnoreCase)
+                && a.Name.Trim().Equals(normalized, StringComparison.OrdinalIgnoreCase)
                 && (excludeId == null || a.Id != excludeId)
                 && a.DeletedAt == null);
         }
@@ -145,6 +145,6 @@ public class ArtistRepository
             query = query.Where(a => a.Id != excludeId);
         }
 
-        return query.Any(a => EF.Functions.ILike(a.Name.Trim(), normalized));
+        return query.Any(a => a.Name.Trim().ToLower() == normalized);
     }
 }

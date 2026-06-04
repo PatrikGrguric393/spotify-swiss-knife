@@ -15,18 +15,12 @@ public class PlaylistController : Controller
 		_playlistRepository = playlistRepository;
 	}
 
-	/// <summary>
-	/// Display form to create a new playlist
-	/// </summary>
 	[HttpGet("create")]
 	public IActionResult Create()
 	{
 		return View(new PlaylistCreateModel());
 	}
 
-	/// <summary>
-	/// Handle form submission for creating a new playlist
-	/// </summary>
 	[HttpPost("create")]
 	[ValidateAntiForgeryToken]
 	public IActionResult Create(PlaylistCreateModel model)
@@ -40,20 +34,12 @@ public class PlaylistController : Controller
 				Description = model.Description
 			};
 
-			// Note: In a real app, you would persist this to the database
-			// _context.Playlists.Add(playlist);
-			// _context.SaveChanges();
-
 			return RedirectToAction("Index", "Library", new { section = "Playlists" });
 		}
 
-		// Return form with validation errors
 		return View(model);
 	}
 
-	/// <summary>
-	/// Display form to edit an existing playlist
-	/// </summary>
 	[HttpGet("{id}/edit")]
 	public IActionResult Edit(string id)
 	{
@@ -73,9 +59,6 @@ public class PlaylistController : Controller
 		return View(model);
 	}
 
-	/// <summary>
-	/// Handle form submission for editing a playlist
-	/// </summary>
 	[HttpPost("{id}/edit")]
 	[ValidateAntiForgeryToken]
 	public IActionResult Edit(string id, PlaylistEditModel model)
@@ -97,18 +80,12 @@ public class PlaylistController : Controller
 			playlist.Name = model.Name;
 			playlist.Description = model.Description;
 
-			// Note: In a real app, you would persist this
-			// _context.SaveChanges();
-
 			return RedirectToAction("Index", "Library", new { section = "Playlists" });
 		}
 
 		return View(model);
 	}
 
-	/// <summary>
-	/// Delete a playlist
-	/// </summary>
 	[HttpPost("{id}/delete")]
 	[ValidateAntiForgeryToken]
 	public IActionResult Delete(string id)
@@ -118,10 +95,6 @@ public class PlaylistController : Controller
 		{
 			return NotFound();
 		}
-
-		// Note: In a real app, you would delete this from the database
-		// _context.Playlists.Remove(playlist);
-		// _context.SaveChanges();
 
 		return RedirectToAction("Index", "Library", new { section = "Playlists" });
 	}
