@@ -42,7 +42,7 @@ public class Album
 	public AlbumTracksPage Tracks { get; set; } = new();
 
 	[JsonPropertyName("label")]
-	public string Label { get; set; } = string.Empty;
+	public string? Label { get; set; }
 
 	[JsonPropertyName("popularity")]
 	public int Popularity { get; set; }

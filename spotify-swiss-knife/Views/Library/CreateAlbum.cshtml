@@ -9,7 +9,7 @@
 <div class="form-container">
     <h2>Create New Album</h2>
 
-    <form method="post" id="createAlbumForm">
+    <form method="post" id="createAlbumForm" data-validate="true">
         @Html.AntiForgeryToken()
 
         <partial name="_AlbumFormFields" model="Model" />
@@ -22,6 +22,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
     <script src="~/js/album-track-picker.js" asp-append-version="true"></script>
     <script src="~/js/album-artist-picker.js" asp-append-version="true"></script>
 }

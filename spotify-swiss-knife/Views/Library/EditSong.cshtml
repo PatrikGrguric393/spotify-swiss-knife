@@ -1,0 +1,180 @@
+@using spotify_swiss_knife.Models.FormModels;
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@model TrackEditModel
+
+@{
+    ViewData["Title"] = "Edit Song";
+}
+
+<div class="form-container">
+    <h2>Edit Song</h2>
+
+    <form method="post" id="editSongForm" data-validate="true">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-group">
+            <label asp-for="Name" class="required"></label>
+            <input asp-for="Name" class="form-control" required maxlength="300" data-val-length-max="300" data-val-length-min="1" placeholder="Enter song name" aria-describedby="error-Name" />
+            @{
+                var nameErrors = ViewData.ModelState["Name"]?.Errors;
+                if (nameErrors != null && nameErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
+                        @foreach (var error in nameErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="TrackNumber"></label>
+            <input asp-for="TrackNumber" class="form-control" type="number" min="0" max="500" aria-describedby="error-TrackNumber" />
+            @{
+                var trackNumberErrors = ViewData.ModelState["TrackNumber"]?.Errors;
+                if (trackNumberErrors != null && trackNumberErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-TrackNumber" role="alert" aria-live="polite">
+                        @foreach (var error in trackNumberErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-TrackNumber" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="DiscNumber"></label>
+            <input asp-for="DiscNumber" class="form-control" type="number" min="0" max="5" aria-describedby="error-DiscNumber" />
+            @{
+                var discNumberErrors = ViewData.ModelState["DiscNumber"]?.Errors;
+                if (discNumberErrors != null && discNumberErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-DiscNumber" role="alert" aria-live="polite">
+                        @foreach (var error in discNumberErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-DiscNumber" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Duration" class="required">Duration</label>
+            <input asp-for="Duration" class="form-control" type="text" required pattern="\d+(:[0-5]\d)?" title="Enter seconds (e.g. 213) or minutes:seconds (e.g. 3:33)" placeholder="3:33 or 213" aria-describedby="duration-hint error-Duration" />
+            <p class="album-track-picker-help" id="duration-hint">Enter seconds (213) or minutes:seconds (3:33).</p>
+            @{
+                var durationErrors = ViewData.ModelState["Duration"]?.Errors;
+                if (durationErrors != null && durationErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-Duration" role="alert" aria-live="polite">
+                        @foreach (var error in durationErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-Duration" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group">
+            <label class="shuffle-checkbox" for="IsLocal">
+                <input asp-for="IsLocal" type="checkbox" />
+                <span>@Html.DisplayNameFor(m => m.IsLocal)</span>
+            </label>
+            @{
+                var isLocalErrors = ViewData.ModelState["IsLocal"]?.Errors;
+                if (isLocalErrors != null && isLocalErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-IsLocal" role="alert" aria-live="polite">
+                        @foreach (var error in isLocalErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-IsLocal" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group album-track-picker album-artist-picker" data-album-artist-picker>
+            <fieldset class="album-track-picker-fieldset">
+                <legend asp-for="ArtistIds"></legend>
+                <p class="album-track-picker-help" data-album-artist-help>Search artists, then check every artist on this track.</p>
+                <label class="album-track-picker-search-label" for="songArtistSearch">Search artists</label>
+                <input id="songArtistSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by artist name" autocomplete="off" data-album-artist-search aria-describedby="songArtistPickerStatus error-ArtistIds" />
+                <div class="album-track-picker-status" id="songArtistPickerStatus" role="status" aria-live="polite"></div>
+
+                <div class="album-track-picker-list entity-selection-list" role="group" aria-label="Available artists">
+                    @{
+                        var selectedArtistIds = new HashSet<string>(Model.ArtistIds ?? []);
+                        var artistOptions = ViewBag.ArtistOptions as IEnumerable<SelectListItem> ?? [];
+                        foreach (var artistOption in artistOptions)
+                        {
+                            var optionId = $"artist-option-{artistOption.Value}";
+                            var optionText = artistOption.Text ?? string.Empty;
+                            var searchValue = optionText.ToLowerInvariant();
+                            var isSelected = selectedArtistIds.Contains(artistOption.Value ?? string.Empty) || artistOption.Selected;
+
+                            <label class="album-track-picker-item entity-selection-item" data-album-artist-row data-search-text="@searchValue">
+                                <input id="@optionId" type="checkbox" name="ArtistIds" value="@artistOption.Value" @(isSelected ? "checked" : null) data-album-artist-checkbox />
+                                <span class="album-track-picker-item-text">@optionText</span>
+                            </label>
+                        }
+                    }
+                </div>
+
+                @{
+                    var artistIdErrors = ViewData.ModelState["ArtistIds"]?.Errors;
+                    if (artistIdErrors != null && artistIdErrors.Count > 0)
+                    {
+                        <div class="validation-error show" id="error-ArtistIds" role="alert" aria-live="polite">
+                            @foreach (var error in artistIdErrors)
+                            {
+                                <div class="validation-error-message">@error.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="validation-error" id="error-ArtistIds" role="alert" aria-live="polite"></div>
+                    }
+                }
+            </fieldset>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="@Url.Action("Songs", "Library")" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/album-artist-picker.js" asp-append-version="true"></script>
+}

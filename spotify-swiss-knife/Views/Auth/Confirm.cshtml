@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Stay Signed In?";
+    var displayName = ViewData["DisplayName"] as string ?? "User";
+}
+
+<div class="auth-confirm-shell">
+    <div class="auth-confirm-card">
+        <h1 class="auth-confirm-heading">Welcome, @displayName!</h1>
+        <p class="auth-confirm-subtitle">Signed in with Spotify.</p>
+        <p class="auth-confirm-question">Would you like to stay signed in?</p>
+
+        <div class="auth-confirm-actions">
+            <form asp-controller="Auth" asp-action="ConfirmPost" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="persist" value="true" />
+                <button type="submit" class="auth-confirm-btn auth-confirm-btn--primary">
+                    Stay signed in
+                </button>
+            </form>
+
+            <form asp-controller="Auth" asp-action="ConfirmPost" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="persist" value="false" />
+                <button type="submit" class="auth-confirm-btn auth-confirm-btn--secondary">
+                    Just this session
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

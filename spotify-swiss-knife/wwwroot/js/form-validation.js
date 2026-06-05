@@ -29,16 +29,19 @@
             fetch(finalUrl).then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (!data.isUnique) {
+                        input.dataset.asyncError = '1';
                         if (errorEl) {
                             errorEl.classList.add('show');
                             errorEl.innerHTML = '<div class="validation-error-message">An artist with this name already exists.</div>';
                         }
                         input.classList.add('field-error');
+                        input.classList.remove('field-success');
                     } else {
+                        delete input.dataset.asyncError;
                         if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
                         input.classList.remove('field-error');
                     }
-                }).catch(function () { });
+                }).catch(function (e) { console.error('Name validation check failed:', e); });
         };
 
         var handler = debounce(doCheck, options.debounce || 150);
@@ -59,6 +62,7 @@
         var doCheck = function () {
             var val = input.value.trim();
             if (!val) {
+                delete input.dataset.asyncError;
                 if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
                 input.classList.remove('field-error');
                 return;
@@ -66,22 +70,27 @@
             try {
                 var u = new URL(val);
                 if (!u.hostname.includes('spotify.com')) {
+                    input.dataset.asyncError = '1';
                     if (errorEl) {
                         errorEl.classList.add('show');
                         errorEl.innerHTML = '<div class="validation-error-message">Spotify URL must be a spotify.com link.</div>';
                     }
                     input.classList.add('field-error');
+                    input.classList.remove('field-success');
                     return;
                 }
             } catch (e) {
+                input.dataset.asyncError = '1';
                 if (errorEl) {
                     errorEl.classList.add('show');
                     errorEl.innerHTML = '<div class="validation-error-message">Invalid URL format.</div>';
                 }
                 input.classList.add('field-error');
+                input.classList.remove('field-success');
                 return;
             }
 
+            delete input.dataset.asyncError;
             if (errorEl) { errorEl.classList.remove('show'); errorEl.innerHTML = ''; }
             input.classList.remove('field-error');
         };

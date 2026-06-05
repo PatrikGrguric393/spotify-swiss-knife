@@ -1,10 +1,26 @@
 (function () {
+    function makeStatusRow(colspan, text) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.setAttribute('colspan', colspan);
+        td.style.padding = '0.6rem 0.75rem';
+        td.style.color = '#b6ffb6';
+        td.textContent = text;
+        tr.appendChild(td);
+        return tr;
+    }
+
     function renderRows(rows) {
         const tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
         tbody.innerHTML = '';
         rows.forEach(r => {
+            const detailsId = 'artist-details-' + r.id;
             const tr = document.createElement('tr');
+            tr.setAttribute('tabindex', '0');
+            tr.setAttribute('data-details-id', detailsId);
+            tr.setAttribute('data-entity-type', 'Artist');
+            tr.setAttribute('aria-label', 'View details for ' + r.name);
 
             const tdName = document.createElement('td');
             tdName.setAttribute('data-label', 'Name');
@@ -19,26 +35,6 @@
             a.textContent = 'Open';
             tdUrl.appendChild(a);
 
-            const tdDetails = document.createElement('td');
-            tdDetails.setAttribute('data-label', 'Details');
-            tdDetails.className = 'cell-actions';
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'entity-detail-trigger btn';
-            btn.textContent = 'View';
-
-            const detailsId = 'artist-details-' + r.id;
-            btn.setAttribute('data-details-id', detailsId);
-            btn.setAttribute('data-entity-type', 'Artist');
-
-            const script = document.createElement('script');
-            script.type = 'application/json';
-            script.id = detailsId;
-            script.textContent = JSON.stringify({ Name: r.name, Id: r.id, SpotifyUrl: r.spotifyUrl });
-
-            tdDetails.appendChild(btn);
-            tdDetails.appendChild(script);
-
             const tdActions = document.createElement('td');
             tdActions.setAttribute('data-label', 'Actions');
             tdActions.className = 'cell-actions';
@@ -50,44 +46,32 @@
             del.className = 'btn btn-danger';
             del.href = '/lib/artists/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
+
+            const script = document.createElement('script');
+            script.type = 'application/json';
+            script.id = detailsId;
+            script.textContent = JSON.stringify({ Name: r.name, Id: r.id, SpotifyUrl: r.spotifyUrl });
+
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
-
+            tdActions.appendChild(script);
             tr.appendChild(tdName);
             tr.appendChild(tdUrl);
-            tr.appendChild(tdDetails);
             tr.appendChild(tdActions);
-
             tbody.appendChild(tr);
         });
         if (rows.length === 0) {
-            const empty = document.createElement('tr');
-            const td = document.createElement('td');
-            td.setAttribute('colspan', '4');
-            td.style.padding = '0.6rem 0.75rem';
-            td.style.color = '#b6ffb6';
-            td.textContent = 'No results';
-            empty.appendChild(td);
-            tbody.appendChild(empty);
+            tbody.appendChild(makeStatusRow(3, 'No results'));
         }
     }
 
     function fetchSearch(q) {
         const status = document.querySelector('.search-status');
-        if (status) {
-            status.textContent = 'Loading...';
-        }
+        if (status) status.textContent = 'Loading...';
         const tbody = document.querySelector('.entity-table tbody');
         if (tbody) {
             tbody.innerHTML = '';
-            const loadingRow = document.createElement('tr');
-            const td = document.createElement('td');
-            td.setAttribute('colspan', '4');
-            td.style.padding = '0.6rem 0.75rem';
-            td.style.color = '#b6ffb6';
-            td.textContent = 'Loading...';
-            loadingRow.appendChild(td);
-            tbody.appendChild(loadingRow);
+            tbody.appendChild(makeStatusRow(3, 'Loading...'));
         }
         const url = '/lib/artists/search?q=' + encodeURIComponent(q || '');
         fetch(url, { headers: { 'Accept': 'application/json' } })
@@ -95,10 +79,6 @@
             .then(data => {
                 renderRows(data.map(item => ({ id: item.id, name: item.name, spotifyUrl: item.spotifyUrl })));
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
-                const firstDetail = document.querySelector('.entity-table tbody .entity-detail-trigger');
-                if (firstDetail) {
-                    firstDetail.setAttribute('tabindex', '0');
-                }
             })
             .catch(err => console.error('Artist search failed', err));
     }
@@ -116,7 +96,7 @@
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const first = document.querySelector('.entity-table tbody .entity-detail-trigger');
+                const first = document.querySelector('.entity-table tbody tr[data-details-id]');
                 if (first && typeof first.focus === 'function') first.focus();
             }
         });

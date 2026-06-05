@@ -31,9 +31,11 @@ public class PlaylistController : Controller
 			{
 				Id = Guid.NewGuid().ToString(),
 				Name = model.Name,
-				Description = model.Description
+				Description = model.Description ?? string.Empty,
+				Owner = new Owner { DisplayName = model.OwnerDisplayName }
 			};
 
+			_playlistRepository.Add(playlist);
 			return RedirectToAction("Index", "Library", new { section = "Playlists" });
 		}
 
@@ -53,7 +55,8 @@ public class PlaylistController : Controller
 		{
 			Id = playlist.Id,
 			Name = playlist.Name,
-			Description = playlist.Description
+			Description = playlist.Description,
+			OwnerDisplayName = playlist.Owner.DisplayName
 		};
 
 		return View(model);
@@ -78,8 +81,10 @@ public class PlaylistController : Controller
 			}
 
 			playlist.Name = model.Name;
-			playlist.Description = model.Description;
+			playlist.Description = model.Description ?? string.Empty;
+			playlist.Owner.DisplayName = model.OwnerDisplayName;
 
+			_playlistRepository.Save(playlist);
 			return RedirectToAction("Index", "Library", new { section = "Playlists" });
 		}
 
@@ -96,6 +101,7 @@ public class PlaylistController : Controller
 			return NotFound();
 		}
 
+		_playlistRepository.Delete(id);
 		return RedirectToAction("Index", "Library", new { section = "Playlists" });
 	}
 }

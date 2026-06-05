@@ -19,7 +19,6 @@
 .form-container h2 {
 	color: #0f0;
 	margin-bottom: 20px;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 }
 
 .form-actions {
@@ -108,7 +107,6 @@
 
 .validation-error-message {
 	color: #ff0000;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	font-size: 0.9rem;
 	line-height: 1.4;
 }
@@ -121,16 +119,17 @@
 	margin-bottom: 16px;
 }
 
-.form-group label {
+.form-group label,
+.form-group-label {
 	color: #0f0;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	font-weight: 500;
 	display: block;
 	margin-bottom: 6px;
 	font-size: 0.95rem;
 }
 
-.form-group label.required::after {
+.form-group label.required::after,
+.form-group-label.required::after {
 	content: ' *';
 	color: #ff0000;
 }
@@ -151,7 +150,6 @@
 .validation-summary-title {
 	color: #ff0000;
 	font-weight: bold;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	margin-bottom: 8px;
 }
 
@@ -163,7 +161,6 @@
 
 .validation-summary-list li {
 	color: #ff0000;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	font-size: 0.9rem;
 	padding: 4px 0;
 	padding-left: 16px;
@@ -186,7 +183,6 @@
 	color: #0f0;
 	font-size: 0.85rem;
 	margin-top: 4px;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	display: none;
 }
 
@@ -223,6 +219,31 @@
 	cursor: not-allowed;
 }
 
+.dpc-wrapper--field {
+	display: block;
+	width: 100%;
+}
+
+.dpc-wrapper--field .dpc-trigger {
+	width: 100%;
+	min-width: 0;
+	text-align: left;
+	border-width: 2px;
+	padding: 8px 12px;
+	font-size: 1rem;
+}
+
+.dpc-wrapper--field.dpc-wrapper--error .dpc-trigger {
+	border-color: #ff0000;
+	box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.dpc-wrapper--field .dpc-panel {
+	left: 0;
+	right: 0;
+	min-width: 0;
+}
+
 @media (max-width: 768px) {
 	.validation-error {
 		font-size: 0.85rem;
@@ -250,5 +271,9 @@
 	   by using gap on the container rather than margins on buttons */
 	.form-actions {
 		gap: 0.5rem;
+	}
+
+	.dpc-wrapper--field .dpc-trigger {
+		padding: 6px 10px;
 	}
 }

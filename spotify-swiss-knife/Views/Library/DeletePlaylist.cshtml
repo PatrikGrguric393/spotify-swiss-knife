@@ -1,0 +1,32 @@
+@model spotify_swiss_knife.Models.Playlist
+
+@{
+    ViewData["Title"] = "Delete Playlist";
+}
+
+<div class="form-container">
+    <h2>Delete Playlist</h2>
+
+    <p>Are you sure you want to delete the playlist <strong>@Model.Name</strong>?</p>
+
+    <form method="post" id="deletePlaylistForm">
+        @Html.AntiForgeryToken()
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a href="@Url.Action("Playlists", "Library")" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('deletePlaylistForm');
+            if (!form) return;
+            form.addEventListener('submit', function () {
+                var button = form.querySelector('button[type=submit]');
+                if (button) button.disabled = true;
+            });
+        });
+    </script>
+}

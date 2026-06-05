@@ -51,6 +51,20 @@
                     </li>
                     <li><a asp-controller="About" asp-action="Index" class="nav-link @(currentController == "About" ? "active" : string.Empty)">About</a></li>
                     <li><a href="#" class="nav-link">Settings</a></li>
+                    <li class="nav-auth-item">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <span class="nav-auth-name">@User.Identity.Name</span>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="nav-link nav-auth-logout-btn">Logout</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Login" class="nav-link nav-login-btn">Login</a>
+                        }
+                    </li>
                 </ul>
             </nav>
         </div>

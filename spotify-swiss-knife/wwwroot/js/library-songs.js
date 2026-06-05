@@ -1,15 +1,24 @@
 (function () {
-    var locale = navigator.language || 'en';
-    var triggerFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
-
-    function formatReleaseDate(val) {
-        if (!val) return '';
-        var parts = val.split('-');
-        if (parts.length === 3) {
-            var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            return triggerFmt.format(d);
+    function parseDuration(val) {
+        if (!val || !val.trim()) return null;
+        var parts = val.trim().split(':');
+        if (parts.length === 1) {
+            var secs = parseInt(parts[0], 10);
+            return isNaN(secs) ? null : secs;
         }
-        return val;
+        if (parts.length === 2) {
+            var m = parseInt(parts[0], 10);
+            var s = parseInt(parts[1], 10);
+            if (isNaN(m) || isNaN(s)) return null;
+            return m * 60 + s;
+        }
+        return null;
+    }
+
+    function formatDuration(ms) {
+        var s = Math.floor(ms / 1000);
+        var m = Math.floor(s / 60);
+        return m + ':' + String(s % 60).padStart(2, '0');
     }
 
     function makeStatusRow(colspan, text) {
@@ -28,11 +37,11 @@
         if (!tbody) return;
         tbody.innerHTML = '';
         rows.forEach(function(r) {
-            var detailsId = 'album-details-' + r.id;
+            var detailsId = 'track-details-' + r.id;
             var tr = document.createElement('tr');
             tr.setAttribute('tabindex', '0');
             tr.setAttribute('data-details-id', detailsId);
-            tr.setAttribute('data-entity-type', 'Album');
+            tr.setAttribute('data-entity-type', 'Song');
             tr.setAttribute('aria-label', 'View details for ' + r.name);
 
             var tdName = document.createElement('td');
@@ -43,36 +52,44 @@
             tdArtists.setAttribute('data-label', 'Artists');
             tdArtists.textContent = r.artists;
 
-            var tdDate = document.createElement('td');
-            tdDate.setAttribute('data-label', 'Release Date');
-            tdDate.textContent = formatReleaseDate(r.releaseDate);
+            var tdDuration = document.createElement('td');
+            tdDuration.setAttribute('data-label', 'Duration');
+            tdDuration.textContent = formatDuration(r.durationMs);
 
             var tdActions = document.createElement('td');
             tdActions.setAttribute('data-label', 'Actions');
             tdActions.className = 'cell-actions';
             var edit = document.createElement('a');
             edit.className = 'btn';
-            edit.href = '/lib/albums/edit/' + encodeURIComponent(r.id);
+            edit.href = '/lib/songs/edit/' + encodeURIComponent(r.id);
             edit.textContent = 'Edit';
             var del = document.createElement('a');
             del.className = 'btn btn-danger';
-            del.href = '/lib/albums/delete/' + encodeURIComponent(r.id);
+            del.href = '/lib/songs/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
 
             var script = document.createElement('script');
             script.type = 'application/json';
             script.id = detailsId;
-            script.textContent = JSON.stringify({ Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate });
+            script.textContent = JSON.stringify({
+                Name: r.name,
+                Artists: r.artists,
+                Duration: formatDuration(r.durationMs),
+                Disc: r.discNumber,
+                TrackNumber: r.trackNumber,
+                Local: r.isLocal ? 'Yes' : 'No'
+            });
 
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
             tdActions.appendChild(script);
             tr.appendChild(tdName);
             tr.appendChild(tdArtists);
-            tr.appendChild(tdDate);
+            tr.appendChild(tdDuration);
             tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
+
         if (rows.length === 0) {
             tbody.appendChild(makeStatusRow(4, 'No results'));
         }
@@ -90,28 +107,22 @@
         var params = new URLSearchParams();
         params.set('q', q || '');
 
-        var dateFrom = document.getElementById('albumDateFrom');
-        var dateTo = document.getElementById('albumDateTo');
-        if (dateFrom && dateFrom.value) params.set('dateFrom', dateFrom.value);
-        if (dateTo && dateTo.value) params.set('dateTo', dateTo.value);
+        var minSec = parseDuration(document.getElementById('songDurationMin') ? document.getElementById('songDurationMin').value : '');
+        var maxSec = parseDuration(document.getElementById('songDurationMax') ? document.getElementById('songDurationMax').value : '');
+        if (minSec !== null) params.set('durationMin', minSec);
+        if (maxSec !== null) params.set('durationMax', maxSec);
 
-        fetch('/lib/albums/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+        fetch('/lib/songs/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                renderRows(data.map(function(item) {
-                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate };
-                }));
+                renderRows(data);
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })
-            .catch(function(err) { console.error('Album search failed', err); });
+            .catch(function(err) { console.error('Song search failed', err); });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.entity-table td[data-date]').forEach(function(td) {
-            td.textContent = formatReleaseDate(td.dataset.date);
-        });
-
-        var searchInput = document.getElementById('albumSearch');
+        var searchInput = document.getElementById('songSearch');
         if (!searchInput) return;
 
         var timer = 0;
@@ -129,28 +140,26 @@
             }
         });
 
-        var onDateSelect = function() { fetchSearch(searchInput.value); };
+        var durationMin = document.getElementById('songDurationMin');
+        var durationMax = document.getElementById('songDurationMax');
+        var durationClear = document.getElementById('songDurationClear');
 
-        window.Dpc.selfInit = true;
-        window.Dpc.initDpcWrappers(onDateSelect);
-        document.querySelectorAll('.dpc').forEach(function(el) {
-            window.Dpc.buildCalendar(el, onDateSelect);
-        });
-
-        var clearBtn = document.getElementById('albumDateClear');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
-                var fromHidden = document.getElementById('albumDateFrom');
-                var toHidden = document.getElementById('albumDateTo');
-                if (fromHidden) fromHidden.value = '';
-                if (toHidden) toHidden.value = '';
-                var trigFrom = document.getElementById('triggerFrom');
-                var trigTo = document.getElementById('triggerTo');
-                if (trigFrom) trigFrom.textContent = 'From: —';
-                if (trigTo) trigTo.textContent = 'To: —';
-                document.querySelectorAll('.dpc').forEach(function(el) {
-                    if (el._state) window.Dpc.renderCalendar(el, el._state, onDateSelect);
-                });
+        if (durationMin) {
+            durationMin.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
+            });
+        }
+        if (durationMax) {
+            durationMax.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
+            });
+        }
+        if (durationClear) {
+            durationClear.addEventListener('click', function() {
+                if (durationMin) durationMin.value = '';
+                if (durationMax) durationMax.value = '';
                 clearTimeout(timer);
                 fetchSearch(searchInput.value);
             });

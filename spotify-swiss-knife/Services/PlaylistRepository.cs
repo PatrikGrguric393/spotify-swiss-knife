@@ -59,6 +59,19 @@ public class PlaylistRepository
         return GetAll().FirstOrDefault(playlist => playlist.Id == id);
     }
 
+    public void Add(Playlist playlist)
+    {
+        if (_context is null)
+        {
+            _snapshot.Playlists.Add(playlist);
+            return;
+        }
+
+        _context.Playlists.Add(playlist);
+        SyncTrackEntries(playlist);
+        _context.SaveChanges();
+    }
+
     public int Update(Playlist playlist)
     {
         if (_context is null)
@@ -91,6 +104,42 @@ public class PlaylistRepository
         }
 
         return affectedRows + _context.SaveChanges();
+    }
+
+    public void Save(Playlist playlist)
+    {
+        if (_context is null)
+        {
+            var index = _snapshot.Playlists.FindIndex(existing => existing.Id == playlist.Id);
+            if (index >= 0)
+            {
+                _snapshot.Playlists[index] = playlist;
+            }
+
+            return;
+        }
+
+        SyncTrackEntries(playlist);
+        _context.SaveChanges();
+    }
+
+    public void Delete(string id)
+    {
+        if (_context is null)
+        {
+            _snapshot.Playlists.RemoveAll(playlist => playlist.Id == id);
+            return;
+        }
+
+        var playlist = _context.Playlists.FirstOrDefault(existing => existing.Id == id);
+        if (playlist is null)
+        {
+            return;
+        }
+
+        // PlaylistTrackEntry.Playlist cascades, so its entries are removed automatically
+        _context.Playlists.Remove(playlist);
+        _context.SaveChanges();
     }
 
     private static void SyncPlaylistWrappers(Playlist playlist)

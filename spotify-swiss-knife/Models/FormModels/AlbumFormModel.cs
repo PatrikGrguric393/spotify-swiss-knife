@@ -10,7 +10,6 @@ public abstract class AlbumFormModel
 	public string Name { get; set; } = string.Empty;
 
 	[Required(ErrorMessage = "Album type is required")]
-	[RegularExpression("^(album|single|compilation)$", ErrorMessage = "Album type must be one of: album, single, compilation")]
 	[Display(Name = "Album Type")]
 	public string AlbumType { get; set; } = string.Empty;
 
@@ -28,8 +27,8 @@ public abstract class AlbumFormModel
 	[Display(Name = "Release Date")]
 	public string ReleaseDate { get; set; } = string.Empty;
 
-	[MinLength(1, ErrorMessage = "Select at least one track")]
-	[Display(Name = "Select Songs")]
+	[MinLength(1, ErrorMessage = "Select at least one song")]
+	[Display(Name = "Songs")]
 	public List<string> TrackIds { get; set; } = [];
 
 	[MinLength(1, ErrorMessage = "Select at least one artist")]

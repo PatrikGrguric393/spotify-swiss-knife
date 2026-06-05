@@ -7,7 +7,59 @@
 
 <section class="library-page">
     <h1>Library: Playlists</h1>
+    <div class="library-filters">
+        <div class="library-actions">
+            <div class="search-box">
+                <label for="playlistSearch" class="visually-hidden">Search</label>
+                <input id="playlistSearch" name="q" type="search" class="search-input" placeholder="Search playlists..." aria-label="Search playlists" />
+                <span class="search-status" aria-live="polite"></span>
+            </div>
+        </div>
+
+        <div class="date-range-filters">
+            <span class="filter-group-label">Last Shuffled</span>
+            <div class="dpc-wrapper" id="wrapperFrom">
+                <button type="button" class="dpc-trigger" id="triggerFrom" aria-haspopup="true" aria-expanded="false">From: —</button>
+                <div class="dpc-panel" id="panelFrom" hidden>
+                    <div class="dpc" id="dpcFrom" data-target="playlistDateFrom">
+                        <div class="dpc__header">
+                            <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                            <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                            <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                        </div>
+                        <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                        <div class="dpc__weekdays" aria-hidden="true"></div>
+                        <div class="dpc__grid" role="grid" aria-label="From date"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dpc-wrapper" id="wrapperTo">
+                <button type="button" class="dpc-trigger" id="triggerTo" aria-haspopup="true" aria-expanded="false">To: —</button>
+                <div class="dpc-panel" id="panelTo" hidden>
+                    <div class="dpc" id="dpcTo" data-target="playlistDateTo">
+                        <div class="dpc__header">
+                            <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                            <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                            <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                        </div>
+                        <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                        <div class="dpc__weekdays" aria-hidden="true"></div>
+                        <div class="dpc__grid" role="grid" aria-label="To date"></div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="playlistDateFrom" />
+            <input type="hidden" id="playlistDateTo" />
+            <button type="button" id="playlistDateClear" class="dpc-clear">Clear</button>
+        </div>
+    </div>
     <p>All playlists from the mock repository.</p>
+
+    <div class="table-actions">
+        <a class="btn btn-primary" href="@Url.Action("CreatePlaylist", "Library")">Create Playlist</a>
+    </div>
 
     <div class="table-wrap">
         <table class="entity-table">
@@ -17,7 +69,7 @@
                     <th>Owner</th>
                     <th>Tracks</th>
                     <th>Last Shuffled</th>
-                    <th>Contents</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,15 +77,14 @@
             {
                 var contentsId = $"playlist-contents-{playlist.Id}";
 
-                <tr>
+                <tr tabindex="0" data-contents-id="@contentsId" aria-label="View tracks for @playlist.Name">
                     <td data-label="Name">@playlist.Name</td>
                     <td data-label="Owner">@(playlist.Owner.DisplayName ?? "Unknown")</td>
                     <td data-label="Tracks">@playlist.Tracks.Total</td>
                     <td data-label="Last Shuffled">@(playlist.LastShuffled?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
-                    <td data-label="Contents" class="cell-actions">
-                        <button type="button" class="playlist-contents-trigger" data-contents-id="@contentsId">
-                            View Tracks
-                        </button>
+                    <td data-label="Actions" class="cell-actions">
+                        <a class="btn" href="@Url.Action("EditPlaylist", "Library", new { id = playlist.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("DeletePlaylist", "Library", new { id = playlist.Id })">Delete</a>
                     </td>
                 </tr>
             }
@@ -70,42 +121,68 @@ document.addEventListener('DOMContentLoaded', function () {
     var backdrop = document.getElementById('playlistContentsBackdrop');
     var closeBtn = document.getElementById('playlistContentsClose');
     var table = document.getElementById('playlistContentsTable');
-    var triggers = document.querySelectorAll('.playlist-contents-trigger');
     var playlists = @Html.Raw(JsonSerializer.Serialize(Model));
+    var lastTriggerRow = null;
 
-    triggers.forEach(function (trigger) {
-        trigger.addEventListener('click', function () {
-            var playlistId = this.dataset.contentsId.replace('playlist-contents-', '');
-            var playlist = playlists.find(p => p.id === playlistId);
+    function openPlaylist(row) {
+        var contentsId = row.dataset.contentsId;
+        var playlistId = contentsId.replace('playlist-contents-', '');
+        var playlist = playlists.find(function (p) { return p.id === playlistId; });
 
-            if (playlist) {
-                document.getElementById('playlistContentsTitle').textContent = playlist.name + ' - ' + playlist.tracks.items.length + ' tracks';
-                table.innerHTML = '';
+        if (!playlist) return;
 
-                playlist.tracks.items.forEach(function (item, index) {
-                    var track = item.track;
-                    var artists = track.artists.map(a => a.name).join(', ');
-                    var duration = formatDuration(track.duration_ms);
-                    var row = '<tr><td data-label="#">' + (index + 1) + '</td><td data-label="Song">' + track.name + '</td><td data-label="Artist(s)">' + artists + '</td><td data-label="Duration">' + duration + '</td></tr>';
-                    table.innerHTML += row;
-                });
+        document.getElementById('playlistContentsTitle').textContent = playlist.name + ' - ' + playlist.tracks.items.length + ' tracks';
+        table.innerHTML = '';
 
-                backdrop.hidden = false;
-                backdrop.setAttribute('aria-hidden', 'false');
-                closeBtn.focus();
-            }
+        playlist.tracks.items.forEach(function (item, index) {
+            var track = item.track;
+            var artists = track.artists.map(function (a) { return a.name; }).join(', ');
+            var duration = formatDuration(track.duration_ms);
+            var tr = '<tr><td data-label="#">' + (index + 1) + '</td><td data-label="Song">' + track.name + '</td><td data-label="Artist(s)">' + artists + '</td><td data-label="Duration">' + duration + '</td></tr>';
+            table.innerHTML += tr;
         });
-    });
 
-    closeBtn.addEventListener('click', function () {
+        backdrop.hidden = false;
+        backdrop.setAttribute('aria-hidden', 'false');
+        closeBtn.focus();
+    }
+
+    function closePlaylist() {
         backdrop.hidden = true;
         backdrop.setAttribute('aria-hidden', 'true');
+        if (lastTriggerRow && typeof lastTriggerRow.focus === 'function') {
+            lastTriggerRow.focus();
+        }
+    }
+
+    document.querySelector('.entity-table tbody').addEventListener('click', function (e) {
+        if (e.target.closest('a, button')) return;
+        var row = e.target.closest('tr[data-contents-id]');
+        if (!row) return;
+        lastTriggerRow = row;
+        openPlaylist(row);
     });
+
+    document.querySelector('.entity-table tbody').addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var row = e.target.closest('tr[data-contents-id]');
+        if (!row) return;
+        e.preventDefault();
+        lastTriggerRow = row;
+        openPlaylist(row);
+    });
+
+    closeBtn.addEventListener('click', closePlaylist);
 
     backdrop.addEventListener('click', function (e) {
         if (e.target === backdrop) {
-            backdrop.hidden = true;
-            backdrop.setAttribute('aria-hidden', 'true');
+            closePlaylist();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !backdrop.hidden) {
+            closePlaylist();
         }
     });
 
@@ -118,13 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var selectedId = new URLSearchParams(window.location.search).get('selected');
     if (selectedId) {
-        var selectedTrigger = Array.prototype.find.call(triggers, function (trigger) {
-            return trigger.dataset.contentsId === 'playlist-contents-' + selectedId;
-        });
-
-        if (selectedTrigger) {
-            selectedTrigger.click();
+        var selectedRow = document.querySelector('tr[data-contents-id="playlist-contents-' + selectedId + '"]');
+        if (selectedRow) {
+            lastTriggerRow = selectedRow;
+            openPlaylist(selectedRow);
         }
     }
 });
 </script>
+
+@section Scripts {
+    <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
+    <script src="~/js/library-playlists.js" asp-append-version="true"></script>
+}

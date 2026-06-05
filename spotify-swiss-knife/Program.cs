@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
@@ -53,6 +54,20 @@ builder.Services.AddScoped<AlbumRepository>();
 builder.Services.AddScoped<ArtistRepository>();
 builder.Services.AddScoped<PlaylistRepository>();
 
+builder.Services.AddHttpClient("spotify");
+builder.Services.AddScoped<SpotifyAuthService>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "SpotifySSK";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.SlidingExpiration = false;
+        options.LoginPath = "/auth/login";
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -68,6 +83,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

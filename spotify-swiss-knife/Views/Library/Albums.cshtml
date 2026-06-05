@@ -16,16 +16,42 @@
             </div>
         </div>
 
-        <div class="date-range-filter">
-            <div class="date-range-filter__field">
-                <label for="albumDateFrom" class="date-range-filter__label">From</label>
-                <input id="albumDateFrom" type="date" class="search-input date-range-filter__input" />
+        <div class="date-range-filters">
+            <div class="dpc-wrapper" id="wrapperFrom">
+                <button type="button" class="dpc-trigger" id="triggerFrom" aria-haspopup="true" aria-expanded="false">From: —</button>
+                <div class="dpc-panel" id="panelFrom" hidden>
+                    <div class="dpc" id="dpcFrom" data-target="albumDateFrom">
+                        <div class="dpc__header">
+                            <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                            <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                            <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                        </div>
+                        <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                        <div class="dpc__weekdays" aria-hidden="true"></div>
+                        <div class="dpc__grid" role="grid" aria-label="From date"></div>
+                    </div>
+                </div>
             </div>
-            <div class="date-range-filter__field">
-                <label for="albumDateTo" class="date-range-filter__label">To</label>
-                <input id="albumDateTo" type="date" class="search-input date-range-filter__input" />
+
+            <div class="dpc-wrapper" id="wrapperTo">
+                <button type="button" class="dpc-trigger" id="triggerTo" aria-haspopup="true" aria-expanded="false">To: —</button>
+                <div class="dpc-panel" id="panelTo" hidden>
+                    <div class="dpc" id="dpcTo" data-target="albumDateTo">
+                        <div class="dpc__header">
+                            <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                            <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                            <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                        </div>
+                        <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                        <div class="dpc__weekdays" aria-hidden="true"></div>
+                        <div class="dpc__grid" role="grid" aria-label="To date"></div>
+                    </div>
+                </div>
             </div>
-            <button type="button" id="albumDateClear" class="date-range-filter__clear">Clear</button>
+
+            <input type="hidden" id="albumDateFrom" />
+            <input type="hidden" id="albumDateTo" />
+            <button type="button" id="albumDateClear" class="dpc-clear">Clear</button>
         </div>
     </div>
 
@@ -42,7 +68,6 @@
                     <th>Name</th>
                     <th>Artists</th>
                     <th>Release Date</th>
-                    <th>Details</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -62,19 +87,14 @@
                     album.Popularity
                 };
 
-                <tr>
+                <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Album" aria-label="View details for @album.Name">
                     <td data-label="Name">@album.Name</td>
                     <td data-label="Artists">@artists</td>
-                    <td data-label="Release Date">@album.ReleaseDate</td>
-                    <td data-label="Details" class="cell-actions">
-                        <button type="button" class="entity-detail-trigger btn" data-details-id="@detailsId" data-entity-type="Album">
-                            View
-                        </button>
-                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
-                    </td>
+                    <td data-label="Release Date" data-date="@album.ReleaseDate">@album.ReleaseDate</td>
                     <td data-label="Actions" class="cell-actions">
                         <a class="btn" href="@Url.Action("EditAlbum", "Library", new { id = album.Id })">Edit</a>
                         <a class="btn btn-danger" href="@Url.Action("DeleteAlbum", "Library", new { id = album.Id })">Delete</a>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>
             }
@@ -96,6 +116,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
     <script src="~/js/library-albums.js" asp-append-version="true"></script>
     <script src="~/js/library-details.js" asp-append-version="true"></script>
 }

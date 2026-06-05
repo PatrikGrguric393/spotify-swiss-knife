@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Models;
+using spotify_swiss_knife.Models.FormModels;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
@@ -29,7 +30,7 @@ public class ServicesController : Controller
 
         if (selectedPlaylist is null)
         {
-            ModelState.AddModelError(nameof(input.PlaylistId), "Please select a valid playlist.");
+            ModelState.AddModelError("Input.PlaylistId", "Please select a valid playlist.");
         }
 
         var statusMessage = string.Empty;

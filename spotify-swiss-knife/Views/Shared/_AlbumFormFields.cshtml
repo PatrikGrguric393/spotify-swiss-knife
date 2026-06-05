@@ -8,7 +8,7 @@
 
 <div class="form-group">
     <label asp-for="Name" class="required"></label>
-    <input asp-for="Name" class="form-control" maxlength="300" placeholder="Enter album name" aria-describedby="error-Name" />
+    <input asp-for="Name" class="form-control" required maxlength="300" data-val-length-max="300" data-val-length-min="1" placeholder="Enter album name" aria-describedby="error-Name" />
     @{
         var nameErrors = ViewData.ModelState["Name"]?.Errors;
         if (nameErrors != null && nameErrors.Count > 0)
@@ -29,7 +29,7 @@
 
 <div class="form-group">
     <label asp-for="AlbumType" class="required"></label>
-    <select asp-for="AlbumType" class="form-control" aria-describedby="error-AlbumType" data-album-type-select>
+    <select asp-for="AlbumType" class="form-control" required aria-describedby="error-AlbumType" data-album-type-select>
         <option value="">Select album type</option>
         <option value="album">Album</option>
         <option value="single">Single</option>
@@ -54,7 +54,7 @@
 </div>
 
 <div class="form-group album-track-picker album-artist-picker" data-album-artist-picker>
-    <fieldset class="album-track-picker-fieldset">
+    <fieldset class="album-track-picker-fieldset" data-required-group data-required-group-message="Select at least one artist.">
         <legend asp-for="ArtistIds" class="required"></legend>
         <p class="album-track-picker-help" data-album-artist-help>Search artists, then check every artist on this album.</p>
         <label class="album-track-picker-search-label" for="albumArtistSearch">Search artists</label>
@@ -100,7 +100,7 @@
 </div>
 
 <div class="form-group album-track-picker @(hasSelectedAlbumType ? string.Empty : "album-track-picker-locked")" data-album-track-picker>
-    <fieldset class="album-track-picker-fieldset">
+    <fieldset class="album-track-picker-fieldset" data-required-group data-required-group-message="Select at least one track.">
         <legend asp-for="TrackIds" class="required"></legend>
         <p class="album-track-picker-rule" data-album-track-constraint role="status" aria-live="polite"></p>
         <label class="album-track-picker-search-label" for="albumTrackSearch">Search songs</label>
@@ -188,10 +188,31 @@
 </div>
 
 <div class="form-group">
-    <label asp-for="ReleaseDate" class="required"></label>
-    <input asp-for="ReleaseDate" class="form-control" type="date" aria-describedby="error-ReleaseDate" />
     @{
         var releaseDateErrors = ViewData.ModelState["ReleaseDate"]?.Errors;
+    }
+    <span id="label-ReleaseDate" class="form-group-label required">Release Date</span>
+    <div class="dpc-wrapper dpc-wrapper--field @(releaseDateErrors != null && releaseDateErrors.Count > 0 ? "dpc-wrapper--error" : "")"
+         id="wrapperReleaseDate"
+         aria-describedby="error-ReleaseDate">
+        <button type="button" class="dpc-trigger" id="triggerReleaseDate"
+                aria-haspopup="true" aria-expanded="false"
+                aria-labelledby="label-ReleaseDate">—</button>
+        <div class="dpc-panel" id="panelReleaseDate" hidden>
+            <div class="dpc" id="dpcReleaseDate" data-target="releaseDate">
+                <div class="dpc__header">
+                    <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                    <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                    <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                </div>
+                <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                <div class="dpc__weekdays" aria-hidden="true"></div>
+                <div class="dpc__grid" role="grid" aria-label="Release date"></div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" asp-for="ReleaseDate" id="releaseDate" />
+    @{
         if (releaseDateErrors != null && releaseDateErrors.Count > 0)
         {
             <div class="validation-error show" id="error-ReleaseDate" role="alert" aria-live="polite">

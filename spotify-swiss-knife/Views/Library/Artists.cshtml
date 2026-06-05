@@ -27,7 +27,6 @@
                 <tr>
                     <th>Name</th>
                     <th>Spotify URL</th>
-                    <th>Details</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -42,22 +41,17 @@
                     SpotifyUrl = artist.ExternalUrls.Spotify
                 };
 
-                <tr>
+                <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Artist" aria-label="View details for @artist.Name">
                     <td data-label="Name">@artist.Name</td>
                     <td data-label="Spotify URL">
                         <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">
                             Open
                         </a>
                     </td>
-                    <td data-label="Details" class="cell-actions">
-                        <button type="button" class="entity-detail-trigger btn" data-details-id="@detailsId" data-entity-type="Artist">
-                            View
-                        </button>
-                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
-                    </td>
                     <td data-label="Actions" class="cell-actions">
                         <a class="btn" href="@Url.Action("EditArtist", "Library", new { id = artist.Id })">Edit</a>
                         <a class="btn btn-danger" href="@Url.Action("DeleteArtist", "Library", new { id = artist.Id })">Delete</a>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>
             }

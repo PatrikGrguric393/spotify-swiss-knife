@@ -1,6 +1,10 @@
 class FormValidator {
 	constructor(formSelector) {
-		this.form = document.querySelector(formSelector);
+		try {
+			this.form = document.querySelector(formSelector);
+		} catch (e) {
+			this.form = null;
+		}
 		if (!this.form) {
 			console.error(`Form not found: ${formSelector}`);
 			return;
@@ -11,6 +15,7 @@ class FormValidator {
 		}
 
 		this.fields = {};
+		this.checkboxGroups = {};
 		this.hasErrors = false;
 		this.init();
 	}
@@ -19,6 +24,7 @@ class FormValidator {
 		this.form.dataset.validationInitialized = 'true';
 		const inputs = this.form.querySelectorAll('input, textarea, select');
 		inputs.forEach((input) => {
+			if (input.type === 'hidden' || input.type === 'checkbox') return;
 			const fieldName = input.name;
 			if (fieldName) {
 				this.fields[fieldName] = {
@@ -30,10 +36,52 @@ class FormValidator {
 				input.addEventListener('blur', () => this.validateField(fieldName));
 				input.addEventListener('input', () => this.clearFieldError(fieldName));
 				this.createErrorContainer(input, fieldName);
+
+				if (this.fields[fieldName].errorContainer?.classList.contains('show')) {
+					input.classList.add('field-error');
+					this.fields[fieldName].isValid = false;
+				}
 			}
 		});
 
+		this.form.querySelectorAll('fieldset[data-required-group]').forEach((fieldset) => {
+			const firstCheckbox = fieldset.querySelector('input[type="checkbox"]');
+			if (!firstCheckbox || !firstCheckbox.name) return;
+			const groupName = firstCheckbox.name;
+			const errorContainer = fieldset.querySelector(`#error-${groupName}`) || this.form.querySelector(`#error-${groupName}`);
+			this.checkboxGroups[groupName] = { fieldset, errorContainer, isValid: true };
+			if (errorContainer?.classList.contains('show')) {
+				this.checkboxGroups[groupName].isValid = false;
+			}
+			fieldset.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+				cb.addEventListener('change', () => this.validateCheckboxGroup(groupName));
+			});
+		});
+
 		this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+	}
+
+	validateCheckboxGroup(groupName) {
+		const group = this.checkboxGroups[groupName];
+		if (!group) return true;
+		const checkboxes = this.form.querySelectorAll(`input[type="checkbox"][name="${groupName}"]`);
+		const anyChecked = Array.from(checkboxes).some((cb) => cb.checked);
+		const container = group.errorContainer;
+		const message = group.fieldset.dataset.requiredGroupMessage || 'Select at least one option.';
+		if (!anyChecked) {
+			if (container) {
+				container.classList.add('show');
+				container.innerHTML = `<div class="validation-error-message">${message}</div>`;
+			}
+			group.isValid = false;
+		} else {
+			if (container) {
+				container.classList.remove('show');
+				container.innerHTML = '';
+			}
+			group.isValid = true;
+		}
+		return anyChecked;
 	}
 
 	createErrorContainer(input, fieldName) {
@@ -129,16 +177,27 @@ class FormValidator {
 		const input = field.element;
 		const container = field.errorContainer;
 
+		if (isValid && input.dataset.asyncError) {
+			field.isValid = false;
+			return;
+		}
+
 		field.isValid = isValid;
 
 		if (isValid) {
 			input.classList.remove('field-error');
-			input.classList.add('field-success');
+			if (input.value.trim()) {
+				input.classList.add('field-success');
+			} else {
+				input.classList.remove('field-success');
+			}
+			input.setAttribute('aria-invalid', 'false');
 			container.classList.remove('show');
 			container.innerHTML = '';
 		} else {
 			input.classList.remove('field-success');
 			input.classList.add('field-error');
+			input.setAttribute('aria-invalid', 'true');
 			container.classList.add('show');
 			container.innerHTML = errors
 				.map((error) => `<div class="validation-error-message">${this.escapeHtml(error)}</div>`)
@@ -149,6 +208,7 @@ class FormValidator {
 	clearFieldError(fieldName) {
 		const field = this.fields[fieldName];
 		if (field && !field.isValid) {
+			delete field.element.dataset.asyncError;
 			field.element.classList.remove('field-error', 'field-success');
 			field.errorContainer.classList.remove('show');
 			field.errorContainer.innerHTML = '';
@@ -166,8 +226,11 @@ class FormValidator {
 	validateAll() {
 		let allValid = true;
 		Object.keys(this.fields).forEach((fieldName) => {
-			const isValid = this.validateField(fieldName);
-			if (!isValid) allValid = false;
+			this.validateField(fieldName);
+			if (!this.fields[fieldName].isValid) allValid = false;
+		});
+		Object.keys(this.checkboxGroups).forEach((groupName) => {
+			if (!this.validateCheckboxGroup(groupName)) allValid = false;
 		});
 		return allValid;
 	}
@@ -178,7 +241,14 @@ class FormValidator {
 			for (const fieldName in this.fields) {
 				if (!this.fields[fieldName].isValid) {
 					this.fields[fieldName].element.focus();
-					break;
+					return;
+				}
+			}
+			for (const groupName in this.checkboxGroups) {
+				if (!this.checkboxGroups[groupName].isValid) {
+					const firstCb = this.form.querySelector(`input[type="checkbox"][name="${groupName}"]`);
+					if (firstCb) firstCb.focus();
+					return;
 				}
 			}
 		}
@@ -194,7 +264,8 @@ class FormValidator {
 document.addEventListener('DOMContentLoaded', () => {
 	const forms = document.querySelectorAll('form[data-validate="true"]');
 	forms.forEach((form) => {
-		new FormValidator(`#${form.id || ''}`);
+		if (!form.id) return;
+		new FormValidator(`#${form.id}`);
 	});
 });
 

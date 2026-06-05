@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace spotify_swiss_knife.Models;
 
-public class AlbumTracksPage
+public abstract class SpotifyPage<T>
 {
 	[JsonPropertyName("href")]
 	public string Href { get; set; } = string.Empty;
@@ -23,32 +23,12 @@ public class AlbumTracksPage
 	public int Total { get; set; }
 
 	[JsonPropertyName("items")]
-	public List<Track> Items { get; set; } = [];
+	public List<T> Items { get; set; } = [];
 }
 
-public class PlaylistTracksPage
-{
-	[JsonPropertyName("href")]
-	public string Href { get; set; } = string.Empty;
+public class AlbumTracksPage : SpotifyPage<Track> { }
 
-	[JsonPropertyName("limit")]
-	public int Limit { get; set; }
-
-	[JsonPropertyName("next")]
-	public string? Next { get; set; }
-
-	[JsonPropertyName("offset")]
-	public int Offset { get; set; }
-
-	[JsonPropertyName("previous")]
-	public string? Previous { get; set; }
-
-	[JsonPropertyName("total")]
-	public int Total { get; set; }
-
-	[JsonPropertyName("items")]
-	public List<PlaylistTrack> Items { get; set; } = [];
-}
+public class PlaylistTracksPage : SpotifyPage<PlaylistTrack> { }
 
 public class PlaylistTrack
 {

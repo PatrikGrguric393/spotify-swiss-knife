@@ -1,14 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+using spotify_swiss_knife.Models.FormModels;
 
 namespace spotify_swiss_knife.Models;
-
-public class ShufflePlaylistFormInput
-{
-    [Required]
-    public string PlaylistId { get; set; } = string.Empty;
-
-    public ShuffleRandomnessLevel RandomnessLevel { get; set; } = ShuffleRandomnessLevel.Medium;
-}
 
 public class ShufflePlaylistPage
 {

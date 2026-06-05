@@ -39,6 +39,126 @@ public class LibraryController : Controller
         return View(songs);
     }
 
+    [HttpGet("songs/create")]
+    public IActionResult CreateSong()
+    {
+        PopulateArtistOptions([]);
+        return View("CreateSong", new Models.FormModels.TrackCreateModel());
+    }
+
+    [HttpPost("songs/create")]
+    [ValidateAntiForgeryToken]
+    public IActionResult CreateSongPost([FromForm] Models.FormModels.TrackCreateModel model)
+    {
+        if (!TryParseDuration(model.Duration, out var durationMs))
+        {
+            ModelState.AddModelError(nameof(model.Duration), "Enter duration as seconds (e.g. 213) or minutes:seconds (e.g. 3:33), up to 1 hour.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            PopulateArtistOptions(model.ArtistIds);
+            return View("CreateSong", model);
+        }
+
+        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+
+        var track = new Models.Track
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = model.Name.Trim(),
+            TrackNumber = model.TrackNumber,
+            DiscNumber = model.DiscNumber,
+            DurationMs = durationMs,
+            IsLocal = model.IsLocal,
+            ExternalUrls = new Models.ExternalUrls(),
+            Artists = selectedArtists
+        };
+
+        _trackRepository.Add(track);
+        return RedirectToAction(nameof(Songs));
+    }
+
+    [HttpGet("songs/edit/{id}")]
+    public IActionResult EditSong(string id)
+    {
+        var track = _trackRepository.GetById(id);
+        if (track is null)
+        {
+            return NotFound();
+        }
+
+        var artistIds = track.Artists.Select(a => a.Id).ToList();
+        PopulateArtistOptions(artistIds);
+
+        var model = new Models.FormModels.TrackEditModel
+        {
+            Id = track.Id,
+            Name = track.Name,
+            TrackNumber = track.TrackNumber,
+            DiscNumber = track.DiscNumber,
+            Duration = FormatDuration(track.DurationMs),
+            IsLocal = track.IsLocal,
+            ArtistIds = artistIds
+        };
+
+        return View("EditSong", model);
+    }
+
+    [HttpPost("songs/edit/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult EditSongPost(string id, [FromForm] Models.FormModels.TrackEditModel model)
+    {
+        var track = _trackRepository.GetById(id);
+        if (track is null)
+        {
+            return NotFound();
+        }
+
+        if (!TryParseDuration(model.Duration, out var durationMs))
+        {
+            ModelState.AddModelError(nameof(model.Duration), "Enter duration as seconds (e.g. 213) or minutes:seconds (e.g. 3:33), up to 1 hour.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            PopulateArtistOptions(model.ArtistIds);
+            return View("EditSong", model);
+        }
+
+        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+
+        track.Name = model.Name.Trim();
+        track.TrackNumber = model.TrackNumber;
+        track.DiscNumber = model.DiscNumber;
+        track.DurationMs = durationMs;
+        track.IsLocal = model.IsLocal;
+        track.Artists = selectedArtists;
+
+        _trackRepository.Update(track);
+        return RedirectToAction(nameof(Songs));
+    }
+
+    [HttpGet("songs/delete/{id}")]
+    public IActionResult DeleteSong(string id)
+    {
+        var track = _trackRepository.GetById(id);
+        if (track is null)
+        {
+            return NotFound();
+        }
+
+        return View("DeleteSong", track);
+    }
+
+    [HttpPost("songs/delete/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteSongConfirmed(string id)
+    {
+        _trackRepository.Delete(id);
+        return RedirectToAction(nameof(Songs));
+    }
+
     [HttpGet("albums")]
     public IActionResult Albums()
     {
@@ -100,7 +220,7 @@ public class LibraryController : Controller
             Name = ToTitleCase(model.Name.Trim()),
             AlbumType = model.AlbumType,
             TotalTracks = selectedTracks.Count,
-            Label = (model.Label ?? string.Empty).Trim(),
+            Label = model.Label?.Trim(),
             Popularity = model.Popularity,
             ReleaseDate = (model.ReleaseDate ?? string.Empty).Trim(),
             ReleaseDatePrecision = "day",
@@ -212,7 +332,7 @@ public class LibraryController : Controller
         album.Name = ToTitleCase(model.Name.Trim());
         album.AlbumType = model.AlbumType;
         album.TotalTracks = selectedTracks.Count;
-        album.Label = (model.Label ?? string.Empty).Trim();
+        album.Label = model.Label?.Trim();
         album.Popularity = model.Popularity;
         album.ReleaseDate = (model.ReleaseDate ?? string.Empty).Trim();
         album.ReleaseDatePrecision = "day";
@@ -426,6 +546,74 @@ public class LibraryController : Controller
         return Json(results);
     }
 
+    [HttpGet("playlists/search")]
+    public IActionResult SearchPlaylists(string q, string? dateFrom, string? dateTo)
+    {
+        var all = _playlistRepository.GetAll();
+        IEnumerable<Models.Playlist> filtered = string.IsNullOrWhiteSpace(q)
+            ? all
+            : all.Where(p =>
+                p.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (p.Owner.DisplayName ?? string.Empty).Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (p.Description ?? string.Empty).Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                p.Tracks.Total.ToString().Contains(q, StringComparison.OrdinalIgnoreCase));
+
+        if (DateOnly.TryParse(dateFrom, out var from))
+            filtered = filtered.Where(p =>
+                p.LastShuffled.HasValue && DateOnly.FromDateTime(p.LastShuffled.Value) >= from);
+
+        if (DateOnly.TryParse(dateTo, out var to))
+            filtered = filtered.Where(p =>
+                p.LastShuffled.HasValue && DateOnly.FromDateTime(p.LastShuffled.Value) <= to);
+
+        var results = filtered
+            .Take(20)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                Owner = p.Owner.DisplayName,
+                TracksCount = p.Tracks.Total,
+                LastShuffled = p.LastShuffled
+            })
+            .ToList();
+
+        return Json(results);
+    }
+
+    [HttpGet("songs/search")]
+    public IActionResult SearchSongs(string q, int? durationMin, int? durationMax)
+    {
+        var all = _trackRepository.GetAll();
+        IEnumerable<Models.Track> filtered = string.IsNullOrWhiteSpace(q)
+            ? all
+            : all.Where(t =>
+                t.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                t.Artists.Any(a => a.Name.Contains(q, StringComparison.OrdinalIgnoreCase)));
+
+        if (durationMin.HasValue)
+            filtered = filtered.Where(t => t.DurationMs >= durationMin.Value * 1000);
+
+        if (durationMax.HasValue)
+            filtered = filtered.Where(t => t.DurationMs <= durationMax.Value * 1000);
+
+        var results = filtered
+            .Take(20)
+            .Select(t => new
+            {
+                t.Id,
+                t.Name,
+                Artists = string.Join(", ", t.Artists.Select(a => a.Name)),
+                t.DurationMs,
+                t.DiscNumber,
+                t.TrackNumber,
+                t.IsLocal
+            })
+            .ToList();
+
+        return Json(results);
+    }
+
     [HttpGet("artists/validate-name")]
     public IActionResult ValidateArtistName(string q, string? excludeId)
     {
@@ -439,6 +627,157 @@ public class LibraryController : Controller
     {
         var playlists = _playlistRepository.GetAll();
         return View(playlists);
+    }
+
+    [HttpGet("playlists/create")]
+    public IActionResult CreatePlaylist()
+    {
+        PopulateTrackOptions([]);
+        return View("CreatePlaylist", new Models.FormModels.PlaylistCreateModel());
+    }
+
+    [HttpPost("playlists/create")]
+    [ValidateAntiForgeryToken]
+    public IActionResult CreatePlaylistPost([FromForm] Models.FormModels.PlaylistCreateModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            PopulateTrackOptions(model.TrackIds);
+            return View("CreatePlaylist", model);
+        }
+
+        var wantedIds = new HashSet<string>(model.TrackIds ?? []);
+        var allTracks = _trackRepository.GetAll();
+        var trackById = allTracks.Where(t => wantedIds.Contains(t.Id)).ToDictionary(t => t.Id);
+
+        if (trackById.Count != wantedIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "One or more selected songs are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("CreatePlaylist", model);
+        }
+
+        var items = (model.TrackIds ?? [])
+            .Where(trackById.ContainsKey)
+            .Select(id => new Models.PlaylistTrack { Track = trackById[id] })
+            .ToList();
+
+        var playlist = new Models.Playlist
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = model.Name.Trim(),
+            Description = (model.Description ?? string.Empty).Trim(),
+            ExternalUrls = new Models.ExternalUrls(),
+            Owner = new Models.Owner(),
+            SnapshotId = Guid.NewGuid().ToString("N"),
+            Tracks = new Models.PlaylistTracksPage
+            {
+                Items = items,
+                Total = items.Count,
+                Limit = items.Count,
+                Offset = 0
+            }
+        };
+
+        _playlistRepository.Add(playlist);
+        return RedirectToAction(nameof(Playlists));
+    }
+
+    [HttpGet("playlists/edit/{id}")]
+    public IActionResult EditPlaylist(string id)
+    {
+        var playlist = _playlistRepository.GetById(id);
+        if (playlist is null)
+        {
+            return NotFound();
+        }
+
+        var trackIds = playlist.Tracks.Items.Select(item => item.Track.Id).ToList();
+        PopulateTrackOptions(trackIds);
+
+        var model = new Models.FormModels.PlaylistEditModel
+        {
+            Id = playlist.Id,
+            Name = playlist.Name,
+            Description = playlist.Description,
+            TrackIds = trackIds
+        };
+
+        return View("EditPlaylist", model);
+    }
+
+    [HttpPost("playlists/edit/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult EditPlaylistPost(string id, [FromForm] Models.FormModels.PlaylistEditModel model)
+    {
+        var playlist = _playlistRepository.GetById(id);
+        if (playlist is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            PopulateTrackOptions(model.TrackIds);
+            return View("EditPlaylist", model);
+        }
+
+        var wantedIds = new HashSet<string>(model.TrackIds ?? []);
+        var allTracks = _trackRepository.GetAll();
+        var trackById = allTracks.Where(track => wantedIds.Contains(track.Id)).ToDictionary(track => track.Id);
+
+        if (trackById.Count != wantedIds.Count)
+        {
+            ModelState.AddModelError(nameof(model.TrackIds), "One or more selected songs are invalid.");
+            PopulateTrackOptions(model.TrackIds);
+            return View("EditPlaylist", model);
+        }
+
+        playlist.Name = model.Name.Trim();
+        playlist.Description = (model.Description ?? string.Empty).Trim();
+
+        // Preserve existing order for retained songs, then append newly added ones
+        var previousOrder = playlist.Tracks.Items.Select(item => item.Track.Id).ToList();
+        var previousSet = new HashSet<string>(previousOrder);
+        var orderedIds = previousOrder.Where(wantedIds.Contains).ToList();
+        orderedIds.AddRange((model.TrackIds ?? []).Where(trackId => !previousSet.Contains(trackId)));
+
+        var seen = new HashSet<string>();
+        var items = orderedIds
+            .Where(seen.Add)
+            .Select(trackId => new Models.PlaylistTrack { Track = trackById[trackId] })
+            .ToList();
+
+        playlist.Tracks = new Models.PlaylistTracksPage
+        {
+            Items = items,
+            Total = items.Count,
+            Limit = items.Count,
+            Offset = 0
+        };
+
+        _playlistRepository.Save(playlist);
+        return RedirectToAction(nameof(Playlists));
+    }
+
+    [HttpGet("playlists/delete/{id}")]
+    public IActionResult DeletePlaylist(string id)
+    {
+        var playlist = _playlistRepository.GetById(id);
+        if (playlist is null)
+        {
+            return NotFound();
+        }
+
+        return View("DeletePlaylist", playlist);
+    }
+
+    [HttpPost("playlists/delete/{id}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeletePlaylistConfirmed(string id)
+    {
+        _playlistRepository.Delete(id);
+        return RedirectToAction(nameof(Playlists));
     }
 
     private void PopulateTrackOptions(IEnumerable<string>? selectedTrackIds)
@@ -478,7 +817,9 @@ public class LibraryController : Controller
         model.AlbumType = NormalizeAlbumType(model.AlbumType);
         if (!AllowedAlbumTypes.Contains(model.AlbumType))
         {
-            ModelState.AddModelError(nameof(model.AlbumType), "Album type must be one of: album, single, compilation.");
+            // Only add error when value is non-empty; empty string is already caught by [Required]
+            if (!string.IsNullOrEmpty(model.AlbumType))
+                ModelState.AddModelError(nameof(model.AlbumType), "Album type must be one of: album, single, compilation.");
             return;
         }
 
@@ -537,5 +878,53 @@ public class LibraryController : Controller
         {
             return text;
         }
+    }
+
+    private const int MaxDurationMs = 3600000;
+
+    private static string FormatDuration(int durationMs)
+    {
+        var totalSeconds = durationMs / 1000;
+        return $"{totalSeconds / 60}:{totalSeconds % 60:D2}";
+    }
+
+    // Accepts plain seconds ("213") or minutes:seconds ("3:33"); caps at one hour.
+    private static bool TryParseDuration(string? input, out int durationMs)
+    {
+        durationMs = 0;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        var text = input.Trim();
+        var parts = text.Split(':');
+        int totalSeconds;
+
+        if (parts.Length == 1)
+        {
+            if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out totalSeconds))
+            {
+                return false;
+            }
+        }
+        else if (parts.Length == 2)
+        {
+            if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var minutes) ||
+                !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var seconds) ||
+                seconds > 59)
+            {
+                return false;
+            }
+
+            totalSeconds = minutes * 60 + seconds;
+        }
+        else
+        {
+            return false;
+        }
+
+        durationMs = totalSeconds * 1000;
+        return durationMs >= 0 && durationMs <= MaxDurationMs;
     }
 }

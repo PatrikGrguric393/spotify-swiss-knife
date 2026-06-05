@@ -28,11 +28,27 @@
                 aria-label="Playlist Name"
                 aria-describedby="error-Name"
             />
+            @{
+                var nameErrors = ViewData.ModelState["Name"]?.Errors;
+                if (nameErrors != null && nameErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
+                        @foreach (var error in nameErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
+                }
+            }
         </div>
 
         <div class="form-group">
             <label for="Description">Description</label>
-            <textarea 
+            <textarea
                 id="Description" 
                 name="Description" 
                 class="form-control" 
@@ -43,6 +59,54 @@
                 aria-label="Description"
                 aria-describedby="error-Description"
             >@Model.Description</textarea>
+            @{
+                var descriptionErrors = ViewData.ModelState["Description"]?.Errors;
+                if (descriptionErrors != null && descriptionErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-Description" role="alert" aria-live="polite">
+                        @foreach (var error in descriptionErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-Description" role="alert" aria-live="polite"></div>
+                }
+            }
+        </div>
+
+        <div class="form-group">
+            <label for="OwnerDisplayName">Owner</label>
+            <input
+                type="text"
+                id="OwnerDisplayName"
+                name="OwnerDisplayName"
+                class="form-control"
+                value="@Model.OwnerDisplayName"
+                maxlength="100"
+                data-val-length-max="100"
+                placeholder="Enter owner name (optional)"
+                aria-label="Owner"
+                aria-describedby="error-OwnerDisplayName"
+            />
+            @{
+                var ownerDisplayNameErrors = ViewData.ModelState["OwnerDisplayName"]?.Errors;
+                if (ownerDisplayNameErrors != null && ownerDisplayNameErrors.Count > 0)
+                {
+                    <div class="validation-error show" id="error-OwnerDisplayName" role="alert" aria-live="polite">
+                        @foreach (var error in ownerDisplayNameErrors)
+                        {
+                            <div class="validation-error-message">@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="validation-error" id="error-OwnerDisplayName" role="alert" aria-live="polite"></div>
+                }
+            }
         </div>
 
         <div class="form-actions">

@@ -53,6 +53,18 @@ public class TrackRepository
             .FirstOrDefault(track => track.Id == id);
     }
 
+    public void Add(Track track)
+    {
+        if (_context is null)
+        {
+            _snapshot.Tracks.Add(track);
+            return;
+        }
+
+        _context.Tracks.Add(track);
+        _context.SaveChanges();
+    }
+
     public void Update(Track track)
     {
         if (_context is null)
@@ -67,6 +79,27 @@ public class TrackRepository
         }
 
         _context.Tracks.Update(track);
+        _context.SaveChanges();
+    }
+
+    public void Delete(string id)
+    {
+        if (_context is null)
+        {
+            _snapshot.Tracks.RemoveAll(track => track.Id == id);
+            return;
+        }
+
+        var track = _context.Tracks.FirstOrDefault(existing => existing.Id == id);
+        if (track is null)
+        {
+            return;
+        }
+
+        // PlaylistTrackEntry.Track uses Restrict, so remove playlist links before deleting the track
+        var entries = _context.PlaylistTrackEntries.Where(entry => entry.TrackId == id);
+        _context.PlaylistTrackEntries.RemoveRange(entries);
+        _context.Tracks.Remove(track);
         _context.SaveChanges();
     }
 }

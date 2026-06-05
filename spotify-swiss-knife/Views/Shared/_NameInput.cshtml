@@ -30,7 +30,10 @@
         if (nameErrors != null && nameErrors.Count > 0)
         {
             <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
-                <div class="validation-error-message">@nameErrors[0].ErrorMessage</div>
+                @foreach (var error in nameErrors)
+                {
+                    <div class="validation-error-message">@error.ErrorMessage</div>
+                }
             </div>
         }
         else
@@ -38,3 +41,4 @@
             <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
         }
     }
+</div>

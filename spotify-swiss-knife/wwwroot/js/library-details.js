@@ -15,13 +15,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        var trigger = Array.prototype.find.call(document.querySelectorAll('.entity-detail-trigger'), function (button) {
-            var detailsId = button.getAttribute('data-details-id') || '';
+        var row = Array.prototype.find.call(document.querySelectorAll('tr[data-details-id]'), function (tr) {
+            var detailsId = tr.getAttribute('data-details-id') || '';
             return detailsId.endsWith(selectedId);
         });
 
-        if (trigger) {
-            trigger.click();
+        if (row) {
+            lastTrigger = row;
+            openDetails(row.getAttribute('data-entity-type') || 'Entity', row.getAttribute('data-details-id'));
         }
     }
 
@@ -210,16 +211,30 @@ document.addEventListener('DOMContentLoaded', function () {
         detailClose.focus();
     }
 
-    // Use event delegation so dynamically-rendered buttons work
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest && e.target.closest('.entity-detail-trigger');
-        if (!btn) return;
+        if (e.target.closest('a, button')) return;
+        var row = e.target.closest && e.target.closest('tr[data-details-id]');
+        if (!row) return;
 
-        var detailsId = btn.getAttribute('data-details-id');
-        var entityType = btn.getAttribute('data-entity-type') || 'Entity';
+        var detailsId = row.getAttribute('data-details-id');
+        var entityType = row.getAttribute('data-entity-type') || 'Entity';
         if (!detailsId) return;
 
-        lastTrigger = btn;
+        lastTrigger = row;
+        openDetails(entityType, detailsId);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var row = e.target.closest && e.target.closest('tr[data-details-id]');
+        if (!row) return;
+
+        e.preventDefault();
+        var detailsId = row.getAttribute('data-details-id');
+        var entityType = row.getAttribute('data-entity-type') || 'Entity';
+        if (!detailsId) return;
+
+        lastTrigger = row;
         openDetails(entityType, detailsId);
     });
 

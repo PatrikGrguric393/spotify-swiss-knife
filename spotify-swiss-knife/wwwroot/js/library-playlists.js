@@ -1,16 +1,6 @@
 (function () {
     var locale = navigator.language || 'en';
-    var triggerFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
-
-    function formatReleaseDate(val) {
-        if (!val) return '';
-        var parts = val.split('-');
-        if (parts.length === 3) {
-            var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            return triggerFmt.format(d);
-        }
-        return val;
-    }
+    var dateFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 
     function makeStatusRow(colspan, text) {
         var tr = document.createElement('tr');
@@ -28,53 +18,52 @@
         if (!tbody) return;
         tbody.innerHTML = '';
         rows.forEach(function(r) {
-            var detailsId = 'album-details-' + r.id;
+            var contentsId = 'playlist-contents-' + r.id;
             var tr = document.createElement('tr');
             tr.setAttribute('tabindex', '0');
-            tr.setAttribute('data-details-id', detailsId);
-            tr.setAttribute('data-entity-type', 'Album');
-            tr.setAttribute('aria-label', 'View details for ' + r.name);
+            tr.setAttribute('data-contents-id', contentsId);
+            tr.setAttribute('aria-label', 'View tracks for ' + r.name);
 
             var tdName = document.createElement('td');
             tdName.setAttribute('data-label', 'Name');
             tdName.textContent = r.name;
 
-            var tdArtists = document.createElement('td');
-            tdArtists.setAttribute('data-label', 'Artists');
-            tdArtists.textContent = r.artists;
+            var tdOwner = document.createElement('td');
+            tdOwner.setAttribute('data-label', 'Owner');
+            tdOwner.textContent = r.owner;
 
-            var tdDate = document.createElement('td');
-            tdDate.setAttribute('data-label', 'Release Date');
-            tdDate.textContent = formatReleaseDate(r.releaseDate);
+            var tdTracks = document.createElement('td');
+            tdTracks.setAttribute('data-label', 'Tracks');
+            tdTracks.textContent = r.tracksCount;
+
+            var tdShuffled = document.createElement('td');
+            tdShuffled.setAttribute('data-label', 'Last Shuffled');
+            tdShuffled.textContent = r.lastShuffled ? dateFmt.format(new Date(r.lastShuffled)) : 'Never';
 
             var tdActions = document.createElement('td');
             tdActions.setAttribute('data-label', 'Actions');
             tdActions.className = 'cell-actions';
             var edit = document.createElement('a');
             edit.className = 'btn';
-            edit.href = '/lib/albums/edit/' + encodeURIComponent(r.id);
+            edit.href = '/lib/playlists/edit/' + encodeURIComponent(r.id);
             edit.textContent = 'Edit';
             var del = document.createElement('a');
             del.className = 'btn btn-danger';
-            del.href = '/lib/albums/delete/' + encodeURIComponent(r.id);
+            del.href = '/lib/playlists/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
-
-            var script = document.createElement('script');
-            script.type = 'application/json';
-            script.id = detailsId;
-            script.textContent = JSON.stringify({ Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate });
 
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
-            tdActions.appendChild(script);
             tr.appendChild(tdName);
-            tr.appendChild(tdArtists);
-            tr.appendChild(tdDate);
+            tr.appendChild(tdOwner);
+            tr.appendChild(tdTracks);
+            tr.appendChild(tdShuffled);
             tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
+
         if (rows.length === 0) {
-            tbody.appendChild(makeStatusRow(4, 'No results'));
+            tbody.appendChild(makeStatusRow(5, 'No results'));
         }
     }
 
@@ -84,34 +73,28 @@
         var tbody = document.querySelector('.entity-table tbody');
         if (tbody) {
             tbody.innerHTML = '';
-            tbody.appendChild(makeStatusRow(4, 'Loading...'));
+            tbody.appendChild(makeStatusRow(5, 'Loading...'));
         }
 
         var params = new URLSearchParams();
         params.set('q', q || '');
 
-        var dateFrom = document.getElementById('albumDateFrom');
-        var dateTo = document.getElementById('albumDateTo');
+        var dateFrom = document.getElementById('playlistDateFrom');
+        var dateTo = document.getElementById('playlistDateTo');
         if (dateFrom && dateFrom.value) params.set('dateFrom', dateFrom.value);
         if (dateTo && dateTo.value) params.set('dateTo', dateTo.value);
 
-        fetch('/lib/albums/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+        fetch('/lib/playlists/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                renderRows(data.map(function(item) {
-                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate };
-                }));
+                renderRows(data);
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })
-            .catch(function(err) { console.error('Album search failed', err); });
+            .catch(function(err) { console.error('Playlist search failed', err); });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.entity-table td[data-date]').forEach(function(td) {
-            td.textContent = formatReleaseDate(td.dataset.date);
-        });
-
-        var searchInput = document.getElementById('albumSearch');
+        var searchInput = document.getElementById('playlistSearch');
         if (!searchInput) return;
 
         var timer = 0;
@@ -124,7 +107,7 @@
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                var first = document.querySelector('.entity-table tbody tr[data-details-id]');
+                var first = document.querySelector('.entity-table tbody tr[data-contents-id]');
                 if (first && typeof first.focus === 'function') first.focus();
             }
         });
@@ -137,11 +120,11 @@
             window.Dpc.buildCalendar(el, onDateSelect);
         });
 
-        var clearBtn = document.getElementById('albumDateClear');
+        var clearBtn = document.getElementById('playlistDateClear');
         if (clearBtn) {
             clearBtn.addEventListener('click', function() {
-                var fromHidden = document.getElementById('albumDateFrom');
-                var toHidden = document.getElementById('albumDateTo');
+                var fromHidden = document.getElementById('playlistDateFrom');
+                var toHidden = document.getElementById('playlistDateTo');
                 if (fromHidden) fromHidden.value = '';
                 if (toHidden) toHidden.value = '';
                 var trigFrom = document.getElementById('triggerFrom');
