@@ -38,15 +38,20 @@
                 {
                     artist.Name,
                     artist.Id,
-                    SpotifyUrl = artist.ExternalUrls.Spotify
+                    SpotifyUrl = artist.ExternalUrls?.Spotify
                 };
 
                 <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Artist" aria-label="View details for @artist.Name">
                     <td data-label="Name">@artist.Name</td>
                     <td data-label="Spotify URL">
-                        <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">
-                            Open
-                        </a>
+                        @if (!string.IsNullOrEmpty(artist.ExternalUrls?.Spotify))
+                        {
+                            <a href="@artist.ExternalUrls.Spotify" target="_blank" rel="noopener noreferrer">Open</a>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
                     </td>
                     <td data-label="Actions" class="cell-actions">
                         <a class="btn" href="@Url.Action("EditArtist", "Library", new { id = artist.Id })">Edit</a>
@@ -74,5 +79,4 @@
 
 @section Scripts {
     <script src="~/js/library-artists.js" asp-append-version="true"></script>
-    <script src="~/js/library-details.js" asp-append-version="true"></script>
 }

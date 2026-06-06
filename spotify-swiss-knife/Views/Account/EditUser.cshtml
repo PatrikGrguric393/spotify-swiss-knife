@@ -1,0 +1,108 @@
+@model spotify_swiss_knife.Models.FormModels.EditUserModel
+
+@{
+    ViewData["Title"] = "Edit user";
+    var roles = ViewBag.Roles as string[] ?? Array.Empty<string>();
+    var dobValue = Model.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var dobLabel = Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("dd MMM yyyy") : "Pick a date";
+
+    void FieldErrors(string field)
+    {
+        var errors = ViewData.ModelState[field]?.Errors;
+        if (errors != null && errors.Count > 0)
+        {
+            <div class="validation-error show" id="error-@field" role="alert" aria-live="polite">
+                @foreach (var error in errors)
+                {
+                    <div class="validation-error-message">@error.ErrorMessage</div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="validation-error" id="error-@field" role="alert" aria-live="polite"></div>
+        }
+    }
+}
+
+<div class="form-container">
+    <h2>Edit user</h2>
+
+    <form asp-controller="Account" asp-action="EditUser" asp-route-id="@Model.Id" method="post" id="editUserForm" data-validate="true">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="required"></label>
+            <input asp-for="Email" class="form-control" type="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="error-Email" />
+            <span asp-validation-for="Email" class="visually-hidden"></span>
+            @{ FieldErrors("Email"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="FirstName" class="required"></label>
+            <input asp-for="FirstName" class="form-control" autocomplete="given-name" required maxlength="100" data-val-length-max="100" placeholder="Enter first name" aria-describedby="error-FirstName" />
+            <span asp-validation-for="FirstName" class="visually-hidden"></span>
+            @{ FieldErrors("FirstName"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="LastName" class="required"></label>
+            <input asp-for="LastName" class="form-control" autocomplete="family-name" required maxlength="100" data-val-length-max="100" placeholder="Enter last name" aria-describedby="error-LastName" />
+            <span asp-validation-for="LastName" class="visually-hidden"></span>
+            @{ FieldErrors("LastName"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="DateOfBirth" for="editUserDobTrigger"></label>
+            <div class="dpc-wrapper dpc-wrapper--field" id="wrapperEditUserDob">
+                <button type="button" class="dpc-trigger" id="editUserDobTrigger" aria-haspopup="true" aria-expanded="false" aria-describedby="error-DateOfBirth">@dobLabel</button>
+                <div class="dpc-panel" id="panelEditUserDob" hidden>
+                    <div class="dpc" id="dpcEditUserDob" data-target="editUserDob">
+                        <div class="dpc__header">
+                            <button type="button" class="dpc__nav" data-dir="-1" aria-label="Previous">&#8249;</button>
+                            <button type="button" class="dpc__head-btn" aria-label="Pick year"></button>
+                            <button type="button" class="dpc__nav" data-dir="1" aria-label="Next">&#8250;</button>
+                        </div>
+                        <div class="dpc__year-grid" hidden aria-label="Year picker"></div>
+                        <div class="dpc__weekdays" aria-hidden="true"></div>
+                        <div class="dpc__grid" role="grid" aria-label="Date of birth"></div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="DateOfBirth" id="editUserDob" value="@dobValue" />
+            @{ FieldErrors("DateOfBirth"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Role"></label>
+            <select asp-for="Role" class="form-control" aria-describedby="error-Role">
+                @foreach (var role in roles)
+                {
+                    if (role == Model.Role)
+                    {
+                        <option value="@role" selected>@role</option>
+                    }
+                    else
+                    {
+                        <option value="@role">@role</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="Role" class="visually-hidden"></span>
+            @{ FieldErrors("Role"); }
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a class="btn" asp-controller="Account" asp-action="Users">Back to users</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
+}
+</content>

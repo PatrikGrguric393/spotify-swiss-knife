@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="auth-confirm-shell">
+    <div class="auth-confirm-card">
+        <h1 class="auth-confirm-heading">Access denied</h1>
+        <p class="auth-confirm-subtitle">Error 403 &mdash; insufficient permissions.</p>
+        <p class="auth-confirm-question">
+            You don't have permission to perform this action. If you believe this is a
+            mistake, contact an administrator to review your account role.
+        </p>
+
+        <div class="auth-confirm-actions">
+            <a asp-controller="Home" asp-action="Index" class="auth-confirm-btn auth-confirm-btn--primary">
+                Back to home
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.FormModels;
@@ -6,6 +7,7 @@ using spotify_swiss_knife.Services;
 namespace spotify_swiss_knife.Controllers;
 
 [Route("playlists")]
+[Authorize(Roles = "Admin,Editor")]
 public class PlaylistController : Controller
 {
 	private readonly PlaylistRepository _playlistRepository;

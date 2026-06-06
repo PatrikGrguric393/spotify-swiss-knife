@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
@@ -57,18 +57,37 @@ builder.Services.AddScoped<PlaylistRepository>();
 builder.Services.AddHttpClient("spotify");
 builder.Services.AddScoped<SpotifyAuthService>();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     {
-        options.Cookie.Name = "SpotifySSK";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-        options.SlidingExpiration = false;
-        options.LoginPath = "/auth/login";
-    });
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedAccount = false;
+    })
+    .AddEntityFrameworkStores<SpotifyDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "SSKAuth";
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/denied";
+});
+
+// Spotify OAuth is kept as a separate, optional connection on its own scheme so it
+// does not reset the Identity defaults used for app login and authorization.
+builder.Services.AddAuthentication().AddCookie("SpotifyConnect", options =>
+{
+    options.Cookie.Name = "SpotifySSK";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.SlidingExpiration = false;
+});
 
 var app = builder.Build();
+
+await IdentitySeeder.SeedAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -85,6 +104,13 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
+
+app.MapControllerRoute(
+    name: "shuffle",
+    pattern: "shuffle",
+    defaults: new { controller = "Services", action = "ShufflePlaylist" });
 
 app.MapControllerRoute(
     name: "default",

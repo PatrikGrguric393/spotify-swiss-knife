@@ -1,0 +1,63 @@
+@model spotify_swiss_knife.Models.FormModels.LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+    var returnUrl = ViewData["ReturnUrl"] as string ?? string.Empty;
+
+    void FieldErrors(string field)
+    {
+        var errors = ViewData.ModelState[field]?.Errors;
+        if (errors != null && errors.Count > 0)
+        {
+            <div class="validation-error show" id="error-@field" role="alert" aria-live="polite">
+                @foreach (var error in errors)
+                {
+                    <div class="validation-error-message">@error.ErrorMessage</div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="validation-error" id="error-@field" role="alert" aria-live="polite"></div>
+        }
+    }
+}
+
+<div class="form-container">
+    <h2>Log in</h2>
+
+    <form asp-controller="Account" asp-action="Login" method="post" id="loginForm" data-validate="true">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="required"></label>
+            <input asp-for="Email" class="form-control" type="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="error-Email" />
+            @{ FieldErrors("Email"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Password" class="required"></label>
+            <input asp-for="Password" class="form-control" type="password" autocomplete="current-password" required placeholder="Enter your password" aria-describedby="error-Password" />
+            @{ FieldErrors("Password"); }
+        </div>
+
+        <div class="form-group">
+            <label class="shuffle-checkbox" for="RememberMe">
+                <input asp-for="RememberMe" type="checkbox" />
+                <span>@Html.DisplayNameFor(m => m.RememberMe)</span>
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </div>
+    </form>
+
+    <p class="auth-alt-action">
+        New here?
+        <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@returnUrl">Create an account</a>
+    </p>
+</div>

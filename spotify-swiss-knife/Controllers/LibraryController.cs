@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using spotify_swiss_knife.Services;
@@ -6,6 +7,7 @@ using System.Globalization;
 namespace spotify_swiss_knife.Controllers;
 
 [Route("lib")]
+[Authorize(Roles = "Admin,Editor")]
 public class LibraryController : Controller
 {
     private static readonly HashSet<string> AllowedAlbumTypes = ["album", "single", "compilation"];
@@ -27,11 +29,13 @@ public class LibraryController : Controller
         _playlistRepository = playlistRepository;
     }
 
+    [AllowAnonymous]
     public IActionResult Index()
     {
         return RedirectToAction(nameof(Songs));
     }
 
+    [AllowAnonymous]
     [HttpGet("songs")]
     public IActionResult Songs()
     {
@@ -159,6 +163,7 @@ public class LibraryController : Controller
         return RedirectToAction(nameof(Songs));
     }
 
+    [AllowAnonymous]
     [HttpGet("albums")]
     public IActionResult Albums()
     {
@@ -377,6 +382,7 @@ public class LibraryController : Controller
         return RedirectToAction(nameof(Albums));
     }
 
+    [AllowAnonymous]
     [HttpGet("artists")]
     public IActionResult Artists()
     {
@@ -492,6 +498,7 @@ public class LibraryController : Controller
         return RedirectToAction(nameof(Artists));
     }
 
+    [AllowAnonymous]
     [HttpGet("artists/search")]
     public IActionResult SearchArtists(string q)
     {
@@ -510,6 +517,7 @@ public class LibraryController : Controller
         return Json(results);
     }
 
+    [AllowAnonymous]
     [HttpGet("albums/search")]
     public IActionResult SearchAlbums(string q, string? dateFrom, string? dateTo)
     {
@@ -546,6 +554,7 @@ public class LibraryController : Controller
         return Json(results);
     }
 
+    [AllowAnonymous]
     [HttpGet("playlists/search")]
     public IActionResult SearchPlaylists(string q, string? dateFrom, string? dateTo)
     {
@@ -581,6 +590,7 @@ public class LibraryController : Controller
         return Json(results);
     }
 
+    [AllowAnonymous]
     [HttpGet("songs/search")]
     public IActionResult SearchSongs(string q, int? durationMin, int? durationMax)
     {
@@ -614,6 +624,7 @@ public class LibraryController : Controller
         return Json(results);
     }
 
+    [AllowAnonymous]
     [HttpGet("artists/validate-name")]
     public IActionResult ValidateArtistName(string q, string? excludeId)
     {
@@ -622,6 +633,7 @@ public class LibraryController : Controller
         return Json(new { isUnique = !exists });
     }
 
+    [AllowAnonymous]
     [HttpGet("playlists")]
     public IActionResult Playlists()
     {

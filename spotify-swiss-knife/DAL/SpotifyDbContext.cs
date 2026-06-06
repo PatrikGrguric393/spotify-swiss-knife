@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.DAL;
 
-public class SpotifyDbContext : DbContext
+public class SpotifyDbContext : IdentityDbContext<AppUser>
 {
 	public SpotifyDbContext(DbContextOptions<SpotifyDbContext> options) : base(options)
 	{

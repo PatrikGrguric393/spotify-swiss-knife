@@ -34,13 +34,26 @@ class FormValidator {
 				};
 
 				input.addEventListener('blur', () => this.validateField(fieldName));
-				input.addEventListener('input', () => this.clearFieldError(fieldName));
+				if (input.hasAttribute('data-match')) {
+					input.addEventListener('input', () => this.validateField(fieldName));
+				} else {
+					input.addEventListener('input', () => this.clearFieldError(fieldName));
+				}
 				this.createErrorContainer(input, fieldName);
 
 				if (this.fields[fieldName].errorContainer?.classList.contains('show')) {
 					input.classList.add('field-error');
 					this.fields[fieldName].isValid = false;
 				}
+			}
+		});
+
+		Object.keys(this.fields).forEach((fieldName) => {
+			const input = this.fields[fieldName].element;
+			if (!input.hasAttribute('data-match')) return;
+			const source = this.resolveMatchSource(input);
+			if (source) {
+				source.addEventListener('input', () => this.validateField(fieldName));
 			}
 		});
 
@@ -166,10 +179,31 @@ class FormValidator {
 			}
 		}
 
+		if (input.hasAttribute('data-match') && value) {
+			const source = this.resolveMatchSource(input);
+			if (source && source.value !== input.value) {
+				const label = this.getFieldLabel(input);
+				errors.push(`${label} does not match`);
+			}
+		}
+
 		const isValid = errors.length === 0;
 		this.displayFieldErrors(fieldName, errors, isValid);
 
 		return isValid;
+	}
+
+	resolveMatchSource(input) {
+		const ref = input.getAttribute('data-match');
+		if (!ref) return null;
+		let source = null;
+		if (ref.charAt(0) === '#') {
+			source = document.getElementById(ref.slice(1));
+		}
+		if (!source) {
+			source = this.form.querySelector(`#${ref}`) || this.form.querySelector(`[name="${ref}"]`);
+		}
+		return source;
 	}
 
 	displayFieldErrors(fieldName, errors, isValid) {

@@ -12,7 +12,7 @@
     <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
         <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
 
-        <form action="/shuffle" method="post" class="shuffle-form">
+        <form action="@Url.Action("ShufflePlaylist", "Services")" method="post" class="shuffle-form">
             @Html.AntiForgeryToken()
 
             <div class="shuffle-form-pair">
@@ -39,14 +39,11 @@
                 </div>
             </div>
 
-            <!-- View Playlist Button -->
             <div class="shuffle-form-row">
                 <button type="button" id="viewPlaylistBtn" class="playlist-contents-trigger" style="display: none;">
                     View playlist contents
                 </button>
             </div>
-
-                <!-- Immediate shuffle only: scheduling removed -->
 
             <div class="shuffle-form-actions">
                 <button type="submit" class="shuffle-submit">Start shuffle</button>
@@ -77,8 +74,10 @@
         </div>
     </div>
 
-    @{ var playlistsJson = JsonSerializer.Serialize(Model.Playlists, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
+</section>
 
+@section Scripts {
+    @{ var playlistsJson = JsonSerializer.Serialize(Model.Playlists, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const playlists = @Html.Raw(playlistsJson);
@@ -121,7 +120,6 @@
                 return null;
             }
 
-            // Support both playlist item wrapper ({ track: {...} }) and direct track objects.
             const candidate = (item.track && typeof item.track === 'object') ? item.track : item;
             return (candidate && typeof candidate === 'object') ? candidate : null;
         }
@@ -256,7 +254,6 @@
                 return;
             }
 
-            // Refresh open modal content when changing selection, but do not auto-open.
             if (!playlistBackdrop.hidden) {
                 updateModalContents();
             }
@@ -296,5 +293,4 @@
         }
     });
     </script>
-
-</section>
+}

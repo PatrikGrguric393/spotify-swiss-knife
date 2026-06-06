@@ -116,95 +116,91 @@
     </section>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var backdrop = document.getElementById('playlistContentsBackdrop');
-    var closeBtn = document.getElementById('playlistContentsClose');
-    var table = document.getElementById('playlistContentsTable');
-    var playlists = @Html.Raw(JsonSerializer.Serialize(Model));
-    var lastTriggerRow = null;
-
-    function openPlaylist(row) {
-        var contentsId = row.dataset.contentsId;
-        var playlistId = contentsId.replace('playlist-contents-', '');
-        var playlist = playlists.find(function (p) { return p.id === playlistId; });
-
-        if (!playlist) return;
-
-        document.getElementById('playlistContentsTitle').textContent = playlist.name + ' - ' + playlist.tracks.items.length + ' tracks';
-        table.innerHTML = '';
-
-        playlist.tracks.items.forEach(function (item, index) {
-            var track = item.track;
-            var artists = track.artists.map(function (a) { return a.name; }).join(', ');
-            var duration = formatDuration(track.duration_ms);
-            var tr = '<tr><td data-label="#">' + (index + 1) + '</td><td data-label="Song">' + track.name + '</td><td data-label="Artist(s)">' + artists + '</td><td data-label="Duration">' + duration + '</td></tr>';
-            table.innerHTML += tr;
-        });
-
-        backdrop.hidden = false;
-        backdrop.setAttribute('aria-hidden', 'false');
-        closeBtn.focus();
-    }
-
-    function closePlaylist() {
-        backdrop.hidden = true;
-        backdrop.setAttribute('aria-hidden', 'true');
-        if (lastTriggerRow && typeof lastTriggerRow.focus === 'function') {
-            lastTriggerRow.focus();
-        }
-    }
-
-    document.querySelector('.entity-table tbody').addEventListener('click', function (e) {
-        if (e.target.closest('a, button')) return;
-        var row = e.target.closest('tr[data-contents-id]');
-        if (!row) return;
-        lastTriggerRow = row;
-        openPlaylist(row);
-    });
-
-    document.querySelector('.entity-table tbody').addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        var row = e.target.closest('tr[data-contents-id]');
-        if (!row) return;
-        e.preventDefault();
-        lastTriggerRow = row;
-        openPlaylist(row);
-    });
-
-    closeBtn.addEventListener('click', closePlaylist);
-
-    backdrop.addEventListener('click', function (e) {
-        if (e.target === backdrop) {
-            closePlaylist();
-        }
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !backdrop.hidden) {
-            closePlaylist();
-        }
-    });
-
-    function formatDuration(ms) {
-        var seconds = Math.floor(ms / 1000);
-        var minutes = Math.floor(seconds / 60);
-        var secs = seconds % 60;
-        return minutes + ':' + (secs < 10 ? '0' : '') + secs;
-    }
-
-    var selectedId = new URLSearchParams(window.location.search).get('selected');
-    if (selectedId) {
-        var selectedRow = document.querySelector('tr[data-contents-id="playlist-contents-' + selectedId + '"]');
-        if (selectedRow) {
-            lastTriggerRow = selectedRow;
-            openPlaylist(selectedRow);
-        }
-    }
-});
-</script>
-
 @section Scripts {
     <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
     <script src="~/js/library-playlists.js" asp-append-version="true"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var backdrop = document.getElementById('playlistContentsBackdrop');
+        var closeBtn = document.getElementById('playlistContentsClose');
+        var table = document.getElementById('playlistContentsTable');
+        var playlists = @Html.Raw(JsonSerializer.Serialize(Model));
+        var lastTriggerRow = null;
+
+        function formatDuration(ms) {
+            var seconds = Math.floor(ms / 1000);
+            var minutes = Math.floor(seconds / 60);
+            var secs = seconds % 60;
+            return minutes + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        function openPlaylist(row) {
+            var contentsId = row.dataset.contentsId;
+            var playlistId = contentsId.replace('playlist-contents-', '');
+            var playlist = playlists.find(function (p) { return p.id === playlistId; });
+
+            if (!playlist) return;
+
+            document.getElementById('playlistContentsTitle').textContent = playlist.name + ' - ' + playlist.tracks.items.length + ' tracks';
+
+            var rows = '';
+            playlist.tracks.items.forEach(function (item, index) {
+                var track = item.track;
+                if (!track) return;
+                var artists = track.artists.map(function (a) { return a.name; }).join(', ');
+                var duration = formatDuration(track.duration_ms);
+                rows += '<tr><td data-label="#">' + (index + 1) + '</td><td data-label="Song">' + track.name + '</td><td data-label="Artist(s)">' + artists + '</td><td data-label="Duration">' + duration + '</td></tr>';
+            });
+            table.innerHTML = rows;
+
+            backdrop.hidden = false;
+            backdrop.setAttribute('aria-hidden', 'false');
+            closeBtn.focus();
+        }
+
+        function closePlaylist() {
+            backdrop.hidden = true;
+            backdrop.setAttribute('aria-hidden', 'true');
+            if (lastTriggerRow && typeof lastTriggerRow.focus === 'function') {
+                lastTriggerRow.focus();
+            }
+        }
+
+        document.querySelector('.entity-table tbody').addEventListener('click', function (e) {
+            if (e.target.closest('a, button')) return;
+            var row = e.target.closest('tr[data-contents-id]');
+            if (!row) return;
+            lastTriggerRow = row;
+            openPlaylist(row);
+        });
+
+        document.querySelector('.entity-table tbody').addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var row = e.target.closest('tr[data-contents-id]');
+            if (!row) return;
+            e.preventDefault();
+            lastTriggerRow = row;
+            openPlaylist(row);
+        });
+
+        closeBtn.addEventListener('click', closePlaylist);
+
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) closePlaylist();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !backdrop.hidden) closePlaylist();
+        });
+
+        var selectedId = new URLSearchParams(window.location.search).get('selected');
+        if (selectedId) {
+            var selectedRow = document.querySelector('tr[data-contents-id="playlist-contents-' + selectedId + '"]');
+            if (selectedRow) {
+                lastTriggerRow = selectedRow;
+                openPlaylist(selectedRow);
+            }
+        }
+    });
+    </script>
 }

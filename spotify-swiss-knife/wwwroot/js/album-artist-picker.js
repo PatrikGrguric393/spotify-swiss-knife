@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchInput = picker.querySelector('[data-album-artist-search]');
         const rows = Array.from(picker.querySelectorAll('[data-album-artist-row]'));
         const checkboxes = () => Array.from(picker.querySelectorAll('[data-album-artist-checkbox]'));
-        const status = picker.querySelector('#albumArtistPickerStatus') || null;
+        const status = picker.querySelector('.album-track-picker-status') || null;
         const list = picker.querySelector('.album-track-picker-list');
 
         if (!searchInput || !list) {

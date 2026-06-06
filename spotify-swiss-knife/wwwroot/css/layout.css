@@ -456,6 +456,68 @@
         }
     }
 
+    /*
+     * Breakpoint A — hide the title when the viewport is too narrow to fit
+     * title + search + nav on one row. The header stays a single unwrapped row;
+     * only the title is sacrificed to reclaim ~200 px.
+     */
+    .app-title-short { display: none; }
+
+    @media (min-width: 769px) and (max-width: 1200px) {
+        .app-title { display: block; }
+        .app-title-full { display: none; }
+        .app-title-short { display: inline; }
+    }
+
+    /*
+     * Breakpoint B — when even dropping the title isn't enough, let the header
+     * row scroll horizontally so the nav is never clipped or wrapped.
+     * The header itself must stay overflow: visible so dropdown menus can
+     * escape the scrolling container.
+     *
+     * Scrollbar is hidden visually but kept functional (thin / none).
+     * -webkit-overflow-scrolling enables momentum scrolling on iOS.
+     */
+    @media (min-width: 769px) and (max-width: 960px) {
+        .app-header {
+            overflow: visible;
+        }
+
+        .header-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            /* Remove any implicit max-width cap on the container itself */
+            max-width: none;
+            /* Keep all items pinned to a single row */
+            flex-wrap: nowrap;
+            /* Compensate for padding so the scrollbar doesn't eat layout space */
+            padding-bottom: 0;
+        }
+
+        /* Hide the scrollbar visually while keeping it functional */
+        .header-container::-webkit-scrollbar {
+            height: 0;
+            width: 0;
+        }
+
+        .header-container {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* Nav must not shrink — it sets the minimum scroll extent */
+        .app-nav {
+            flex-shrink: 0;
+        }
+
+        /* Search can shrink to a sensible minimum, but no further */
+        .global-search-shell {
+            flex-shrink: 1;
+            min-width: 180px;
+        }
+    }
+
 /* ── Nav auth item ──────────────────────────────────────── */
 
 /*
@@ -697,5 +759,96 @@
     .auth-confirm-btn {
         width: 100%;
         text-align: center;
+    }
+}
+
+/* ── Auth zones: Spotify connection vs app account ──────── */
+
+/*
+ * Two consecutive auth zones live in the nav: the Spotify connection (left)
+ * and the app account (right). The Spotify zone keeps the heavier separator
+ * that detaches the auth controls from the main nav links; the account zone
+ * uses a lighter divider so the two zones read as related-but-distinct.
+ */
+.nav-account-item {
+    border-left-color: rgba(0, 255, 0, 0.18);
+    padding-left: 1rem;
+    margin-left: 0;
+}
+
+/* "Connect Spotify" link: same emphasised border treatment as the login btn */
+.nav-spotify-connect-btn {
+    border: 2px solid #0f0 !important;
+    color: #0f0;
+    padding: 0.3rem 0.85rem;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nav-spotify-connect-btn:hover {
+    background-color: #0f0;
+    color: #000;
+    border-color: #0f0 !important;
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.35);
+    border-bottom: 2px solid #0f0 !important;
+}
+
+/* Connected status label: green check, slightly brighter than the dim name */
+.nav-spotify-status {
+    color: #7fff7f;
+    max-width: none;
+}
+
+/* Register link: lighter, secondary treatment next to the bordered Login btn */
+.nav-register-btn {
+    color: #9cff9c;
+}
+
+/* Role pill shown after the account name in the nav */
+.nav-auth-role {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid rgba(0, 255, 0, 0.45);
+    color: #9cff9c;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+/* ── Mobile overrides for the two auth zones ────────────── */
+@media (max-width: 768px) {
+    .nav-account-item {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .nav-spotify-connect-btn,
+    .nav-register-btn,
+    .nav-account-users-link {
+        width: 100%;
+        border: none !important;
+        border-bottom: 1px solid #0f0 !important;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: none !important;
+        background: none;
+    }
+
+    .nav-spotify-connect-btn:hover,
+    .nav-register-btn:hover,
+    .nav-account-users-link:hover {
+        background-color: #0f0;
+        color: #000;
+        border-bottom: 1px solid #0f0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Role pill drops to its own centred line under the name on mobile */
+    .nav-auth-role {
+        margin-left: 0.5rem;
     }
 }

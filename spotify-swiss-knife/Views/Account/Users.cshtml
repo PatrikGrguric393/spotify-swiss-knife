@@ -1,0 +1,92 @@
+@model IEnumerable<spotify_swiss_knife.Models.UserRoleRow>
+
+@{
+    ViewData["Title"] = "User Management";
+    var roles = ViewBag.Roles as string[] ?? Array.Empty<string>();
+    var userError = TempData["UserError"] as string;
+}
+
+<div class="library-page">
+    <h1>User management</h1>
+    <p>Assign a role to each registered account. Each user holds a single role.</p>
+
+    @if (!string.IsNullOrWhiteSpace(userError))
+    {
+        <div class="validation-summary show" role="alert" aria-live="assertive">
+            <ul>
+                <li>@userError</li>
+            </ul>
+        </div>
+    }
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Full name</th>
+                    <th scope="col">Current role</th>
+                    <th scope="col">Set role</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5">No users found.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var row in Model)
+                    {
+                        <tr>
+                            <td data-label="Email">@row.Email</td>
+                            <td data-label="Full name">@(string.IsNullOrWhiteSpace(row.FullName) ? "—" : row.FullName)</td>
+                            <td data-label="Current role">
+                                <span class="role-badge">@(string.IsNullOrWhiteSpace(row.CurrentRole) ? "None" : row.CurrentRole)</span>
+                            </td>
+                            <td data-label="Set role" class="cell-actions">
+                                <form asp-controller="Account" asp-action="SetRole" method="post" class="role-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@row.Id" />
+                                    <label class="visually-hidden" for="role-@row.Id">Role for @row.Email</label>
+                                    <select name="role" id="role-@row.Id" class="role-select">
+                                        @foreach (var role in roles)
+                                        {
+                                            if (role == row.CurrentRole)
+                                            {
+                                                <option value="@role" selected>@role</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@role">@role</option>
+                                            }
+                                        }
+                                    </select>
+                                    <noscript>
+                                        <button type="submit" class="btn btn-primary role-submit">Update role</button>
+                                    </noscript>
+                                </form>
+                            </td>
+                            <td data-label="Actions" class="cell-actions">
+                                <a class="btn" href="@Url.Action("EditUser", "Account", new { id = row.Id })">Edit</a>
+                                <form asp-controller="Account" asp-action="DeleteUser" asp-route-id="@row.Id" method="post" class="delete-form" onsubmit="return confirm('Delete user @row.Email?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/account-users.js" asp-append-version="true"></script>
+}
+</content>
+</invoke>

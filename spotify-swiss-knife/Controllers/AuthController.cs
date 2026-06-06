@@ -12,6 +12,7 @@ public class AuthController : Controller
     private readonly SpotifyAuthService _spotifyAuth;
 
     private const string StateCookieKey = "spotify_oauth_state";
+    private const string SpotifyScheme = "SpotifyConnect";
 
     public AuthController(SpotifyAuthService spotifyAuth)
     {
@@ -19,9 +20,9 @@ public class AuthController : Controller
     }
 
     [HttpGet("login")]
-    public IActionResult Login(string? returnUrl = null)
+    public async Task<IActionResult> Login(string? returnUrl = null)
     {
-        if (User.Identity?.IsAuthenticated == true)
+        if ((await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded)
             return Redirect(returnUrl ?? "/");
 
         var state = _spotifyAuth.GenerateState();
@@ -103,7 +104,7 @@ public class AuthController : Controller
         if (!string.IsNullOrEmpty(refreshToken))
             claims.Add(new Claim("refresh_token", refreshToken));
 
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var identity = new ClaimsIdentity(claims, SpotifyScheme);
         var principal = new ClaimsPrincipal(identity);
         var authProps = new AuthenticationProperties
         {
@@ -112,7 +113,7 @@ public class AuthController : Controller
             AllowRefresh = true,
         };
 
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
+        await HttpContext.SignInAsync(SpotifyScheme, principal, authProps);
         return RedirectToAction("Index", "Home");
     }
 
@@ -120,7 +121,7 @@ public class AuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignOutAsync(SpotifyScheme);
         return RedirectToAction("Index", "Home");
     }
 }

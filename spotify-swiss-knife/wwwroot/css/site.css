@@ -1452,3 +1452,93 @@ body.entity-detail-open .app-scroll-area {
     background: #0f0;
     color: #000;
 }
+
+/* ── Auth forms (login / register) ───────────────────────── */
+
+/*
+ * Secondary action under an auth form ("Already have an account? Log in").
+ * Spaced away from the form actions and dimmed so it reads as ancillary.
+ */
+.auth-alt-action {
+    margin: 1.25rem 0 0;
+    padding-top: 1.1rem;
+    border-top: 1px solid rgba(15, 255, 15, 0.18);
+    color: #9cff9c;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+/*
+ * asp-validation-for renders an empty <span> when there is no error; the
+ * field-error red text only matters once it carries a message. We render it
+ * inline beneath the field, matching the validation-error-message palette but
+ * without the boxed background used for the inline server-error blocks.
+ */
+.form-group > .validation-error-message {
+    display: block;
+    margin-top: 4px;
+}
+
+.form-group > .validation-error-message:empty {
+    display: none;
+}
+
+/* ── Admin user management table ─────────────────────────── */
+
+/* Role pill in the "current role" column */
+.role-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid rgba(15, 255, 15, 0.45);
+    color: #9cff9c;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Inline set-role form sits as a single row: select + submit */
+.role-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.role-select {
+    background: #000;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 0.4rem 0.55rem;
+    font-family: inherit;
+    font-size: 0.92rem;
+    cursor: pointer;
+}
+
+.role-select:focus-visible {
+    outline: 2px solid #83ffcf;
+    outline-offset: 1px;
+}
+
+/* Keep the update button compact and not stretched by .btn-primary's flex:1 */
+.role-submit.btn-primary {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .role-form {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .role-select {
+        width: 100%;
+    }
+
+    .role-submit.btn-primary {
+        width: 100%;
+        max-width: none;
+    }
+}

@@ -147,6 +147,42 @@
 	display: block;
 }
 
+/*
+ * asp-validation-summary="ModelOnly" toggles these classes itself: it adds
+ * .validation-summary-valid (no errors) or .validation-summary-errors (errors
+ * present) to the wrapper. Show the box only when errors exist so an empty
+ * summary never renders as a stray red block.
+ */
+.validation-summary.validation-summary-errors {
+	display: block;
+}
+
+.validation-summary.validation-summary-valid {
+	display: none;
+}
+
+/* MVC renders the model-level messages as a <ul><li>; match the list palette */
+.validation-summary ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.validation-summary li {
+	color: #ff0000;
+	font-size: 0.9rem;
+	padding: 4px 0 4px 16px;
+	margin: 0;
+	position: relative;
+}
+
+.validation-summary li::before {
+	content: '✕';
+	position: absolute;
+	left: 0;
+	color: #ff0000;
+}
+
 .validation-summary-title {
 	color: #ff0000;
 	font-weight: bold;

@@ -15,12 +15,14 @@
         var isShufflePlaylist = currentController == "Services" && currentAction == "ShufflePlaylist";
         var isServices = isShufflePlaylist;
         var isLibrary = currentController == "Library";
+        var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
+        var appUserRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Editor") ? "Editor" : string.Empty;
     }
 
     <header class="app-header">
         <div class="header-container">
             <h1 class="app-title">
-                <a asp-controller="Home" asp-action="Index" class="app-title-link">Spotify Swiss Knife</a>
+                <a asp-controller="Home" asp-action="Index" class="app-title-link"><span class="app-title-full">Spotify Swiss Knife</span><span class="app-title-short">SSK</span></a>
             </h1>
             @await Html.PartialAsync("_GlobalSearch")
             <nav class="app-nav">
@@ -51,18 +53,43 @@
                     </li>
                     <li><a asp-controller="About" asp-action="Index" class="nav-link @(currentController == "About" ? "active" : string.Empty)">About</a></li>
                     <li><a href="#" class="nav-link">Settings</a></li>
-                    <li class="nav-auth-item">
+                    <li class="nav-auth-item nav-spotify-item">
+                        @if (spotifyConnected)
+                        {
+                            <span class="nav-auth-name nav-spotify-status">Spotify &#10003;</span>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="nav-link nav-auth-logout-btn">Disconnect</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Login" class="nav-link nav-spotify-connect-btn">Connect Spotify</a>
+                        }
+                    </li>
+                    <li class="nav-auth-item nav-account-item">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <span class="nav-auth-name">@User.Identity.Name</span>
-                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
+                            <span class="nav-auth-name">
+                                @User.Identity.Name
+                                @if (!string.IsNullOrEmpty(appUserRole))
+                                {
+                                    <span class="nav-auth-role">@appUserRole</span>
+                                }
+                            </span>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Account" asp-action="Users" class="nav-link nav-account-users-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a>
+                            }
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="nav-auth-logout-form">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="nav-link nav-auth-logout-btn">Logout</button>
                             </form>
                         }
                         else
                         {
-                            <a asp-controller="Auth" asp-action="Login" class="nav-link nav-login-btn">Login</a>
+                            <a asp-controller="Account" asp-action="Login" class="nav-link nav-login-btn">Login</a>
+                            <a asp-controller="Account" asp-action="Register" class="nav-link nav-register-btn">Register</a>
                         }
                     </li>
                 </ul>
@@ -80,10 +107,10 @@
         </footer>
     </div>
 
-    <script src="~/js/layout.js"></script>
+    <script src="~/js/layout.js" asp-append-version="true"></script>
     <script src="~/js/global-search.js" asp-append-version="true"></script>
-    <script src="~/js/library-details.js"></script>
-    <script src="~/js/validation.js"></script>
+    <script src="~/js/library-details.js" asp-append-version="true"></script>
+    <script src="~/js/validation.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)
 </body>
