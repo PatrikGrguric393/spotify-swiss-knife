@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/validation.css" asp-append-version="true">
+    @RenderSection("Head", required: false)
 </head>
 <body>
     @{
@@ -52,21 +53,6 @@
                         </ul>
                     </li>
                     <li><a asp-controller="About" asp-action="Index" class="nav-link @(currentController == "About" ? "active" : string.Empty)">About</a></li>
-                    <li><a href="#" class="nav-link">Settings</a></li>
-                    <li class="nav-auth-item nav-spotify-item">
-                        @if (spotifyConnected)
-                        {
-                            <span class="nav-auth-name nav-spotify-status">Spotify &#10003;</span>
-                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="nav-link nav-auth-logout-btn">Disconnect</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <a asp-controller="Auth" asp-action="Login" class="nav-link nav-spotify-connect-btn">Connect Spotify</a>
-                        }
-                    </li>
                     <li class="nav-auth-item nav-account-item">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
@@ -81,15 +67,23 @@
                             {
                                 <a asp-controller="Account" asp-action="Users" class="nav-link nav-account-users-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a>
                             }
+                            <a asp-controller="Files" asp-action="Index" class="nav-link @(currentController == "Files" ? "active" : string.Empty)">Files</a>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="nav-auth-logout-form">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="nav-link nav-auth-logout-btn">Logout</button>
                             </form>
                         }
+                        else if (spotifyConnected)
+                        {
+                            <span class="nav-auth-name nav-spotify-status">Spotify &#10003;</span>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="nav-link nav-auth-logout-btn">Disconnect</button>
+                            </form>
+                        }
                         else
                         {
-                            <a asp-controller="Account" asp-action="Login" class="nav-link nav-login-btn">Login</a>
-                            <a asp-controller="Account" asp-action="Register" class="nav-link nav-register-btn">Register</a>
+                            <a asp-controller="Login" asp-action="Index" class="nav-link nav-login-btn">Log in</a>
                         }
                     </li>
                 </ul>

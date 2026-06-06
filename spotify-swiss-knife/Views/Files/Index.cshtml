@@ -1,0 +1,143 @@
+@{
+    ViewData["Title"] = "Files";
+    Layout = "_Layout";
+}
+
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
+}
+
+<div class="library-page">
+    <h1>Files</h1>
+
+    @Html.AntiForgeryToken()
+
+    <div class="files-section">
+        <form id="file-dropzone" class="dropzone files-dropzone" action="/files/upload" method="post">
+        </form>
+    </div>
+
+    <div class="files-section">
+        <div id="files-list-container">
+            <p class="files-empty">Loading...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script>
+        Dropzone.autoDiscover = false;
+
+        const antiforgeryToken = () =>
+            document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        const dropzone = new Dropzone('#file-dropzone', {
+            url: '/files/upload',
+            headers: { 'RequestVerificationToken': antiforgeryToken() },
+            dictDefaultMessage: 'Drop files here or click to upload',
+            init: function () {
+                this.on('sending', function (file, xhr, formData) {
+                    xhr.setRequestHeader('RequestVerificationToken', antiforgeryToken());
+                });
+                this.on('success', function () {
+                    loadFiles();
+                });
+                this.on('error', function (file, errorMessage) {
+                    const msg = typeof errorMessage === 'string'
+                        ? errorMessage
+                        : (errorMessage.error || 'Upload failed.');
+                    const errEl = file.previewElement.querySelector('.dz-error-message span');
+                    if (errEl) errEl.textContent = msg;
+                });
+            }
+        });
+
+        function formatSize(bytes) {
+            if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(2) + ' GB';
+            if (bytes >= 1048576)    return (bytes / 1048576).toFixed(2) + ' MB';
+            if (bytes >= 1024)       return (bytes / 1024).toFixed(2) + ' KB';
+            return bytes + ' B';
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleString();
+        }
+
+        async function deleteFile(id) {
+            if (!confirm('Delete this file?')) return;
+            try {
+                const res = await fetch(`/files/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': antiforgeryToken() }
+                });
+                if (!res.ok) throw new Error('Delete failed.');
+                loadFiles();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function loadFiles() {
+            const container = document.getElementById('files-list-container');
+            try {
+                const res = await fetch('/files/list');
+                if (!res.ok) throw new Error('Failed to load files.');
+                const files = await res.json();
+
+                if (!files.length) {
+                    container.innerHTML = '<p class="files-empty">No files uploaded yet.</p>';
+                    return;
+                }
+
+                const rows = files.map(f => `
+                    <tr>
+                        <td data-label="Name">${escapeHtml(f.name)}</td>
+                        <td data-label="Size">${formatSize(f.size)}</td>
+                        <td data-label="Type">${escapeHtml(f.contentType || '—')}</td>
+                        <td data-label="Uploaded">${formatDate(f.uploadedAt)}</td>
+                        <td data-label="Actions" class="cell-actions">
+                            <a class="btn" href="/files/download/${f.id}" download="${escapeHtml(f.name)}">Download</a>
+                            <button class="btn btn-danger files-delete-btn" data-id="${f.id}">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="table-wrap">
+                        <table class="entity-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Size</th>
+                                    <th>Type</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+
+                container.querySelectorAll('.files-delete-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteFile(btn.dataset.id));
+                });
+            } catch (e) {
+                container.innerHTML = `<p class="files-empty">${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        loadFiles();
+    </script>
+}

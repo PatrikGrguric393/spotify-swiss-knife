@@ -23,7 +23,15 @@ public class AuthController : Controller
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
         if ((await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded)
-            return Redirect(returnUrl ?? "/");
+            return LocalRedirect(returnUrl ?? "/");
+
+        // A local account and Spotify are mutually exclusive: refuse to start the
+        // Spotify flow while a local account is signed in.
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            TempData["LoginError"] = "You're signed in with a local account. Log out first to connect Spotify instead.";
+            return RedirectToAction("Index", "Login");
+        }
 
         var state = _spotifyAuth.GenerateState();
         Response.Cookies.Append(StateCookieKey, state, new CookieOptions
@@ -91,6 +99,13 @@ public class AuthController : Controller
 
         if (accessToken == null || userId == null)
             return RedirectToAction("Index", "Home");
+
+        // Guard against a local account signing in between callback and confirm.
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            TempData["LoginError"] = "You're signed in with a local account. Log out first to connect Spotify instead.";
+            return RedirectToAction("Index", "Login");
+        }
 
         var claims = new List<Claim>
         {

@@ -8,7 +8,7 @@ namespace spotify_swiss_knife.Controllers;
 [ApiController]
 [Route("api/artists")]
 [Produces("application/json")]
-public class ArtistsApiController : ControllerBase
+public class ArtistsApiController : ApiControllerBase
 {
     private readonly ArtistRepository _artistRepository;
 
@@ -123,19 +123,5 @@ public class ArtistsApiController : ControllerBase
 
         _artistRepository.SoftDelete(id);
         return NoContent();
-    }
-
-    private static bool TryValidateSpotifyUrl(string? url, out string error)
-    {
-        error = string.Empty;
-        if (string.IsNullOrEmpty(url)) return true;
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed) || !parsed.Host.Contains("spotify.com"))
-        {
-            error = "Spotify URL must be a valid spotify.com link.";
-            return false;
-        }
-
-        return true;
     }
 }

@@ -1,0 +1,59 @@
+@{
+    ViewData["Title"] = ViewData["Title"] as string ?? "Log In";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var loginError = TempData["LoginError"] as string;
+}
+
+<div class="login-choice-shell">
+    <div class="login-choice-inner">
+        @if (!string.IsNullOrEmpty(loginError))
+        {
+            <div class="validation-summary validation-summary-errors login-choice-alert" role="alert">
+                <p class="validation-summary-title">Could not sign you in</p>
+                <ul class="validation-summary-list">
+                    <li>@loginError</li>
+                </ul>
+            </div>
+        }
+
+        <header class="login-choice-header">
+            <h1 class="login-choice-heading">Choose how to log in</h1>
+            <p class="login-choice-subtitle">
+                You can sign in with a local account or with Spotify &mdash; not both at once.
+            </p>
+        </header>
+
+        <div class="login-choice-grid">
+            <section class="login-choice-card" aria-labelledby="loginChoiceLocalTitle">
+                <h2 class="login-choice-card-title" id="loginChoiceLocalTitle">Local account</h2>
+                <p class="login-choice-card-desc">
+                    Sign in with the username and password you registered on this app.
+                </p>
+                <a asp-controller="Account"
+                   asp-action="Login"
+                   asp-route-returnUrl="@returnUrl"
+                   class="auth-confirm-btn auth-confirm-btn--primary login-choice-btn">
+                    Log in with a local account
+                </a>
+                <p class="auth-alt-action login-choice-alt">
+                    No account yet?
+                    <a asp-controller="Account"
+                       asp-action="Register"
+                       asp-route-returnUrl="@returnUrl">Create an account</a>
+                </p>
+            </section>
+
+            <section class="login-choice-card" aria-labelledby="loginChoiceSpotifyTitle">
+                <h2 class="login-choice-card-title" id="loginChoiceSpotifyTitle">Spotify</h2>
+                <p class="login-choice-card-desc">
+                    Connect your Spotify account to use it as your sign-in method.
+                </p>
+                <a asp-controller="Auth"
+                   asp-action="Login"
+                   class="auth-confirm-btn auth-confirm-btn--secondary login-choice-btn">
+                    Log in with Spotify
+                </a>
+            </section>
+        </div>
+    </div>
+</div>

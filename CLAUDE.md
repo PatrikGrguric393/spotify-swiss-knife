@@ -14,3 +14,9 @@
 - For any request involving Spotify API endpoints, requests, responses, OAuth scopes and flows, or any other Spotify API-related tasks, use the `spotify-web-api` skill as the authoritative source of truth.
 - Do not rely on memory, examples from blogs, or inferred endpoint shapes for Spotify API work.
 - Always verify request parameters, request bodies, response payloads, status codes, and OAuth scopes against the `spotify-web-api` skill before suggesting or writing code.
+
+## Spotify API testing
+
+- Spotify API functionality cannot be tested locally.
+- Do not attempt to run, simulate, or verify Spotify API calls as part of task completion.
+- All testing of Spotify API related functionality must be offloaded to the developer.

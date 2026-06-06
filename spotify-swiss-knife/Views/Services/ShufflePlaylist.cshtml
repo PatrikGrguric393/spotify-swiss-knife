@@ -1,4 +1,3 @@
-@using System.Text.Json
 @model spotify_swiss_knife.Models.ShufflePlaylistPage
 
 @{
@@ -9,288 +8,106 @@
     <h1>Shuffle Playlist</h1>
     <p>Select a playlist, choose randomness, and start the shuffle immediately.</p>
 
-    <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
-        <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <section class="shuffle-notice shuffle-notice-error" role="alert" aria-labelledby="shuffleErrorTitle">
+            <h2 id="shuffleErrorTitle" class="shuffle-notice-title">Playlists unavailable</h2>
+            <p class="shuffle-notice-text">@Model.ErrorMessage</p>
+        </section>
+    }
+    else
+    {
+        <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
+            <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
 
-        <form action="@Url.Action("ShufflePlaylist", "Services")" method="post" class="shuffle-form">
-            @Html.AntiForgeryToken()
+            <form action="@Url.Action("ShufflePlaylist", "Services")" method="post" class="shuffle-form">
+                @Html.AntiForgeryToken()
 
-            <div class="shuffle-form-pair">
-                <div class="shuffle-form-row">
-                    <label asp-for="Input.PlaylistId">Playlist</label>
-                    <select asp-for="Input.PlaylistId" class="shuffle-input" required>
-                        <option value="">Select playlist</option>
-                        @foreach (var playlist in Model.Playlists)
-                        {
-                            <option value="@playlist.Id">@playlist.Name (@playlist.Tracks.Total tracks)</option>
-                        }
-                    </select>
-                    <span class="shuffle-validation" asp-validation-for="Input.PlaylistId"></span>
+                <div class="shuffle-form-pair">
+                    <div class="shuffle-form-row">
+                        <label asp-for="Input.PlaylistId">Playlist</label>
+                        <select asp-for="Input.PlaylistId" class="shuffle-input" required>
+                            <option value="">Select playlist</option>
+                            @foreach (var playlist in Model.Playlists)
+                            {
+                                <option value="@playlist.Id">@playlist.Name (@playlist.Tracks.Total tracks)</option>
+                            }
+                        </select>
+                        <span class="shuffle-validation" asp-validation-for="Input.PlaylistId"></span>
+                    </div>
+
+                    <div class="shuffle-form-row">
+                        <label asp-for="Input.RandomnessLevel">Randomness level</label>
+                        <select asp-for="Input.RandomnessLevel" class="shuffle-input">
+                            @foreach (var level in Enum.GetValues<spotify_swiss_knife.Models.ShuffleRandomnessLevel>())
+                            {
+                                <option value="@level">@level</option>
+                            }
+                        </select>
+                    </div>
                 </div>
 
-                <div class="shuffle-form-row">
-                    <label asp-for="Input.RandomnessLevel">Randomness level</label>
-                    <select asp-for="Input.RandomnessLevel" class="shuffle-input">
-                        @foreach (var level in Enum.GetValues<spotify_swiss_knife.Models.ShuffleRandomnessLevel>())
-                        {
-                            <option value="@level">@level</option>
-                        }
-                    </select>
+                <div class="shuffle-form-actions">
+                    <button type="submit" class="shuffle-submit">
+                        <span class="shuffle-spinner" aria-hidden="true"></span>
+                        <span class="shuffle-submit-label">Start shuffle</span>
+                    </button>
                 </div>
-            </div>
 
-            <div class="shuffle-form-row">
-                <button type="button" id="viewPlaylistBtn" class="playlist-contents-trigger" style="display: none;">
-                    View playlist contents
-                </button>
-            </div>
+                <p class="shuffle-status" role="status" aria-live="polite" aria-atomic="true">
+                    @(string.IsNullOrWhiteSpace(Model.StatusMessage) ? "No shuffle has been run yet." : Model.StatusMessage)
+                </p>
 
-            <div class="shuffle-form-actions">
-                <button type="submit" class="shuffle-submit">Start shuffle</button>
-            </div>
+                @if (Model.ShuffledAtUtc.HasValue)
+                {
+                    <p class="shuffle-last-run">
+                        Last shuffled:
+                        <time class="shuffle-time" datetime="@Model.ShuffledAtUtc.Value.ToString("o")" data-utc="@Model.ShuffledAtUtc.Value.ToString("o")"></time>
+                    </p>
+                }
 
-            <p class="shuffle-status" role="status" aria-live="polite" aria-atomic="true">
-                @(string.IsNullOrWhiteSpace(Model.StatusMessage) ? "No shuffle has been run yet." : Model.StatusMessage)
-            </p>
-
-        </form>
-    </section>
-
-    <!-- Playlist Contents Modal -->
-    <div id="playlistContentsBackdrop" class="playlist-contents-backdrop" hidden aria-hidden="true">
-        <div class="playlist-contents-modal">
-            <div class="playlist-contents-header">
-                <h2 id="playlistContentsTitle">Playlist Contents</h2>
-                <button type="button" id="playlistContentsClose" class="playlist-contents-close" aria-label="Close">✕</button>
-            </div>
-            <div class="playlist-contents-body">
-                <div class="playlist-tabs">
-                    <button type="button" class="playlist-tab-button active" data-tab="before">Before Shuffle</button>
-                    <button type="button" class="playlist-tab-button" data-tab="after">After Shuffle</button>
-                </div>
-                <div id="beforeShuffleContent" class="playlist-tab-content active"></div>
-                <div id="afterShuffleContent" class="playlist-tab-content"></div>
-            </div>
-        </div>
-    </div>
+            </form>
+        </section>
+    }
 
 </section>
 
 @section Scripts {
-    @{ var playlistsJson = JsonSerializer.Serialize(Model.Playlists, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const playlists = @Html.Raw(playlistsJson);
-        const playlistSelect = document.querySelector('[name="Input.PlaylistId"]');
-        const randomnessSelect = document.querySelector('[name="Input.RandomnessLevel"]');
-        const viewPlaylistBtn = document.getElementById('viewPlaylistBtn');
-        const playlistBackdrop = document.getElementById('playlistContentsBackdrop');
-        const playlistClose = document.getElementById('playlistContentsClose');
-        const playlistTitle = document.getElementById('playlistContentsTitle');
-        const beforeContent = document.getElementById('beforeShuffleContent');
-        const afterContent = document.getElementById('afterShuffleContent');
-        const tabButtons = document.querySelectorAll('.playlist-tab-button');
-
-        if (!playlistSelect || !randomnessSelect || !playlistBackdrop || !playlistClose || !beforeContent || !afterContent) {
-            return;
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        function formatDuration(ms) {
-            if (!Number.isFinite(ms) || ms < 0) {
-                return 'N/A';
-            }
-
-            const seconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-        }
-
-        function normalizeTrack(item) {
-            if (!item || typeof item !== 'object') {
-                return null;
-            }
-
-            const candidate = (item.track && typeof item.track === 'object') ? item.track : item;
-            return (candidate && typeof candidate === 'object') ? candidate : null;
-        }
-
-        function extractPlaylistTracks(playlist) {
-            const sources = [
-                playlist?.tracks?.items,
-                playlist?.items?.items,
-                playlist?.items
-            ];
-
-            for (const source of sources) {
-                if (!Array.isArray(source) || source.length === 0) {
-                    continue;
-                }
-
-                return source.map(normalizeTrack).filter(Boolean);
-            }
-
-            return [];
-        }
-
-        function getPlaylistById(playlistId) {
-            return playlists.find(playlist => playlist.id === playlistId);
-        }
-
-        function shuffleItems(items, randomnessLevel) {
-            const shuffled = items.slice();
-
-            if (randomnessLevel === 'Low') {
-                for (let index = 0; index < shuffled.length - 1; index += 2) {
-                    [shuffled[index], shuffled[index + 1]] = [shuffled[index + 1], shuffled[index]];
-                }
-
-                return shuffled;
-            }
-
-            function fisherYates(list) {
-                for (let index = list.length - 1; index > 0; index--) {
-                    const swapIndex = Math.floor(Math.random() * (index + 1));
-                    [list[index], list[swapIndex]] = [list[swapIndex], list[index]];
-                }
-            }
-
-            fisherYates(shuffled);
-
-            if (randomnessLevel === 'High') {
-                fisherYates(shuffled);
-                fisherYates(shuffled);
-            }
-
-            return shuffled;
-        }
-
-        function renderTrackList(tracks) {
-            if (!tracks.length) {
-                return '<p class="shuffle-empty-state">No tracks in this playlist.</p>';
-            }
-
-            let markup = '<div class="table-wrap"><table class="entity-table"><thead><tr><th>#</th><th>Song</th><th>Artists</th><th>Duration</th></tr></thead><tbody>';
-
-            tracks.forEach(function (track, index) {
-                const songName = (typeof track.name === 'string' && track.name.trim()) ? track.name : 'Unknown title';
-                const artists = Array.isArray(track.artists)
-                    ? track.artists
-                        .map(artist => (artist && typeof artist.name === 'string') ? artist.name : '')
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
-                const artistText = artists || 'Unknown artist';
-                const durationValue = Number(track.duration_ms ?? track.durationMs);
-                const durationText = formatDuration(durationValue);
-
-                markup += '<tr>' +
-                    '<td data-label="#">' + (index + 1) + '</td>' +
-                    '<td data-label="Song">' + escapeHtml(songName) + '</td>' +
-                    '<td data-label="Artists">' + escapeHtml(artistText) + '</td>' +
-                    '<td data-label="Duration">' + durationText + '</td>' +
-                    '</tr>';
-            });
-
-            markup += '</tbody></table></div>';
-            return markup;
-        }
-
-        function updateModalContents() {
-            const selectedPlaylist = getPlaylistById(playlistSelect.value);
-
-            if (!selectedPlaylist) {
-                beforeContent.innerHTML = '<p class="shuffle-empty-state">Select a playlist to see its track order.</p>';
-                afterContent.innerHTML = '<p class="shuffle-empty-state">Select a playlist to preview the shuffled order.</p>';
-                playlistTitle.textContent = 'Playlist Contents';
-                return false;
-            }
-
-            const currentTracks = extractPlaylistTracks(selectedPlaylist);
-            const shuffledTracks = shuffleItems(currentTracks, randomnessSelect.value);
-
-            playlistTitle.textContent = selectedPlaylist.name + ' - ' + currentTracks.length + ' tracks';
-            beforeContent.innerHTML = renderTrackList(currentTracks);
-            afterContent.innerHTML = renderTrackList(shuffledTracks);
-            return true;
-        }
-
-        function openModal() {
-            if (!updateModalContents()) {
-                return;
-            }
-
-            playlistBackdrop.hidden = false;
-            playlistBackdrop.setAttribute('aria-hidden', 'false');
-            playlistClose.focus();
-        }
-
-        function closeModal() {
-            playlistBackdrop.hidden = true;
-            playlistBackdrop.setAttribute('aria-hidden', 'true');
-            if (viewPlaylistBtn) {
-                viewPlaylistBtn.focus();
-            }
-        }
-
-        function updateViewButton() {
-            viewPlaylistBtn.style.display = playlistSelect.value ? 'block' : 'none';
-        }
-
-        playlistSelect.addEventListener('change', function () {
-            updateViewButton();
-
-            if (!this.value) {
-                closeModal();
-                return;
-            }
-
-            if (!playlistBackdrop.hidden) {
-                updateModalContents();
+        document.querySelectorAll('.shuffle-time[data-utc]').forEach(function (el) {
+            var parsed = new Date(el.dataset.utc);
+            if (!Number.isNaN(parsed.getTime())) {
+                el.textContent = parsed.toLocaleString();
             }
         });
 
-        randomnessSelect.addEventListener('change', function () {
-            if (!playlistBackdrop.hidden) {
-                updateModalContents();
-            }
-        });
+        document.querySelectorAll('.shuffle-form').forEach(function (form) {
+            var submit = form.querySelector('.shuffle-submit');
+            var label = form.querySelector('.shuffle-submit-label');
+            var status = form.querySelector('.shuffle-status');
+            var inFlight = false;
 
-        if (viewPlaylistBtn) {
-            viewPlaylistBtn.addEventListener('click', openModal);
-        }
+            form.addEventListener('submit', function (event) {
+                if (inFlight) {
+                    event.preventDefault();
+                    return;
+                }
+                inFlight = true;
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                tabButtons.forEach(tabButton => tabButton.classList.remove('active'));
-                document.querySelectorAll('.playlist-tab-content').forEach(content => content.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(`${this.dataset.tab}ShuffleContent`).classList.add('active');
+                if (submit) {
+                    submit.disabled = true;
+                    submit.setAttribute('aria-busy', 'true');
+                    submit.classList.add('is-shuffling');
+                }
+                if (label) {
+                    label.textContent = 'Shuffling…';
+                }
+                if (status) {
+                    status.textContent = 'Shuffling…';
+                }
             });
         });
-
-        playlistClose.addEventListener('click', closeModal);
-
-        playlistBackdrop.addEventListener('click', function (event) {
-            if (event.target === playlistBackdrop) {
-                closeModal();
-            }
-        });
-
-        updateViewButton();
-
-        if (playlistSelect.value) {
-            updateModalContents();
-        }
     });
     </script>
 }

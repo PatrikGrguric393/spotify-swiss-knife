@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.FormModels;
@@ -8,46 +9,113 @@ namespace spotify_swiss_knife.Controllers;
 public class ServicesController : Controller
 {
     private readonly PlaylistRepository _playlistRepository;
+    private readonly SpotifyAuthService _spotifyAuth;
 
-    public ServicesController(PlaylistRepository playlistRepository)
+    private const string SpotifyScheme = "SpotifyConnect";
+
+    public ServicesController(PlaylistRepository playlistRepository, SpotifyAuthService spotifyAuth)
     {
         _playlistRepository = playlistRepository;
+        _spotifyAuth = spotifyAuth;
     }
 
-    public IActionResult ShufflePlaylist()
+    public async Task<IActionResult> ShufflePlaylist()
     {
-        var playlists = _playlistRepository.GetAll();
-        var viewModel = ShufflePlaylistPage.Create(playlists);
+        var source = await ResolvePlaylistsAsync();
+        var viewModel = ShufflePlaylistPage.Create(source.Playlists, errorMessage: source.Error);
         return View(viewModel);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ShufflePlaylist(ShufflePlaylistFormInput input)
+    public async Task<IActionResult> ShufflePlaylist(ShufflePlaylistFormInput input)
     {
-        var playlists = _playlistRepository.GetAll();
-        var selectedPlaylist = playlists.FirstOrDefault(playlist => playlist.Id == input.PlaylistId);
+        var source = await ResolvePlaylistsAsync();
 
+        if (source.Error is not null)
+        {
+            return View(ShufflePlaylistPage.Create(source.Playlists, input, errorMessage: source.Error));
+        }
+
+        var selectedPlaylist = source.Playlists.FirstOrDefault(playlist => playlist.Id == input.PlaylistId);
         if (selectedPlaylist is null)
         {
             ModelState.AddModelError("Input.PlaylistId", "Please select a valid playlist.");
+            return View(ShufflePlaylistPage.Create(source.Playlists, input));
+        }
+
+        // Spotify playlists are shuffled by writing the reordered tracks back to the user's
+        // Spotify account; local-account users shuffle the database-stored playlists.
+        if (source.IsSpotify)
+        {
+            return await ShuffleSpotifyPlaylistAsync(source, selectedPlaylist, input);
         }
 
         var statusMessage = string.Empty;
-
-        if (ModelState.IsValid && selectedPlaylist is not null)
+        if (ModelState.IsValid)
         {
             statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
         }
 
-        var viewModel = ShufflePlaylistPage.Create(playlists, input, statusMessage);
-        return View(viewModel);
+        return View(ShufflePlaylistPage.Create(
+            source.Playlists, input, statusMessage, shuffledAtUtc: selectedPlaylist.LastShuffled));
+    }
+
+    private async Task<IActionResult> ShuffleSpotifyPlaylistAsync(
+        PlaylistSource source, Playlist selectedPlaylist, ShufflePlaylistFormInput input)
+    {
+        var result = await _spotifyAuth.ShufflePlaylistAsync(
+            source.AccessToken!, selectedPlaylist.Id, input.RandomnessLevel);
+
+        if (!result.Succeeded)
+        {
+            return View(ShufflePlaylistPage.Create(source.Playlists, input, statusMessage: result.Error ?? string.Empty));
+        }
+
+        var statusMessage = $"Shuffle completed for '{selectedPlaylist.Name}'. " +
+            $"Tracks: {result.TrackCount}, moved: {result.MovedCount}, randomness: {input.RandomnessLevel}.";
+        return View(ShufflePlaylistPage.Create(
+            source.Playlists, input, statusMessage, shuffledAtUtc: DateTime.UtcNow));
+    }
+
+    // Picks the playlist source from the current login: Spotify if connected, otherwise
+    // the local database for a signed-in app user, otherwise an error for anonymous users.
+    private async Task<PlaylistSource> ResolvePlaylistsAsync()
+    {
+        var spotifyAuth = await HttpContext.AuthenticateAsync(SpotifyScheme);
+        if (spotifyAuth.Succeeded)
+        {
+            var accessToken = spotifyAuth.Principal?.FindFirst("access_token")?.Value;
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                return new PlaylistSource([], true, null,
+                    "Your Spotify connection is missing an access token. Please disconnect and reconnect Spotify.");
+            }
+
+            var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+            if (playlists is null)
+            {
+                return new PlaylistSource([], true, null,
+                    "We couldn't load your Spotify playlists. Your session may have expired or lacks the required " +
+                    "permission — please disconnect and reconnect Spotify.");
+            }
+
+            return new PlaylistSource(playlists, true, accessToken, null);
+        }
+
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return new PlaylistSource(_playlistRepository.GetAll(), false, null, null);
+        }
+
+        return new PlaylistSource([], false, null,
+            "You're not logged in. Connect Spotify or sign in with a local account to load playlists to shuffle.");
     }
 
     private string ExecuteShuffle(Playlist playlist, ShuffleRandomnessLevel randomnessLevel)
     {
         var originalItems = playlist.Tracks.Items.ToList();
-        var shuffledItems = ShuffleTracks(originalItems, randomnessLevel);
+        var shuffledItems = PlaylistShuffler.Shuffle(originalItems, randomnessLevel);
 
         var originalPositions = originalItems
             .Select((item, index) => new { item.Track.Id, index })
@@ -61,44 +129,9 @@ public class ServicesController : Controller
         playlist.LastShuffled = DateTime.UtcNow;
 
         return $"Shuffle completed for '{playlist.Name}'. " +
-               $"Tracks: {shuffledItems.Count}, moved: {movedCount}, randomness: {randomnessLevel}, " +
-               $"executed: {playlist.LastShuffled:yyyy-MM-dd HH:mm} UTC.";
+               $"Tracks: {shuffledItems.Count}, moved: {movedCount}, randomness: {randomnessLevel}.";
     }
 
-    private static List<PlaylistTrack> ShuffleTracks(List<PlaylistTrack> tracks, ShuffleRandomnessLevel randomnessLevel)
-    {
-        var shuffled = tracks.ToList();
-
-        switch (randomnessLevel)
-        {
-            case ShuffleRandomnessLevel.Low:
-                for (var index = 0; index < shuffled.Count - 1; index += 2)
-                {
-                    (shuffled[index], shuffled[index + 1]) = (shuffled[index + 1], shuffled[index]);
-                }
-                break;
-            case ShuffleRandomnessLevel.Medium:
-                FisherYatesShuffle(shuffled);
-                break;
-            case ShuffleRandomnessLevel.High:
-                FisherYatesShuffle(shuffled);
-                FisherYatesShuffle(shuffled);
-                FisherYatesShuffle(shuffled);
-                break;
-            default:
-                FisherYatesShuffle(shuffled);
-                break;
-        }
-
-        return shuffled;
-    }
-
-    private static void FisherYatesShuffle(List<PlaylistTrack> tracks)
-    {
-        for (var index = tracks.Count - 1; index > 0; index--)
-        {
-            var swapIndex = Random.Shared.Next(index + 1);
-            (tracks[index], tracks[swapIndex]) = (tracks[swapIndex], tracks[index]);
-        }
-    }
+    private sealed record PlaylistSource(
+        List<Playlist> Playlists, bool IsSpotify, string? AccessToken, string? Error);
 }

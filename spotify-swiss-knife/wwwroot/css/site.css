@@ -433,6 +433,36 @@ li {
     font-family: inherit;
     font-size: 0.95rem;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shuffle-spinner {
+    display: none;
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: 0 0 auto;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: shuffle-spin 0.7s linear infinite;
+}
+
+.shuffle-submit.is-shuffling .shuffle-spinner {
+    display: inline-block;
+}
+
+@keyframes shuffle-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shuffle-spinner {
+        animation: none;
+    }
 }
 
 .shuffle-submit:hover,
@@ -455,9 +485,77 @@ li {
     font-size: 0.92rem;
 }
 
+.shuffle-last-run {
+    margin: 0.35rem 0 0;
+    color: #6fbf6f;
+    font-size: 0.88rem;
+}
+
+.shuffle-last-run .shuffle-time {
+    color: #9cff9c;
+}
+
 .shuffle-empty-state {
     margin: 0.75rem 0 0;
     color: #9cff9c;
+}
+
+.shuffle-notice {
+    border: 1px solid #0f0;
+    background-color: #030303;
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.shuffle-notice-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #9cff9c;
+}
+
+.shuffle-notice-text {
+    margin: 0;
+    color: #b6ffb6;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.shuffle-notice-error {
+    border-color: #ff5c5c;
+    background-color: rgba(255, 0, 0, 0.06);
+}
+
+.shuffle-notice-error .shuffle-notice-title {
+    color: #ff8f8f;
+}
+
+.shuffle-notice-error .shuffle-notice-text {
+    color: #ffc2c2;
+}
+
+.shuffle-notice-info {
+    border-color: #83ffcf;
+    background-color: rgba(131, 255, 207, 0.05);
+    margin-bottom: 0.85rem;
+}
+
+.shuffle-notice-info .shuffle-notice-title {
+    color: #83ffcf;
+}
+
+.shuffle-submit:disabled,
+.shuffle-submit[disabled] {
+    border-color: #005500;
+    color: #005500;
+    background-color: #000;
+    cursor: not-allowed;
+}
+
+.shuffle-submit:disabled:hover,
+.shuffle-submit[disabled]:hover {
+    background-color: #000;
+    color: #005500;
 }
 
 .album-track-picker {
@@ -590,21 +688,6 @@ li {
 
 .playlist-contents-backdrop[hidden] {
     display: none !important;
-}
-
-.playlist-contents-trigger {
-    background-color: #000;
-    color: #0f0;
-    border: 1px solid #0f0;
-    padding: 0.38rem 0.6rem;
-    font-family: inherit;
-    font-size: 0.92rem;
-    cursor: pointer;
-}
-
-.playlist-contents-trigger:hover {
-    background-color: #0f0;
-    color: #000;
 }
 
 .table-wrap {
@@ -1006,48 +1089,6 @@ body.entity-detail-open .app-scroll-area {
     }
 }
 
-.playlist-tabs {
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: 1px solid #0f0;
-    padding: 0.75rem 1rem 0;
-    background-color: #030303;
-}
-
-.playlist-tab-button {
-    background-color: #000;
-    color: #0f0;
-    border: 1px solid #0f0;
-    border-bottom: none;
-    padding: 0.4rem 0.75rem;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.92rem;
-    transition: all 0.15s ease;
-}
-
-.playlist-tab-button:hover {
-    background-color: #0f0;
-    color: #000;
-}
-
-.playlist-tab-button.active {
-    background-color: #0f0;
-    color: #000;
-    font-weight: bold;
-}
-
-.playlist-tab-content {
-    display: none;
-    padding: 1rem;
-    min-height: 200px;
-    max-height: 50vh;
-    overflow-y: auto;
-}
-
-.playlist-tab-content.active {
-    display: block;
-}
 
 .playlist-track-list {
     display: flex;
@@ -1541,4 +1582,94 @@ body.entity-detail-open .app-scroll-area {
         width: 100%;
         max-width: none;
     }
+}
+
+/* ── Files page ───────────────────────────────────────────── */
+
+.files-section {
+    margin: 1.5rem 0;
+}
+
+.files-dropzone {
+    border: 2px dashed #0f0;
+    background-color: #000;
+    color: #0f0;
+    padding: 2rem 1.5rem;
+    min-height: 160px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.files-dropzone:hover,
+.files-dropzone.dz-drag-hover {
+    background-color: #031303;
+}
+
+.files-dropzone .dz-message {
+    text-align: center;
+    color: #0f0;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.files-dropzone .dz-message .dz-button {
+    background: none;
+    border: none;
+    color: #0f0;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.files-dropzone .dz-preview .dz-progress {
+    background: #031303;
+}
+
+.files-dropzone .dz-preview .dz-progress .dz-upload {
+    background: #0f0;
+}
+
+.files-dropzone .dz-preview .dz-filename span,
+.files-dropzone .dz-preview .dz-size span {
+    color: #0f0;
+    background: #000;
+}
+
+.files-dropzone .dz-preview.dz-error .dz-error-message {
+    background: #1a0000;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+}
+
+.files-dropzone .dz-preview.dz-error .dz-error-mark svg g {
+    fill: #ff4444;
+}
+
+.files-dropzone .dz-preview.dz-success .dz-success-mark svg g {
+    fill: #0f0;
+}
+
+.files-empty {
+    color: #9cff9c;
+    font-style: italic;
+    margin: 1rem 0;
+}
+
+.files-delete-btn {
+    border: 1px solid #0f0;
+    background: #000;
+    color: #0f0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.92rem;
+    padding: 0.38rem 0.6rem;
+}
+
+.files-delete-btn:hover {
+    background: #0f0;
+    color: #000;
 }

@@ -96,6 +96,13 @@ public class TrackRepository
             return;
         }
 
+        if (track.AlbumId is not null)
+        {
+            var album = _context.Albums.Find(track.AlbumId);
+            if (album is not null)
+                album.TotalTracks = _context.Tracks.Count(t => t.AlbumId == track.AlbumId && t.Id != id);
+        }
+
         // PlaylistTrackEntry.Track uses Restrict, so remove playlist links before deleting the track
         var entries = _context.PlaylistTrackEntries.Where(entry => entry.TrackId == id);
         _context.PlaylistTrackEntries.RemoveRange(entries);

@@ -12,12 +12,15 @@ public class AlbumSummaryDto
 
     public int TotalTracks { get; set; }
 
+    public string? SpotifyUrl { get; set; }
+
     public static AlbumSummaryDto FromEntity(Album album) => new()
     {
         Id = album.Id,
         Name = album.Name,
         AlbumType = album.AlbumType,
         ReleaseDate = album.ReleaseDate,
-        TotalTracks = album.TotalTracks
+        TotalTracks = album.TotalTracks,
+        SpotifyUrl = album.ExternalUrls?.Spotify
     };
 }

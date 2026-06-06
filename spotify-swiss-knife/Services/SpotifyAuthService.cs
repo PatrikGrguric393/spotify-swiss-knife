@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
@@ -16,7 +17,10 @@ public class SpotifyAuthService
     private const string AuthorizeUrl = "https://accounts.spotify.com/authorize";
     private const string TokenUrl = "https://accounts.spotify.com/api/token";
     private const string ProfileUrl = "https://api.spotify.com/v1/me";
-    private const string Scopes = "user-read-private user-read-email";
+    private const string PlaylistsUrl = "https://api.spotify.com/v1/me/playlists?limit=50";
+    private const string PlaylistBaseUrl = "https://api.spotify.com/v1/playlists";
+    private const string Scopes = "user-read-private user-read-email playlist-read-private " +
+        "playlist-read-collaborative playlist-modify-public playlist-modify-private";
 
     public SpotifyAuthService(IConfiguration config, IHttpClientFactory httpClientFactory)
     {
@@ -95,5 +99,298 @@ public class SpotifyAuthService
 
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<SpotifyUserProfile>(json);
+    }
+
+    // Returns the playlists owned or followed by the current user, or null if the
+    // request fails (expired token, missing scope, rate limit, etc.). The list
+    // endpoint returns simplified playlists whose tracks field is only a {href, total}
+    // reference, so track items are not populated here.
+    public async Task<List<Playlist>?> GetUserPlaylistsAsync(string accessToken)
+    {
+        var playlists = new List<Playlist>();
+        var url = PlaylistsUrl;
+
+        // Follow paging links, capped so a malformed response can't loop forever.
+        for (var page = 0; page < 40 && url is not null; page++)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            var pageResult = JsonSerializer.Deserialize<PlaylistsPage>(json);
+            if (pageResult is null)
+                return null;
+
+            // The schema allows null entries when a playlist is no longer available.
+            playlists.AddRange(pageResult.Items.Where(playlist => playlist is not null));
+            url = pageResult.Next;
+        }
+
+        return playlists;
+    }
+
+    // Max items a single replace (PUT with a uris body) can set in one request.
+    private const int ReplaceBatchLimit = 100;
+
+    // Shuffles a Spotify playlist in place. Requires playlist-modify-* scopes.
+    //
+    // Fast path: a playlist that fits one replace batch and has no local files is
+    // rewritten with a single atomic PUT of the shuffled track URIs — two API calls
+    // total regardless of length. Replacing all items in one request leaves no
+    // truncation window, so it is safe despite being destructive in principle.
+    //
+    // Fallback: larger playlists, or any containing local files (which the API can't
+    // re-add by URI), use a non-destructive index reorder that preserves local files
+    // and metadata at the cost of one request per moved item.
+    public async Task<SpotifyShuffleResult> ShufflePlaylistAsync(
+        string accessToken, string playlistId, ShuffleRandomnessLevel randomnessLevel)
+    {
+        var page = await GetFirstItemsPageAsync(accessToken, playlistId);
+        if (page is null)
+        {
+            return SpotifyShuffleResult.Fail(
+                "We couldn't read that Spotify playlist. Your session may have expired or lacks the " +
+                "permission to modify it — please disconnect and reconnect Spotify.");
+        }
+
+        if (page.Total <= 1)
+        {
+            return SpotifyShuffleResult.Ok(page.Total, 0);
+        }
+
+        var uris = page.Items.Select(item => item.Uri).ToList();
+        var fitsOneBatch = page.Total <= ReplaceBatchLimit && page.Next is null && uris.Count == page.Total;
+        var replaceable = fitsOneBatch
+            && page.Items.All(item => !item.IsLocal)
+            && uris.All(uri => !string.IsNullOrEmpty(uri));
+
+        if (replaceable)
+        {
+            return await ReplaceShuffleAsync(accessToken, playlistId, uris!, randomnessLevel);
+        }
+
+        return await ReorderShuffleAsync(accessToken, playlistId, page.Total, randomnessLevel);
+    }
+
+    private async Task<SpotifyShuffleResult> ReplaceShuffleAsync(
+        string accessToken, string playlistId, List<string> uris, ShuffleRandomnessLevel randomnessLevel)
+    {
+        var shuffled = PlaylistShuffler.Shuffle(uris, randomnessLevel);
+        var moved = shuffled.Where((uri, index) => uri != uris[index]).Count();
+
+        var ok = await ReplacePlaylistItemsAsync(accessToken, playlistId, shuffled);
+        return ok
+            ? SpotifyShuffleResult.Ok(shuffled.Count, moved)
+            : SpotifyShuffleResult.Fail(
+                "Spotify rejected the shuffle. Your session may have expired or lacks permission to " +
+                "modify this playlist — please disconnect and reconnect Spotify.");
+    }
+
+    // Non-destructive reorder: realize the target order with single-item moves, chaining
+    // the snapshot ID returned by each move so concurrent edits are detected.
+    private async Task<SpotifyShuffleResult> ReorderShuffleAsync(
+        string accessToken, string playlistId, int total, ShuffleRandomnessLevel randomnessLevel)
+    {
+        var state = await GetPlaylistShuffleStateAsync(accessToken, playlistId);
+        if (state is null)
+        {
+            return SpotifyShuffleResult.Fail(
+                "We couldn't read that Spotify playlist. Your session may have expired or lacks the " +
+                "permission to modify it — please disconnect and reconnect Spotify.");
+        }
+
+        var snapshotId = state.Value.SnapshotId;
+        var target = PlaylistShuffler.Shuffle(Enumerable.Range(0, total).ToList(), randomnessLevel);
+        var current = Enumerable.Range(0, total).ToList();
+        var moved = 0;
+
+        for (var position = 0; position < total; position++)
+        {
+            // Positions before `position` already hold their target item, so the item we
+            // want here can only be at `position` or later.
+            var from = current.IndexOf(target[position]);
+            if (from == position)
+            {
+                continue;
+            }
+
+            var newSnapshot = await ReorderPlaylistItemAsync(accessToken, playlistId, from, position, snapshotId);
+            if (newSnapshot is null)
+            {
+                return SpotifyShuffleResult.Partial(total, moved,
+                    $"Spotify stopped accepting changes after {moved} move(s). The playlist is intact but " +
+                    "only partially shuffled — please try again.");
+            }
+
+            snapshotId = newSnapshot;
+            current.RemoveAt(from);
+            current.Insert(position, target[position]);
+            moved++;
+        }
+
+        return SpotifyShuffleResult.Ok(total, moved);
+    }
+
+    // Fetches the playlist total and the first page of items (URIs + local flags), enough
+    // to decide between the replace fast path and the reorder fallback.
+    private async Task<ShuffleItemsPage?> GetFirstItemsPageAsync(string accessToken, string playlistId)
+    {
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items" +
+            $"?limit={ReplaceBatchLimit}&fields=total,next,items(is_local,item(uri),track(uri))";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<ShuffleItemsPage>(json);
+    }
+
+    private async Task<bool> ReplacePlaylistItemsAsync(string accessToken, string playlistId, List<string> uris)
+    {
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(new PlaylistReplaceRequest { Uris = uris }),
+            Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        return response.IsSuccessStatusCode;
+    }
+
+    private async Task<(string SnapshotId, int Total)?> GetPlaylistShuffleStateAsync(
+        string accessToken, string playlistId)
+    {
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}?fields=snapshot_id,tracks(total)";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var state = JsonSerializer.Deserialize<PlaylistShuffleState>(json);
+        if (state is null || string.IsNullOrEmpty(state.SnapshotId))
+            return null;
+
+        return (state.SnapshotId, state.Tracks?.Total ?? 0);
+    }
+
+    private async Task<string?> ReorderPlaylistItemAsync(
+        string accessToken, string playlistId, int rangeStart, int insertBefore, string snapshotId)
+    {
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(new PlaylistReorderRequest
+            {
+                RangeStart = rangeStart,
+                InsertBefore = insertBefore,
+                RangeLength = 1,
+                SnapshotId = snapshotId,
+            }),
+            Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<PlaylistSnapshot>(json);
+        return string.IsNullOrEmpty(result?.SnapshotId) ? snapshotId : result.SnapshotId;
+    }
+
+    private sealed class PlaylistsPage
+    {
+        [JsonPropertyName("items")]
+        public List<Playlist> Items { get; set; } = [];
+
+        [JsonPropertyName("next")]
+        public string? Next { get; set; }
+    }
+
+    private sealed class PlaylistShuffleState
+    {
+        [JsonPropertyName("snapshot_id")]
+        public string SnapshotId { get; set; } = string.Empty;
+
+        [JsonPropertyName("tracks")]
+        public TracksRef? Tracks { get; set; }
+
+        public sealed class TracksRef
+        {
+            [JsonPropertyName("total")]
+            public int Total { get; set; }
+        }
+    }
+
+    private sealed class ShuffleItemsPage
+    {
+        [JsonPropertyName("total")]
+        public int Total { get; set; }
+
+        [JsonPropertyName("next")]
+        public string? Next { get; set; }
+
+        [JsonPropertyName("items")]
+        public List<ShuffleItem> Items { get; set; } = [];
+    }
+
+    private sealed class ShuffleItem
+    {
+        [JsonPropertyName("is_local")]
+        public bool IsLocal { get; set; }
+
+        // `item` is the current field; `track` is deprecated but still returned, so we
+        // read whichever is present.
+        [JsonPropertyName("item")]
+        public UriRef? Item { get; set; }
+
+        [JsonPropertyName("track")]
+        public UriRef? Track { get; set; }
+
+        public string? Uri => Item?.Uri ?? Track?.Uri;
+    }
+
+    private sealed class UriRef
+    {
+        [JsonPropertyName("uri")]
+        public string? Uri { get; set; }
+    }
+
+    private sealed class PlaylistReplaceRequest
+    {
+        [JsonPropertyName("uris")]
+        public List<string> Uris { get; set; } = [];
+    }
+
+    private sealed class PlaylistReorderRequest
+    {
+        [JsonPropertyName("range_start")]
+        public int RangeStart { get; set; }
+
+        [JsonPropertyName("insert_before")]
+        public int InsertBefore { get; set; }
+
+        [JsonPropertyName("range_length")]
+        public int RangeLength { get; set; }
+
+        [JsonPropertyName("snapshot_id")]
+        public string SnapshotId { get; set; } = string.Empty;
+    }
+
+    private sealed class PlaylistSnapshot
+    {
+        [JsonPropertyName("snapshot_id")]
+        public string SnapshotId { get; set; } = string.Empty;
     }
 }

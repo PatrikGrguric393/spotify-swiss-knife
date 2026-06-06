@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,17 +15,33 @@ public class AccountController : Controller
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
 
+    private const string SpotifyScheme = "SpotifyConnect";
+
     public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
     }
 
+    // A local account and Spotify are mutually exclusive: a local sign-in/register is
+    // refused while Spotify is connected.
+    private async Task<bool> IsSpotifyConnectedAsync() =>
+        (await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded;
+
+    private IActionResult RedirectToChooserForSpotifyConflict()
+    {
+        TempData["LoginError"] = "You're connected with Spotify. Disconnect first to use a local account instead.";
+        return RedirectToAction("Index", "Login");
+    }
+
     [HttpGet("register")]
-    public IActionResult Register(string? returnUrl = null)
+    public async Task<IActionResult> Register(string? returnUrl = null)
     {
         if (_signInManager.IsSignedIn(User))
             return LocalRedirect(returnUrl ?? "/");
+
+        if (await IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
         return View(new RegisterModel());
@@ -34,6 +51,9 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterModel model, string? returnUrl = null)
     {
+        if (await IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
+
         ViewData["ReturnUrl"] = returnUrl;
         if (!ModelState.IsValid)
             return View(model);
@@ -61,10 +81,13 @@ public class AccountController : Controller
     }
 
     [HttpGet("login")]
-    public IActionResult Login(string? returnUrl = null)
+    public async Task<IActionResult> Login(string? returnUrl = null)
     {
         if (_signInManager.IsSignedIn(User))
             return LocalRedirect(returnUrl ?? "/");
+
+        if (await IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
         return View(new LoginModel());
@@ -74,6 +97,9 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginModel model, string? returnUrl = null)
     {
+        if (await IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
+
         ViewData["ReturnUrl"] = returnUrl;
         if (!ModelState.IsValid)
             return View(model);

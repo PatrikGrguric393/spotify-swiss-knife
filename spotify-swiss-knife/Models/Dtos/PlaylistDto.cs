@@ -1,0 +1,28 @@
+namespace spotify_swiss_knife.Models.Dtos;
+
+public class PlaylistDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? SpotifyUrl { get; set; }
+    public string? OwnerDisplayName { get; set; }
+    public IReadOnlyCollection<PlaylistTrackItemDto> Tracks { get; set; } = new List<PlaylistTrackItemDto>();
+
+    public static PlaylistDto FromEntity(Playlist playlist) => new()
+    {
+        Id = playlist.Id,
+        Name = playlist.Name,
+        Description = playlist.Description,
+        SpotifyUrl = playlist.ExternalUrls?.Spotify,
+        OwnerDisplayName = playlist.Owner?.DisplayName,
+        Tracks = playlist.TrackEntries
+            .OrderBy(e => e.SortOrder)
+            .Select(e => new PlaylistTrackItemDto
+            {
+                Name = e.Track.Name,
+                SpotifyUrl = e.Track.ExternalUrls?.Spotify
+            })
+            .ToList()
+    };
+}

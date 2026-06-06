@@ -47,6 +47,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 512 * 1024 * 1024; // 512 MB
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 512 * 1024 * 1024; // 512 MB
+});
 builder.Services.AddDbContext<SpotifyDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SpotifyDbContext")));
 builder.Services.AddScoped<TrackRepository>();
@@ -70,7 +78,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "SSKAuth";
-    options.LoginPath = "/account/login";
+    options.LoginPath = "/login";
     options.AccessDeniedPath = "/account/denied";
 });
 

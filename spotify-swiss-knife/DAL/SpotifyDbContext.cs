@@ -15,6 +15,7 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>
 	public DbSet<Playlist> Playlists => Set<Playlist>();
 	public DbSet<PlaylistTrackEntry> PlaylistTrackEntries => Set<PlaylistTrackEntry>();
 	public DbSet<Track> Tracks => Set<Track>();
+	public DbSet<UserFile> UserFiles => Set<UserFile>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -137,6 +138,15 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>
 			});
 			entity.Ignore(playlist => playlist.Items);
 			entity.Ignore(playlist => playlist.Tracks);
+		});
+
+		modelBuilder.Entity<UserFile>(entity =>
+		{
+			entity.HasKey(f => f.Id);
+			entity.HasOne(f => f.User)
+				.WithMany()
+				.HasForeignKey(f => f.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
 		});
 
 		modelBuilder.Entity<PlaylistTrackEntry>(entity =>
