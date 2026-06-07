@@ -32,7 +32,7 @@ ul, ol {
     padding-left: 1rem;
 }
 
-li {
+.app-content li {
     margin: 0.5rem 0;
 }
 
@@ -119,6 +119,7 @@ li {
     margin: 0 1rem;
     display: grid;
     gap: 0;
+    align-self: center;
 }
 
 .global-search-input-shell {

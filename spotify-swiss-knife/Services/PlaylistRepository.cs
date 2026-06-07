@@ -6,31 +6,15 @@ namespace spotify_swiss_knife.Services;
 
 public class PlaylistRepository
 {
-    private readonly SpotifyDbContext? _context;
-    private readonly MusicDataSnapshot _snapshot;
-
-    public PlaylistRepository() : this(MusicDataStore.GetSnapshot())
-    {
-    }
+    private readonly SpotifyDbContext _context;
 
     public PlaylistRepository(SpotifyDbContext context)
     {
         _context = context;
-        _snapshot = MusicDataStore.GetSnapshot();
-    }
-
-    public PlaylistRepository(MusicDataSnapshot snapshot)
-    {
-        _snapshot = snapshot;
     }
 
     public List<Playlist> GetAll()
     {
-        if (_context is null)
-        {
-            return _snapshot.Playlists;
-        }
-
         var playlists = _context.Playlists
             .Include(playlist => playlist.TrackEntries)
                 .ThenInclude(entry => entry.Track)
@@ -42,31 +26,18 @@ public class PlaylistRepository
             .ToList();
 
         foreach (var playlist in playlists)
-        {
             SyncPlaylistWrappers(playlist);
-        }
 
         return playlists;
     }
 
     public Playlist? GetById(string id)
     {
-        if (_context is null)
-        {
-            return _snapshot.Playlists.FirstOrDefault(playlist => playlist.Id == id);
-        }
-
         return GetAll().FirstOrDefault(playlist => playlist.Id == id);
     }
 
     public void Add(Playlist playlist)
     {
-        if (_context is null)
-        {
-            _snapshot.Playlists.Add(playlist);
-            return;
-        }
-
         _context.Playlists.Add(playlist);
         SyncTrackEntries(playlist);
         _context.SaveChanges();
@@ -74,16 +45,9 @@ public class PlaylistRepository
 
     public int Update(Playlist playlist)
     {
-        if (_context is null)
-        {
-            return 0;
-        }
-
         var orderedTrackIds = playlist.Tracks.Items.Select(item => item.Track.Id).ToList();
         if (orderedTrackIds.Count == 0)
-        {
             return _context.SaveChanges();
-        }
 
         var hasUniqueTrackIds = orderedTrackIds.Distinct().Count() == orderedTrackIds.Count;
         var existingEntryCount = _context.PlaylistTrackEntries.Count(entry => entry.PlaylistId == playlist.Id);
@@ -108,34 +72,14 @@ public class PlaylistRepository
 
     public void Save(Playlist playlist)
     {
-        if (_context is null)
-        {
-            var index = _snapshot.Playlists.FindIndex(existing => existing.Id == playlist.Id);
-            if (index >= 0)
-            {
-                _snapshot.Playlists[index] = playlist;
-            }
-
-            return;
-        }
-
         SyncTrackEntries(playlist);
         _context.SaveChanges();
     }
 
     public void Delete(string id)
     {
-        if (_context is null)
-        {
-            _snapshot.Playlists.RemoveAll(playlist => playlist.Id == id);
-            return;
-        }
-
         var playlist = _context.Playlists.FirstOrDefault(existing => existing.Id == id);
-        if (playlist is null)
-        {
-            return;
-        }
+        if (playlist is null) return;
 
         // PlaylistTrackEntry.Playlist cascades, so its entries are removed automatically
         _context.Playlists.Remove(playlist);
@@ -146,10 +90,7 @@ public class PlaylistRepository
     {
         var wrappedTracks = playlist.TrackEntries
             .OrderBy(entry => entry.SortOrder)
-            .Select(entry => new PlaylistTrack
-            {
-                Track = entry.Track
-            })
+            .Select(entry => new PlaylistTrack { Track = entry.Track })
             .ToList();
 
         var page = new PlaylistTracksPage
@@ -180,9 +121,7 @@ public class PlaylistRepository
             if (existingEntries.Count == desiredOrder.Count && desiredOrder.Keys.All(existingEntries.ContainsKey))
             {
                 foreach (var entry in desiredOrder)
-                {
                     existingEntries[entry.Key].SortOrder = entry.Value;
-                }
 
                 return;
             }

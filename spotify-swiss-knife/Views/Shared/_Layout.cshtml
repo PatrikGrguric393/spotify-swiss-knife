@@ -15,9 +15,10 @@
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
         var isShufflePlaylist = currentController == "Services" && currentAction == "ShufflePlaylist";
         var isServices = isShufflePlaylist;
-        var isLibrary = currentController == "Library";
+        var isLibrary = currentController is "Songs" or "Albums" or "Artists" or "Playlists";
         var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
         var appUserRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Editor") ? "Editor" : string.Empty;
+        var isProfile = (currentController == "Account" || currentController == "Files");
     }
 
     <header class="app-header">
@@ -46,46 +47,56 @@
                             Library
                         </button>
                         <ul class="dropdown-menu" id="libraryMenu" aria-label="Library menu">
-                            <li><a asp-controller="Library" asp-action="Songs" class="nav-submenu-link @(isLibrary && currentAction == "Songs" ? "active" : string.Empty)">Songs</a></li>
-                            <li><a asp-controller="Library" asp-action="Albums" class="nav-submenu-link @(isLibrary && currentAction == "Albums" ? "active" : string.Empty)">Albums</a></li>
-                            <li><a asp-controller="Library" asp-action="Artists" class="nav-submenu-link @(isLibrary && currentAction == "Artists" ? "active" : string.Empty)">Artists</a></li>
-                            <li><a asp-controller="Library" asp-action="Playlists" class="nav-submenu-link @(isLibrary && currentAction == "Playlists" ? "active" : string.Empty)">Playlists</a></li>
+                            <li><a asp-controller="Songs" asp-action="Songs" class="nav-submenu-link @(currentController == "Songs" ? "active" : string.Empty)">Songs</a></li>
+                            <li><a asp-controller="Albums" asp-action="Albums" class="nav-submenu-link @(currentController == "Albums" ? "active" : string.Empty)">Albums</a></li>
+                            <li><a asp-controller="Artists" asp-action="Artists" class="nav-submenu-link @(currentController == "Artists" ? "active" : string.Empty)">Artists</a></li>
+                            <li><a asp-controller="Playlists" asp-action="Playlists" class="nav-submenu-link @(currentController == "Playlists" ? "active" : string.Empty)">Playlists</a></li>
                         </ul>
                     </li>
                     <li><a asp-controller="About" asp-action="Index" class="nav-link @(currentController == "About" ? "active" : string.Empty)">About</a></li>
-                    <li class="nav-auth-item nav-account-item">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <span class="nav-auth-name">
-                                @User.Identity.Name
-                                @if (!string.IsNullOrEmpty(appUserRole))
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-dropdown @(isProfile ? "active" : string.Empty)" id="profileDropdown">
+                            <button type="button" class="nav-link nav-dropdown-toggle @(isProfile ? "active" : string.Empty)" id="profileToggle" aria-expanded="false" aria-controls="profileMenu">
+                                @User.Identity.Name@if (!string.IsNullOrEmpty(appUserRole)){<span class="nav-auth-role">@appUserRole</span>}
+                            </button>
+                            <ul class="dropdown-menu" id="profileMenu" aria-label="Profile menu">
+                                @if (User.IsInRole("Admin"))
                                 {
-                                    <span class="nav-auth-role">@appUserRole</span>
+                                    <li><a asp-controller="Account" asp-action="Users" class="nav-submenu-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a></li>
                                 }
-                            </span>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <a asp-controller="Account" asp-action="Users" class="nav-link nav-account-users-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a>
-                            }
-                            <a asp-controller="Files" asp-action="Index" class="nav-link @(currentController == "Files" ? "active" : string.Empty)">Files</a>
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="nav-auth-logout-form">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="nav-link nav-auth-logout-btn">Logout</button>
-                            </form>
-                        }
-                        else if (spotifyConnected)
-                        {
-                            <span class="nav-auth-name nav-spotify-status">Spotify &#10003;</span>
-                            <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-auth-logout-form">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="nav-link nav-auth-logout-btn">Disconnect</button>
-                            </form>
-                        }
-                        else
-                        {
+                                <li><a asp-controller="Files" asp-action="Index" class="nav-submenu-link @(currentController == "Files" ? "active" : string.Empty)">Files</a></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="nav-submenu-logout-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="nav-submenu-link nav-submenu-logout-btn">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else if (spotifyConnected)
+                    {
+                        <li class="nav-dropdown" id="profileDropdown">
+                            <button type="button" class="nav-link nav-dropdown-toggle nav-spotify-status" id="profileToggle" aria-expanded="false" aria-controls="profileMenu">
+                                Spotify &#10003;
+                            </button>
+                            <ul class="dropdown-menu" id="profileMenu" aria-label="Profile menu">
+                                <li>
+                                    <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-submenu-logout-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="nav-submenu-link nav-submenu-logout-btn">Disconnect</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
                             <a asp-controller="Login" asp-action="Index" class="nav-link nav-login-btn">Log in</a>
-                        }
-                    </li>
+                        </li>
+                    }
                 </ul>
             </nav>
         </div>

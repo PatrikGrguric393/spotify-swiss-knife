@@ -30,7 +30,7 @@
     <p>All songs from the mock repository.</p>
 
     <div class="table-actions">
-        <a class="btn btn-primary" href="@Url.Action("CreateSong", "Library")">Create Song</a>
+        <a class="btn btn-primary" href="@Url.Action("CreateSong", "Songs")">Create Song</a>
     </div>
 
     <div class="table-wrap">
@@ -64,8 +64,8 @@
                     <td data-label="Artists">@artists</td>
                     <td data-label="Duration">@duration.ToString(@"m\:ss")</td>
                     <td data-label="Actions" class="cell-actions">
-                        <a class="btn" href="@Url.Action("EditSong", "Library", new { id = song.Id })">Edit</a>
-                        <a class="btn btn-danger" href="@Url.Action("DeleteSong", "Library", new { id = song.Id })">Delete</a>
+                        <a class="btn" href="@Url.Action("EditSong", "Songs", new { id = song.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("DeleteSong", "Songs", new { id = song.Id })">Delete</a>
                         <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>

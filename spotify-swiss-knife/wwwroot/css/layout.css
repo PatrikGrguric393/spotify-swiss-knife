@@ -64,8 +64,6 @@
         display: block;
         position: fixed;
         inset: 0;
-        width: 100vw;
-        height: 100vh;
         pointer-events: none;
         z-index: 0;
         opacity: 0.22;
@@ -84,7 +82,7 @@
         max-width: 100%;
         padding: 0 0.75rem;
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: space-between;
         align-items: center;
         gap: 0.45rem 0.75rem;
@@ -183,9 +181,8 @@
     }
 
     .dropdown-menu {
-        position: absolute;
-        top: calc(100% + 0.3rem);
-        left: 0;
+        position: fixed;
+        left: auto;
         min-width: 14rem;
         list-style: none;
         padding: 0.45rem 0;
@@ -243,7 +240,7 @@
         border-bottom: 2px solid #0f0;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
         :root {
             --header-height: 40px;
         }
@@ -268,14 +265,12 @@
         .app-title {
             display: block;
             font-size: 1.1rem;
-            flex: 1 1 auto;
+            flex: 0 1 auto;
         }
 
         .global-search-shell {
-            order: 3;
-            flex: 1 1 100%;
-            max-width: none;
-            margin: 0;
+            flex: 1 1 auto;
+            min-width: 0;
         }
 
         .nav-toggle {
@@ -341,17 +336,14 @@
         }
 
         .nav-link {
-            padding: 1.5rem 1rem;
+            padding: calc(1.75rem + 2px) 1rem 1.75rem;
+            border: none;
             border-bottom: 1px solid #0f0;
             text-align: center;
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .nav-link:last-child {
-            border-bottom: none;
         }
 
         .nav-list > li {
@@ -366,6 +358,14 @@
         .nav-dropdown-toggle {
             width: 100%;
             justify-content: center;
+            margin: 0;
+            padding-top: calc(1.75rem + 2px);
+            padding-bottom: 1.75rem;
+            border: none;
+            border-bottom: 1px solid #0f0;
+        }
+
+        .nav-dropdown.open > .nav-dropdown-toggle {
             border-bottom: none;
         }
 
@@ -384,8 +384,6 @@
             transition: max-height 0.24s ease, opacity 0.2s ease, visibility 0.2s linear;
             width: 86%;
             margin: 0 auto;
-            border: 1px solid #0f0;
-            border-top: none;
         }
         
         .dropdown-menu li {
@@ -398,7 +396,8 @@
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0;
+            border: 1px solid #0f0;
         }
 
         .nav-submenu-link {
@@ -407,7 +406,7 @@
             justify-content: center;
             border-left: none;
             border-bottom: 1px solid #0f0;
-            padding: 1.15rem 1rem;
+            padding: 1.75rem 1rem;
             background-color: #020b02;
         }
 
@@ -427,16 +426,22 @@
         }
 
         .header-container {
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
         }
     }
 
-    @media (min-width: 769px) {
+    @media (min-width: 1025px) {
         .app-title {
             display: block;
             white-space: nowrap;
             flex-shrink: 0;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
         }
 
         .header-container {
@@ -456,93 +461,42 @@
         }
     }
 
-    /*
-     * Breakpoint A — hide the title when the viewport is too narrow to fit
-     * title + search + nav on one row. The header stays a single unwrapped row;
-     * only the title is sacrificed to reclaim ~200 px.
-     */
     .app-title-short { display: none; }
 
-    @media (min-width: 769px) and (max-width: 1200px) {
-        .app-title { display: block; }
-        .app-title-full { display: none; }
-        .app-title-short { display: inline; }
-    }
-
-    /*
-     * Breakpoint B — when even dropping the title isn't enough, let the header
-     * row scroll horizontally so the nav is never clipped or wrapped.
-     * The header itself must stay overflow: visible so dropdown menus can
-     * escape the scrolling container.
-     *
-     * Scrollbar is hidden visually but kept functional (thin / none).
-     * -webkit-overflow-scrolling enables momentum scrolling on iOS.
-     */
-    @media (min-width: 769px) and (max-width: 960px) {
-        .app-header {
-            overflow: visible;
-        }
-
-        .header-container {
-            overflow-x: auto;
-            overflow-y: visible;
-            -webkit-overflow-scrolling: touch;
-            /* Remove any implicit max-width cap on the container itself */
-            max-width: none;
-            /* Keep all items pinned to a single row */
-            flex-wrap: nowrap;
-            /* Compensate for padding so the scrollbar doesn't eat layout space */
-            padding-bottom: 0;
-        }
-
-        /* Hide the scrollbar visually while keeping it functional */
-        .header-container::-webkit-scrollbar {
-            height: 0;
-            width: 0;
-        }
-
-        .header-container {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        /* Nav must not shrink — it sets the minimum scroll extent */
-        .app-nav {
-            flex-shrink: 0;
-        }
-
-        /* Search can shrink to a sensible minimum, but no further */
-        .global-search-shell {
-            flex-shrink: 1;
-            min-width: 180px;
-        }
-    }
+@media (max-width: 550px) {
+    .app-title-full { display: none; }
+    .app-title-short { display: inline; }
+}
 
 /* ── Nav auth item ──────────────────────────────────────── */
 
-/*
- * Desktop: the auth item sits flush after the last nav item but carries a
- * left-border separator so it reads as a distinct zone without needing an
- * extra element.
- */
-.nav-auth-item {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    border-left: 1px solid rgba(0, 255, 0, 0.3);
-    padding-left: 1.5rem;
-    margin-left: 0.5rem;
+/* Logout/Disconnect button inside profile dropdown menu: resets button UA styles
+   so .nav-submenu-link visual styles take full effect. */
+.nav-submenu-logout-form {
+    margin: 0;
+    padding: 0;
+    display: block;
 }
 
-/* Dim label showing the logged-in user's display name */
-.nav-auth-name {
-    color: #4d8f4d;
-    font-size: 0.88rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 12rem;
-    letter-spacing: 0.02em;
+.nav-submenu-logout-btn {
+    width: 100%;
+    background: none;
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+    border: none;
+    line-height: 1.2;
+    color: inherit;
+}
+
+@media (max-width: 1024px) {
+    .nav-submenu-logout-btn {
+        margin: 0;
+        text-align: center;
+    }
 }
 
 /* Login button: green border + green text to make it stand out */
@@ -582,63 +536,6 @@
     font-family: inherit;
     font-size: 1rem;
     line-height: 1.2;
-}
-
-/* ── Mobile overrides for nav auth item ─────────────────── */
-@media (max-width: 768px) {
-    /*
-     * On mobile the nav is a full-screen modal list. The auth item must
-     * behave like every other list item: full width, border-bottom divider,
-     * centred text. The left-border separator used on desktop is removed.
-     */
-    .nav-auth-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        border-left: none;
-        padding-left: 0;
-        margin-left: 0;
-        width: 100%;
-    }
-
-    /* User name shown as a small dim label above the logout button */
-    .nav-auth-name {
-        display: block;
-        text-align: center;
-        padding: 0.65rem 1rem 0.4rem;
-        font-size: 0.82rem;
-        border-bottom: 1px solid rgba(0, 255, 0, 0.25);
-        max-width: none;
-        color: #4d8f4d;
-    }
-
-    /* Login and logout both get the same full-width mobile nav-link treatment */
-    .nav-login-btn,
-    .nav-auth-logout-btn {
-        width: 100%;
-        border: none !important;
-        border-bottom: 1px solid #0f0 !important;
-        padding: 1.5rem 1rem;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: none !important;
-        background: none;
-    }
-
-    .nav-login-btn:hover,
-    .nav-auth-logout-btn:hover {
-        background-color: #0f0;
-        color: #000;
-        border-bottom: 1px solid #0f0 !important;
-        box-shadow: none !important;
-    }
-
-    .nav-auth-logout-form {
-        display: block;
-        width: 100%;
-    }
 }
 
 /* ── Auth confirm card ───────────────────────────────────── */
@@ -764,18 +661,6 @@
 
 /* ── Auth zones: Spotify connection vs app account ──────── */
 
-/*
- * Two consecutive auth zones live in the nav: the Spotify connection (left)
- * and the app account (right). The Spotify zone keeps the heavier separator
- * that detaches the auth controls from the main nav links; the account zone
- * uses a lighter divider so the two zones read as related-but-distinct.
- */
-.nav-account-item {
-    border-left-color: rgba(0, 255, 0, 0.18);
-    padding-left: 1rem;
-    margin-left: 0;
-}
-
 /* "Connect Spotify" link: same emphasised border treatment as the login btn */
 .nav-spotify-connect-btn {
     border: 2px solid #0f0 !important;
@@ -814,43 +699,6 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     vertical-align: middle;
-}
-
-/* ── Mobile overrides for the two auth zones ────────────── */
-@media (max-width: 768px) {
-    .nav-account-item {
-        border-left: none;
-        padding-left: 0;
-    }
-
-    .nav-spotify-connect-btn,
-    .nav-register-btn,
-    .nav-account-users-link {
-        width: 100%;
-        border: none !important;
-        border-bottom: 1px solid #0f0 !important;
-        padding: 1.5rem 1rem;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: none !important;
-        background: none;
-    }
-
-    .nav-spotify-connect-btn:hover,
-    .nav-register-btn:hover,
-    .nav-account-users-link:hover {
-        background-color: #0f0;
-        color: #000;
-        border-bottom: 1px solid #0f0 !important;
-        box-shadow: none !important;
-    }
-
-    /* Role pill drops to its own centred line under the name on mobile */
-    .nav-auth-role {
-        margin-left: 0.5rem;
-    }
 }
 
 /* ── Login chooser page ──────────────────────────────────── */

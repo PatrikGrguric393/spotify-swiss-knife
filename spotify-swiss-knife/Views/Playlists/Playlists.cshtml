@@ -58,7 +58,7 @@
     <p>All playlists from the mock repository.</p>
 
     <div class="table-actions">
-        <a class="btn btn-primary" href="@Url.Action("CreatePlaylist", "Library")">Create Playlist</a>
+        <a class="btn btn-primary" href="@Url.Action("CreatePlaylist", "Playlists")">Create Playlist</a>
     </div>
 
     <div class="table-wrap">
@@ -83,8 +83,8 @@
                     <td data-label="Tracks">@playlist.Tracks.Total</td>
                     <td data-label="Last Shuffled">@(playlist.LastShuffled?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
                     <td data-label="Actions" class="cell-actions">
-                        <a class="btn" href="@Url.Action("EditPlaylist", "Library", new { id = playlist.Id })">Edit</a>
-                        <a class="btn btn-danger" href="@Url.Action("DeletePlaylist", "Library", new { id = playlist.Id })">Delete</a>
+                        <a class="btn" href="@Url.Action("EditPlaylist", "Playlists", new { id = playlist.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("DeletePlaylist", "Playlists", new { id = playlist.Id })">Delete</a>
                     </td>
                 </tr>
             }

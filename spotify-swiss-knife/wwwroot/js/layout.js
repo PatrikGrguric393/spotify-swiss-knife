@@ -1,9 +1,65 @@
 document.addEventListener('DOMContentLoaded', function() {
     const navToggle = document.getElementById('navToggle');
     const navList = document.getElementById('navList');
-    const libraryDropdown = document.getElementById('libraryDropdown');
-    const libraryToggle = document.getElementById('libraryToggle');
     let backdrop = document.getElementById('navBackdrop');
+
+    // Collect all nav dropdowns so Services and Library are handled identically.
+    const allDropdowns = Array.from(document.querySelectorAll('.nav-dropdown'));
+
+    function isMobileNav() {
+        return window.innerWidth <= 1024;
+    }
+
+    // CSS now handles dropdown positioning via position:absolute / top:100%.
+    // This function only clears any lingering inline styles from a previous
+    // JS-positioned session (e.g. after a resize that crosses the breakpoint).
+    function positionDropdownMenu(dropdown) {
+        const menu = dropdown.querySelector('.dropdown-menu');
+        if (menu) {
+            menu.style.top = '';
+            menu.style.left = '';
+        }
+    }
+
+    function closeDropdown(dropdown) {
+        const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+
+        dropdown.classList.remove('open');
+
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function openDropdown(dropdown) {
+        const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+
+        // Close every other dropdown first.
+        allDropdowns.forEach(function(d) {
+            if (d !== dropdown) {
+                closeDropdown(d);
+            }
+        });
+
+        positionDropdownMenu(dropdown);
+        dropdown.classList.add('open');
+
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function toggleDropdown(dropdown) {
+        if (dropdown.classList.contains('open')) {
+            closeDropdown(dropdown);
+        } else {
+            openDropdown(dropdown);
+        }
+    }
+
+    function closeAllDropdowns() {
+        allDropdowns.forEach(closeDropdown);
+    }
 
     function closeMobileNav() {
         if (!navList || !backdrop) {
@@ -14,30 +70,36 @@ document.addEventListener('DOMContentLoaded', function() {
         backdrop.classList.remove('active');
     }
 
-    function closeLibraryDropdown() {
-        if (!libraryDropdown || !libraryToggle) {
-            return;
-        }
-
-        libraryDropdown.classList.remove('open');
-        libraryToggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function toggleLibraryDropdown() {
-        if (!libraryDropdown || !libraryToggle) {
-            return;
-        }
-
-        const isOpen = libraryDropdown.classList.toggle('open');
-        libraryToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    }
-
     if (!backdrop) {
         backdrop = document.createElement('div');
         backdrop.id = 'navBackdrop';
         backdrop.className = 'nav-backdrop';
         document.body.insertBefore(backdrop, document.body.firstChild);
     }
+
+    // Wire up each dropdown toggle button.
+    allDropdowns.forEach(function(dropdown) {
+        const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+
+        if (!toggle) {
+            return;
+        }
+
+        toggle.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleDropdown(dropdown);
+        });
+    });
+
+    // Re-position open dropdowns when the window resizes (e.g. crossing breakpoints).
+    window.addEventListener('resize', function() {
+        allDropdowns.forEach(function(dropdown) {
+            if (dropdown.classList.contains('open')) {
+                positionDropdownMenu(dropdown);
+            }
+        });
+    });
 
     if (navToggle && navList) {
         navToggle.addEventListener('click', function() {
@@ -47,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         backdrop.addEventListener('click', function() {
             closeMobileNav();
-            closeLibraryDropdown();
+            closeAllDropdowns();
         });
 
         navList.addEventListener('click', function(event) {
@@ -73,27 +135,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (libraryToggle) {
-        libraryToggle.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            toggleLibraryDropdown();
-        });
-    }
-
     document.addEventListener('click', function(event) {
-        if (!libraryDropdown) {
-            return;
-        }
-
-        if (!libraryDropdown.contains(event.target)) {
-            closeLibraryDropdown();
-        }
+        // Close any open dropdown whose container does not contain the click target.
+        allDropdowns.forEach(function(dropdown) {
+            if (dropdown.classList.contains('open') && !dropdown.contains(event.target)) {
+                closeDropdown(dropdown);
+            }
+        });
     });
 
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            closeLibraryDropdown();
+            closeAllDropdowns();
             closeMobileNav();
         }
     });
@@ -125,8 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const dpr = window.devicePixelRatio || 1;
-        const width = Math.max(1, Math.floor(window.innerWidth));
-        const height = Math.max(1, Math.floor(window.innerHeight));
+        const width = Math.max(1, Math.floor(matrixCanvas.offsetWidth || window.innerWidth));
+        const height = Math.max(1, Math.floor(matrixCanvas.offsetHeight || window.innerHeight));
 
         const isMobile = width <= 768;
         glyphSize = isMobile ? 20 : 17;
@@ -162,8 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lastFrameTime = timestamp;
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        const width = matrixCanvas.offsetWidth || window.innerWidth;
+        const height = matrixCanvas.offsetHeight || window.innerHeight;
 
         matrixContext.fillStyle = 'rgba(0, 0, 0, 0.09)';
         matrixContext.fillRect(0, 0, width, height);
