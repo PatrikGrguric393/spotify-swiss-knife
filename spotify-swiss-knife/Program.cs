@@ -60,6 +60,12 @@ builder.Services.AddAuthentication().AddCookie("SpotifyConnect", options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SpotifyDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 await IdentitySeeder.SeedAsync(app.Services);
 
 // Configure the HTTP request pipeline.
