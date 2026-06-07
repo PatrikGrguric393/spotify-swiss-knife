@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
@@ -22,6 +23,9 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 builder.Services.AddDbContext<SpotifyDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SpotifyDbContext")));
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<SpotifyDbContext>();
 builder.Services.AddScoped<TrackRepository>();
 builder.Services.AddScoped<AlbumRepository>();
 builder.Services.AddScoped<ArtistRepository>();

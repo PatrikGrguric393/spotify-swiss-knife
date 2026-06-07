@@ -34,11 +34,10 @@
 
         const dropzone = new Dropzone('#file-dropzone', {
             url: '/files/upload',
-            headers: { 'RequestVerificationToken': antiforgeryToken() },
             dictDefaultMessage: 'Drop files here or click to upload',
             init: function () {
                 this.on('sending', function (file, xhr, formData) {
-                    xhr.setRequestHeader('RequestVerificationToken', antiforgeryToken());
+                    formData.append('__RequestVerificationToken', antiforgeryToken());
                 });
                 this.on('success', function () {
                     loadFiles();

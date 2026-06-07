@@ -1,14 +1,17 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.DAL;
 
-public class SpotifyDbContext : IdentityDbContext<AppUser>
+public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContext
 {
 	public SpotifyDbContext(DbContextOptions<SpotifyDbContext> options) : base(options)
 	{
 	}
+
+	public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
 	public DbSet<Album> Albums => Set<Album>();
 	public DbSet<Artist> Artists => Set<Artist>();
