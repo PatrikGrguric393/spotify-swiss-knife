@@ -64,7 +64,9 @@ public class AccountController : Controller
             Email = model.Email,
             FirstName = model.FirstName.Trim(),
             LastName = model.LastName.Trim(),
-            DateOfBirth = model.DateOfBirth
+            DateOfBirth = model.DateOfBirth,
+            OIB = model.OIB.Trim(),
+            JMBG = model.JMBG.Trim()
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -188,6 +190,8 @@ public class AccountController : Controller
             FirstName = user.FirstName ?? string.Empty,
             LastName = user.LastName ?? string.Empty,
             DateOfBirth = user.DateOfBirth,
+            OIB = user.OIB,
+            JMBG = user.JMBG,
             Role = roles.FirstOrDefault() ?? string.Empty
         });
     }
@@ -208,6 +212,8 @@ public class AccountController : Controller
         user.FirstName = model.FirstName.Trim();
         user.LastName = model.LastName.Trim();
         user.DateOfBirth = model.DateOfBirth;
+        user.OIB = model.OIB.Trim();
+        user.JMBG = model.JMBG.Trim();
 
         if (!string.Equals(user.Email, model.Email, StringComparison.OrdinalIgnoreCase))
         {

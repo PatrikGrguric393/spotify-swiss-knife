@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
@@ -20,6 +21,7 @@ public class PlaylistsApiController : ApiControllerBase
         _context = context;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PlaylistSummaryDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<PlaylistSummaryDto>> GetAll([FromQuery] string? q)
@@ -37,6 +39,7 @@ public class PlaylistsApiController : ApiControllerBase
         return Ok(playlists.OrderBy(p => p.Name).Select(PlaylistSummaryDto.FromEntity));
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -499,21 +499,43 @@
     }
 }
 
-/* Login button: green border + green text to make it stand out */
+/* Login button: green text to make it stand out (border+padding scoped per breakpoint) */
 .nav-login-btn {
-    border: 2px solid #0f0 !important;
     color: #0f0;
-    padding: 0.3rem 0.85rem;
     transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nav-login-btn:hover {
     background-color: #0f0;
     color: #000;
-    border-color: #0f0 !important;
     box-shadow: 0 0 6px rgba(0, 255, 0, 0.35);
-    /* suppress the default nav-link bottom border on hover */
-    border-bottom: 2px solid #0f0 !important;
+}
+
+/* On mobile the login item matches the height/padding of every other nav item.
+   Only the green text colour distinguishes it; no pill border. */
+@media (max-width: 1024px) {
+    .nav-login-btn {
+        border: none;
+        border-bottom: 1px solid #0f0;
+        padding: calc(1.75rem + 2px) 1rem 1.75rem;
+    }
+
+    .nav-login-btn:hover {
+        border-bottom: 1px solid #0f0;
+    }
+}
+
+/* On desktop restore the pill appearance. */
+@media (min-width: 1025px) {
+    .nav-login-btn {
+        border: 2px solid #0f0 !important;
+        padding: 0.3rem 0.85rem;
+    }
+
+    .nav-login-btn:hover {
+        border-color: #0f0 !important;
+        border-bottom: 2px solid #0f0 !important;
+    }
 }
 
 /* Logout form: strip default form chrome so it sits inline */

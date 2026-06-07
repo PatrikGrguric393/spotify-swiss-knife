@@ -77,6 +77,20 @@
         </div>
 
         <div class="form-group">
+            <label asp-for="OIB" class="required"></label>
+            <input asp-for="OIB" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="11" data-val-length-max="11" pattern="[0-9]{11}" placeholder="Enter 11-digit OIB" aria-describedby="error-OIB" />
+            <span asp-validation-for="OIB" class="visually-hidden"></span>
+            @{ FieldErrors("OIB"); }
+        </div>
+
+        <div class="form-group">
+            <label asp-for="JMBG" class="required"></label>
+            <input asp-for="JMBG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="13" data-val-length-max="13" pattern="[0-9]{13}" placeholder="Enter 13-digit JMBG" aria-describedby="error-JMBG" />
+            <span asp-validation-for="JMBG" class="visually-hidden"></span>
+            @{ FieldErrors("JMBG"); }
+        </div>
+
+        <div class="form-group">
             <label asp-for="Role"></label>
             <select asp-for="Role" class="form-control" aria-describedby="error-Role">
                 @foreach (var role in roles)

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
@@ -20,6 +21,7 @@ public class TracksApiController : ApiControllerBase
         _context = context;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<TrackSummaryDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<TrackSummaryDto>> GetAll([FromQuery] string? q)
@@ -37,6 +39,7 @@ public class TracksApiController : ApiControllerBase
         return Ok(tracks.OrderBy(t => t.Name).Select(TrackSummaryDto.FromEntity));
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(TrackDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

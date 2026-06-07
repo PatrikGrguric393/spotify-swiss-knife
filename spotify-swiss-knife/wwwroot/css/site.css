@@ -1601,12 +1601,13 @@ body.entity-detail-open .app-scroll-area {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.15s ease;
+    transition: border-color 0.2s ease, border-width 0.2s ease;
 }
 
 .files-dropzone:hover,
 .files-dropzone.dz-drag-hover {
-    background-color: #031303;
+    border-color: #0ff;
+    border-width: 3px;
 }
 
 .files-dropzone .dz-message {

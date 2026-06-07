@@ -4,7 +4,8 @@
       "Bash(xargs cat)",
       "Bash(git -C /home/pg/Documents/spotify-swiss-knife diff --stat HEAD)",
       "Bash(grep -E '\\\\.\\(html|css|js|ts|razor|cshtml|scss\\)$')",
-      "Bash(dotnet add *)"
+      "Bash(dotnet add *)",
+      "Bash(grep -E \"\\\\.\\(html|cshtml|css|js\\)$\")"
     ]
   }
 }

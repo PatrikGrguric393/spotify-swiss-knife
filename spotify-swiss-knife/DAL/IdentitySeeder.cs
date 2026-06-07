@@ -23,7 +23,8 @@ public static class IdentitySeeder
         var email = config["SeedAdmin:Email"] ?? "admin@ssk.local";
         var password = config["SeedAdmin:Password"] ?? "Admin123!";
 
-        if (await userManager.FindByEmailAsync(email) is null)
+        var existingAdmin = await userManager.FindByEmailAsync(email);
+        if (existingAdmin is null)
         {
             var admin = new AppUser
             {
@@ -31,12 +32,20 @@ public static class IdentitySeeder
                 Email = email,
                 EmailConfirmed = true,
                 FirstName = "Site",
-                LastName = "Administrator"
+                LastName = "Administrator",
+                OIB = "00000000000",
+                JMBG = "0000000000000"
             };
 
             var result = await userManager.CreateAsync(admin, password);
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(admin, "Admin");
+        }
+        else if (string.IsNullOrEmpty(existingAdmin.OIB) || string.IsNullOrEmpty(existingAdmin.JMBG))
+        {
+            existingAdmin.OIB = "00000000000";
+            existingAdmin.JMBG = "0000000000000";
+            await userManager.UpdateAsync(existingAdmin);
         }
     }
 }

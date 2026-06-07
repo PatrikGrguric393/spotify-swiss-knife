@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.Dtos;
@@ -17,6 +18,7 @@ public class ArtistsApiController : ApiControllerBase
         _artistRepository = artistRepository;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ArtistSummaryDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<ArtistSummaryDto>> GetAll(
@@ -41,6 +43,7 @@ public class ArtistsApiController : ApiControllerBase
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

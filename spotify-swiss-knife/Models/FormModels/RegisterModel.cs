@@ -22,6 +22,18 @@ public class RegisterModel
     public DateOnly? DateOfBirth { get; set; }
 
     [Required]
+    [StringLength(11, MinimumLength = 11, ErrorMessage = "OIB must be exactly 11 digits.")]
+    [RegularExpression("^[0-9]*$", ErrorMessage = "OIB may contain digits only.")]
+    [Display(Name = "OIB")]
+    public string OIB { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(13, MinimumLength = 13, ErrorMessage = "JMBG must be exactly 13 digits.")]
+    [RegularExpression("^[0-9]*$", ErrorMessage = "JMBG may contain digits only.")]
+    [Display(Name = "JMBG")]
+    public string JMBG { get; set; } = string.Empty;
+
+    [Required]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
