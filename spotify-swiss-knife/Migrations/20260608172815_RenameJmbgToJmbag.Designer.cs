@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using spotify_swiss_knife.DAL;
@@ -11,9 +12,11 @@ using spotify_swiss_knife.DAL;
 namespace spotify_swiss_knife.Migrations
 {
     [DbContext(typeof(SpotifyDbContext))]
-    partial class SpotifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608172815_RenameJmbgToJmbag")]
+    partial class RenameJmbgToJmbag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -273,12 +276,6 @@ namespace spotify_swiss_knife.Migrations
                         .HasColumnType("text")
                         .HasAnnotation("Relational:JsonPropertyName", "album_type");
 
-                    b.Property<string>("CoverImageContentType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CoverImageFileName")
-                        .HasColumnType("text");
-
                     b.Property<string>("Label")
                         .HasColumnType("text")
                         .HasAnnotation("Relational:JsonPropertyName", "label");
@@ -373,8 +370,8 @@ namespace spotify_swiss_knife.Migrations
 
                     b.Property<string>("JMBAG")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
 
                     b.Property<string>("LastName")
                         .HasColumnType("text");

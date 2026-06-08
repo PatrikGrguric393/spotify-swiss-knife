@@ -51,9 +51,12 @@ public class TracksApiController : ApiControllerBase
         return Ok(TrackDto.FromEntity(track));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
     [ProducesResponseType(typeof(TrackDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<TrackDto> Create([FromBody] TrackCreateDto dto)
     {
@@ -97,9 +100,12 @@ public class TracksApiController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = track.Id }, TrackDto.FromEntity(created));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(TrackDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<TrackDto> Update(string id, [FromBody] TrackUpdateDto dto)
     {
@@ -155,8 +161,11 @@ public class TracksApiController : ApiControllerBase
         return Ok(TrackDto.FromEntity(updated));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Delete(string id)
     {

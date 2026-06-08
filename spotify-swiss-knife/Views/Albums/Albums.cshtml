@@ -84,11 +84,26 @@
                     ReleaseDate = album.ReleaseDate,
                     TotalTracks = album.TotalTracks,
                     album.Label,
-                    album.Popularity
+                    album.Popularity,
+                    Cover = album.HasCover ? Url.Action("AlbumCover", "Albums", new { id = album.Id }) : null
                 };
 
                 <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Album" aria-label="View details for @album.Name">
-                    <td data-label="Name">@album.Name</td>
+                    <td data-label="Name">
+                        <div class="album-row-name">
+                            @if (album.HasCover)
+                            {
+                                <img class="album-row-thumb"
+                                     src="@Url.Action("AlbumCover", "Albums", new { id = album.Id })"
+                                     alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="album-row-thumb album-row-thumb--placeholder" aria-hidden="true">&#9835;</span>
+                            }
+                            <span class="album-row-title">@album.Name</span>
+                        </div>
+                    </td>
                     <td data-label="Artists">@artists</td>
                     <td data-label="Release Date" data-date="@album.ReleaseDate">@album.ReleaseDate</td>
                     <td data-label="Actions" class="cell-actions">

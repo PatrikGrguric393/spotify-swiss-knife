@@ -15,7 +15,7 @@ public class AppUser : IdentityUser
     public string OIB { get; set; } = string.Empty;
 
     [Required]
-    [StringLength(13, MinimumLength = 13)]
+    [StringLength(10, MinimumLength = 10)]
     [RegularExpression("^[0-9]*$")]
-    public string JMBG { get; set; } = string.Empty;
+    public string JMBAG { get; set; } = string.Empty;
 }

@@ -51,9 +51,12 @@ public class PlaylistsApiController : ApiControllerBase
         return Ok(PlaylistDto.FromEntity(playlist));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
     [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<PlaylistDto> Create([FromBody] PlaylistCreateDto dto)
     {
@@ -102,9 +105,12 @@ public class PlaylistsApiController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = playlist.Id }, PlaylistDto.FromEntity(created));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<PlaylistDto> Update(string id, [FromBody] PlaylistUpdateDto dto)
@@ -151,8 +157,11 @@ public class PlaylistsApiController : ApiControllerBase
         return Ok(PlaylistDto.FromEntity(updated));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Delete(string id)
     {

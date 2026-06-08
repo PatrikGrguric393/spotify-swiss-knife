@@ -30,6 +30,7 @@ builder.Services.AddScoped<TrackRepository>();
 builder.Services.AddScoped<AlbumRepository>();
 builder.Services.AddScoped<ArtistRepository>();
 builder.Services.AddScoped<PlaylistRepository>();
+builder.Services.AddSingleton<AlbumCoverStorage>();
 
 builder.Services.AddHttpClient("spotify");
 builder.Services.AddScoped<SpotifyAuthService>();
@@ -49,6 +50,26 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Name = "SSKAuth";
     options.LoginPath = "/login";
     options.AccessDeniedPath = "/account/denied";
+    options.Events.OnRedirectToLogin = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 // Spotify OAuth is kept as a separate, optional connection on its own scheme so it
@@ -67,7 +88,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SpotifyDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsRelational())
+        await db.Database.MigrateAsync();
+    else
+        await db.Database.EnsureCreatedAsync();
 }
 
 await IdentitySeeder.SeedAsync(app.Services);
@@ -100,3 +124,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// Exposed so integration tests can bootstrap the app via WebApplicationFactory<Program>.
+public partial class Program { }

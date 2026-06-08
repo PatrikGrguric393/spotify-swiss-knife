@@ -84,10 +84,10 @@
         </div>
 
         <div class="form-group">
-            <label asp-for="JMBG" class="required"></label>
-            <input asp-for="JMBG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="13" data-val-length-max="13" pattern="[0-9]{13}" placeholder="Enter 13-digit JMBG" aria-describedby="error-JMBG" />
-            <span asp-validation-for="JMBG" class="visually-hidden"></span>
-            @{ FieldErrors("JMBG"); }
+            <label asp-for="JMBAG" class="required"></label>
+            <input asp-for="JMBAG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="10" data-val-length-max="10" pattern="[0-9]{10}" placeholder="Enter 10-digit JMBAG" aria-describedby="error-JMBAG" />
+            <span asp-validation-for="JMBAG" class="visually-hidden"></span>
+            @{ FieldErrors("JMBAG"); }
         </div>
 
         <div class="form-group">

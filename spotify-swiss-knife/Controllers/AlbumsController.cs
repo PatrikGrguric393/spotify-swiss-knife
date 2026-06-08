@@ -15,12 +15,14 @@ public class AlbumsController : Controller
     private readonly AlbumRepository _albumRepository;
     private readonly TrackRepository _trackRepository;
     private readonly ArtistRepository _artistRepository;
+    private readonly AlbumCoverStorage _coverStorage;
 
-    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository)
+    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage)
     {
         _albumRepository = albumRepository;
         _trackRepository = trackRepository;
         _artistRepository = artistRepository;
+        _coverStorage = coverStorage;
     }
 
     [AllowAnonymous]
@@ -41,9 +43,10 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/create")]
     [ValidateAntiForgeryToken]
-    public IActionResult CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateModel model)
+    public async Task<IActionResult> CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateModel model)
     {
         ValidateAlbumTypeAndTrackCount(model);
+        ValidateCoverImage(model.CoverImage);
 
         if (!ModelState.IsValid)
         {
@@ -92,6 +95,12 @@ public class AlbumsController : Controller
             Artists = selectedArtists
         };
 
+        if (model.CoverImage is { Length: > 0 })
+        {
+            album.CoverImageFileName = await _coverStorage.SaveAsync(model.CoverImage);
+            album.CoverImageContentType = AlbumCoverStorage.ResolveContentType(model.CoverImage.FileName);
+        }
+
         _albumRepository.Add(album);
 
         foreach (var track in selectedTracks)
@@ -129,18 +138,22 @@ public class AlbumsController : Controller
             Popularity = album.Popularity,
             ReleaseDate = album.ReleaseDate,
             TrackIds = trackIds,
-            ArtistIds = artistIds
+            ArtistIds = artistIds,
+            HasExistingCover = album.HasCover
         });
     }
 
     [HttpPost("albums/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditModel model)
+    public async Task<IActionResult> EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditModel model)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
 
+        model.HasExistingCover = album.HasCover;
+
         ValidateAlbumTypeAndTrackCount(model);
+        ValidateCoverImage(model.CoverImage);
 
         if (!ModelState.IsValid)
         {
@@ -191,6 +204,21 @@ public class AlbumsController : Controller
         album.ReleaseDatePrecision = "day";
         album.Artists = selectedArtists;
 
+        if (model.CoverImage is { Length: > 0 })
+        {
+            var previousCover = album.CoverImageFileName;
+            album.CoverImageFileName = await _coverStorage.SaveAsync(model.CoverImage);
+            album.CoverImageContentType = AlbumCoverStorage.ResolveContentType(model.CoverImage.FileName);
+            _coverStorage.Delete(previousCover);
+        }
+        else if (model.RemoveCoverImage && album.HasCover)
+        {
+            var previousCover = album.CoverImageFileName;
+            album.CoverImageFileName = null;
+            album.CoverImageContentType = null;
+            _coverStorage.Delete(previousCover);
+        }
+
         _albumRepository.Update(album);
 
         foreach (var oldTrack in allTracks.Where(t => previousTrackIds.Contains(t.Id) && !newTrackIds.Contains(t.Id)))
@@ -220,8 +248,32 @@ public class AlbumsController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult DeleteAlbumConfirmed(string id)
     {
+        var album = _albumRepository.GetById(id);
+        var coverFileName = album?.CoverImageFileName;
+
         _albumRepository.Delete(id);
+        _coverStorage.Delete(coverFileName);
+
         return RedirectToAction(nameof(Albums));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("albums/cover/{id}")]
+    public IActionResult AlbumCover(string id)
+    {
+        var album = _albumRepository.GetById(id);
+        if (album is null || string.IsNullOrEmpty(album.CoverImageFileName))
+            return NotFound();
+
+        var filePath = _coverStorage.GetPhysicalPath(album.CoverImageFileName);
+        if (filePath is null)
+            return NotFound();
+
+        var contentType = string.IsNullOrEmpty(album.CoverImageContentType)
+            ? AlbumCoverStorage.ResolveContentType(album.CoverImageFileName)
+            : album.CoverImageContentType;
+
+        return PhysicalFile(filePath, contentType);
     }
 
     [AllowAnonymous]
@@ -246,7 +298,8 @@ public class AlbumsController : Controller
             a.Id,
             a.Name,
             Artists = string.Join(", ", a.Artists.Select(ar => ar.Name)),
-            ReleaseDate = a.ReleaseDate
+            ReleaseDate = a.ReleaseDate,
+            a.HasCover
         }).ToList());
     }
 
@@ -300,6 +353,13 @@ public class AlbumsController : Controller
 
         if (model.AlbumType == "single" && model.TrackIds.Count != 1)
             ModelState.AddModelError(nameof(model.TrackIds), "Singles must contain exactly one track.");
+    }
+
+    private void ValidateCoverImage(IFormFile? cover)
+    {
+        if (cover is null || cover.Length == 0) return;
+        if (!AlbumCoverStorage.IsAllowed(cover))
+            ModelState.AddModelError(nameof(Models.FormModels.AlbumFormModel.CoverImage), "Cover image must be a JPG, PNG, GIF, or WebP file.");
     }
 
     private static string NormalizeAlbumType(string? albumType) =>

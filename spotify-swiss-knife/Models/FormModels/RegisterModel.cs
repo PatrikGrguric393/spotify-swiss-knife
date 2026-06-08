@@ -28,10 +28,10 @@ public class RegisterModel
     public string OIB { get; set; } = string.Empty;
 
     [Required]
-    [StringLength(13, MinimumLength = 13, ErrorMessage = "JMBG must be exactly 13 digits.")]
-    [RegularExpression("^[0-9]*$", ErrorMessage = "JMBG may contain digits only.")]
-    [Display(Name = "JMBG")]
-    public string JMBG { get; set; } = string.Empty;
+    [StringLength(10, MinimumLength = 10, ErrorMessage = "JMBAG must be exactly 10 digits.")]
+    [RegularExpression("^[0-9]*$", ErrorMessage = "JMBAG may contain digits only.")]
+    [Display(Name = "JMBAG")]
+    public string JMBAG { get; set; } = string.Empty;
 
     [Required]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]

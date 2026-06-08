@@ -46,4 +46,14 @@ public class Album
 
 	[JsonPropertyName("popularity")]
 	public int Popularity { get; set; }
+
+	[JsonIgnore]
+	public string? CoverImageFileName { get; set; }
+
+	[JsonIgnore]
+	public string? CoverImageContentType { get; set; }
+
+	[NotMapped]
+	[JsonIgnore]
+	public bool HasCover => !string.IsNullOrEmpty(CoverImageFileName);
 }

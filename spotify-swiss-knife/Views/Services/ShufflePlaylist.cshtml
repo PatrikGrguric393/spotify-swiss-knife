@@ -54,17 +54,12 @@
                     </button>
                 </div>
 
-                <p class="shuffle-status" role="status" aria-live="polite" aria-atomic="true">
-                    @(string.IsNullOrWhiteSpace(Model.StatusMessage) ? "No shuffle has been run yet." : Model.StatusMessage)
-                </p>
+                <p class="shuffle-status" role="status" aria-live="polite" aria-atomic="true">No shuffle has been run yet.</p>
 
-                @if (Model.ShuffledAtUtc.HasValue)
-                {
-                    <p class="shuffle-last-run">
-                        Last shuffled:
-                        <time class="shuffle-time" datetime="@Model.ShuffledAtUtc.Value.ToString("o")" data-utc="@Model.ShuffledAtUtc.Value.ToString("o")"></time>
-                    </p>
-                }
+                <p class="shuffle-last-run" hidden>
+                    Last shuffled:
+                    <time class="shuffle-time"></time>
+                </p>
 
             </form>
         </section>
@@ -86,26 +81,72 @@
             var submit = form.querySelector('.shuffle-submit');
             var label = form.querySelector('.shuffle-submit-label');
             var status = form.querySelector('.shuffle-status');
+            var lastRun = form.querySelector('.shuffle-last-run');
+            var timeEl = form.querySelector('.shuffle-time');
             var inFlight = false;
 
+            function setLoading(loading) {
+                if (submit) {
+                    submit.disabled = loading;
+                    if (loading) {
+                        submit.setAttribute('aria-busy', 'true');
+                        submit.classList.add('is-shuffling');
+                    } else {
+                        submit.removeAttribute('aria-busy');
+                        submit.classList.remove('is-shuffling');
+                    }
+                }
+                if (label) {
+                    label.textContent = loading ? 'Shuffling…' : 'Start shuffle';
+                }
+            }
+
             form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
                 if (inFlight) {
-                    event.preventDefault();
                     return;
                 }
                 inFlight = true;
 
-                if (submit) {
-                    submit.disabled = true;
-                    submit.setAttribute('aria-busy', 'true');
-                    submit.classList.add('is-shuffling');
-                }
-                if (label) {
-                    label.textContent = 'Shuffling…';
-                }
+                setLoading(true);
                 if (status) {
                     status.textContent = 'Shuffling…';
                 }
+
+                fetch(form.action, { method: 'POST', body: new FormData(form) })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (result) {
+                        if (result.success === true) {
+                            if (status) {
+                                status.textContent = result.message;
+                            }
+                            if (result.shuffledAtUtc && timeEl && lastRun) {
+                                var parsed = new Date(result.shuffledAtUtc);
+                                timeEl.setAttribute('datetime', result.shuffledAtUtc);
+                                timeEl.setAttribute('data-utc', result.shuffledAtUtc);
+                                timeEl.textContent = Number.isNaN(parsed.getTime())
+                                    ? result.shuffledAtUtc
+                                    : parsed.toLocaleString();
+                                lastRun.removeAttribute('hidden');
+                            }
+                        } else {
+                            if (status) {
+                                status.textContent = result.message;
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        if (status) {
+                            status.textContent = 'Shuffle failed. Please try again.';
+                        }
+                    })
+                    .finally(function () {
+                        setLoading(false);
+                        inFlight = false;
+                    });
             });
         });
     });

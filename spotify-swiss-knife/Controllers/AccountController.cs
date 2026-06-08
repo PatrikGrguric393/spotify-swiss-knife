@@ -66,7 +66,7 @@ public class AccountController : Controller
             LastName = model.LastName.Trim(),
             DateOfBirth = model.DateOfBirth,
             OIB = model.OIB.Trim(),
-            JMBG = model.JMBG.Trim()
+            JMBAG = model.JMBAG.Trim()
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -143,6 +143,8 @@ public class AccountController : Controller
                 Id = user.Id,
                 Email = user.Email ?? user.UserName ?? string.Empty,
                 FullName = $"{user.FirstName} {user.LastName}".Trim(),
+                OIB = user.OIB,
+                JMBAG = user.JMBAG,
                 CurrentRole = roles.FirstOrDefault() ?? string.Empty
             });
         }
@@ -191,7 +193,7 @@ public class AccountController : Controller
             LastName = user.LastName ?? string.Empty,
             DateOfBirth = user.DateOfBirth,
             OIB = user.OIB,
-            JMBG = user.JMBG,
+            JMBAG = user.JMBAG,
             Role = roles.FirstOrDefault() ?? string.Empty
         });
     }
@@ -213,7 +215,7 @@ public class AccountController : Controller
         user.LastName = model.LastName.Trim();
         user.DateOfBirth = model.DateOfBirth;
         user.OIB = model.OIB.Trim();
-        user.JMBG = model.JMBG.Trim();
+        user.JMBAG = model.JMBAG.Trim();
 
         if (!string.Equals(user.Email, model.Email, StringComparison.OrdinalIgnoreCase))
         {

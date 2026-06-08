@@ -34,17 +34,17 @@ public static class IdentitySeeder
                 FirstName = "Site",
                 LastName = "Administrator",
                 OIB = "00000000000",
-                JMBG = "0000000000000"
+                JMBAG = "0000000000"
             };
 
             var result = await userManager.CreateAsync(admin, password);
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(admin, "Admin");
         }
-        else if (string.IsNullOrEmpty(existingAdmin.OIB) || string.IsNullOrEmpty(existingAdmin.JMBG))
+        else if (string.IsNullOrEmpty(existingAdmin.OIB) || string.IsNullOrEmpty(existingAdmin.JMBAG))
         {
             existingAdmin.OIB = "00000000000";
-            existingAdmin.JMBG = "0000000000000";
+            existingAdmin.JMBAG = "0000000000";
             await userManager.UpdateAsync(existingAdmin);
         }
     }

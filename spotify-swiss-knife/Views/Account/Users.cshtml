@@ -25,6 +25,8 @@
                 <tr>
                     <th scope="col">Email</th>
                     <th scope="col">Full name</th>
+                    <th scope="col">OIB</th>
+                    <th scope="col">JMBAG</th>
                     <th scope="col">Current role</th>
                     <th scope="col">Set role</th>
                     <th scope="col">Actions</th>
@@ -34,7 +36,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="5">No users found.</td>
+                        <td colspan="7">No users found.</td>
                     </tr>
                 }
                 else
@@ -44,6 +46,8 @@
                         <tr>
                             <td data-label="Email">@row.Email</td>
                             <td data-label="Full name">@(string.IsNullOrWhiteSpace(row.FullName) ? "—" : row.FullName)</td>
+                            <td data-label="OIB">@row.OIB</td>
+                            <td data-label="JMBAG">@row.JMBAG</td>
                             <td data-label="Current role">
                                 <span class="role-badge">@(string.IsNullOrWhiteSpace(row.CurrentRole) ? "None" : row.CurrentRole)</span>
                             </td>

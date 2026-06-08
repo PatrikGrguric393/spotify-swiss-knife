@@ -52,9 +52,12 @@ public class AlbumsApiController : ApiControllerBase
         return Ok(AlbumDto.FromEntity(album));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
     [ProducesResponseType(typeof(AlbumDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<AlbumDto> Create([FromBody] AlbumCreateDto dto)
     {
@@ -100,9 +103,12 @@ public class AlbumsApiController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = album.Id }, AlbumDto.FromEntity(created));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(AlbumDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<AlbumDto> Update(string id, [FromBody] AlbumUpdateDto dto)
@@ -155,8 +161,11 @@ public class AlbumsApiController : ApiControllerBase
         return Ok(AlbumDto.FromEntity(updated));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Delete(string id)
     {

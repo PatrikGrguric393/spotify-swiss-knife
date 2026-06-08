@@ -313,3 +313,110 @@
 		padding: 6px 10px;
 	}
 }
+
+/* ---- Album cover upload (Create/Edit forms) ---- */
+.album-cover-help {
+	color: #7ab37a;
+	font-size: 0.85rem;
+	margin: 0 0 8px;
+	line-height: 1.4;
+}
+
+.album-cover-input {
+	display: block;
+	width: 100%;
+	cursor: pointer;
+}
+
+.album-cover-input::file-selector-button {
+	font-family: inherit;
+	background: #000;
+	color: #0f0;
+	border: 1px solid #0f0;
+	padding: 4px 10px;
+	margin-right: 10px;
+	cursor: pointer;
+	transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.album-cover-input::file-selector-button:hover {
+	background: #0f0;
+	color: #000;
+}
+
+.album-cover-current,
+.album-cover-preview {
+	margin-bottom: 10px;
+}
+
+.album-cover-current-caption {
+	display: block;
+	color: #7ab37a;
+	font-size: 0.8rem;
+	margin-top: 4px;
+}
+
+.album-cover-thumb,
+.album-cover-preview img {
+	display: block;
+	width: 140px;
+	height: 140px;
+	object-fit: cover;
+	border: 2px solid #0f0;
+	background: #030303;
+}
+
+.album-cover-preview img {
+	border-style: dashed;
+}
+
+.album-cover-remove {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #0f0;
+	font-weight: 500;
+	margin-bottom: 12px;
+	cursor: pointer;
+}
+
+.album-cover-remove input {
+	width: auto;
+	margin: 0;
+	cursor: pointer;
+}
+
+.album-cover-replace-label {
+	margin-top: 4px;
+}
+
+/* ---- Album cover thumbnails in the library listing ---- */
+.album-row-name {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	min-width: 0;
+}
+
+.album-row-thumb {
+	flex: 0 0 auto;
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+	border: 1px solid #0f0;
+	background: #030303;
+}
+
+.album-row-thumb--placeholder {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: #4f8f4f;
+	font-size: 1.1rem;
+	line-height: 1;
+}
+
+.album-row-title {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}

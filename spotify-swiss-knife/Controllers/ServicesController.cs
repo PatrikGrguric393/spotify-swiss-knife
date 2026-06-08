@@ -28,55 +28,42 @@ public class ServicesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ShufflePlaylist(ShufflePlaylistFormInput input)
+    public async Task<IActionResult> ShufflePlaylist([FromForm] ShufflePlaylistFormInput input)
     {
         var source = await ResolvePlaylistsAsync();
 
         if (source.Error is not null)
-        {
-            return View(ShufflePlaylistPage.Create(source.Playlists, input, errorMessage: source.Error));
-        }
+            return Json(new ShuffleJsonResult(false, source.Error, null));
 
         var selectedPlaylist = source.Playlists.FirstOrDefault(playlist => playlist.Id == input.PlaylistId);
         if (selectedPlaylist is null)
-        {
-            ModelState.AddModelError("Input.PlaylistId", "Please select a valid playlist.");
-            return View(ShufflePlaylistPage.Create(source.Playlists, input));
-        }
+            return Json(new ShuffleJsonResult(false, "Please select a valid playlist.", null));
 
-        // Spotify playlists are shuffled by writing the reordered tracks back to the user's
-        // Spotify account; local-account users shuffle the database-stored playlists.
         if (source.IsSpotify)
-        {
-            return await ShuffleSpotifyPlaylistAsync(source, selectedPlaylist, input);
-        }
+            return await ShuffleSpotifyPlaylistJsonAsync(source, selectedPlaylist, input);
 
-        var statusMessage = string.Empty;
-        if (ModelState.IsValid)
-        {
-            statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
-        }
+        if (!ModelState.IsValid)
+            return Json(new ShuffleJsonResult(false, "Invalid form data.", null));
 
-        return View(ShufflePlaylistPage.Create(
-            source.Playlists, input, statusMessage, shuffledAtUtc: selectedPlaylist.LastShuffled));
+        var statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
+        return Json(new ShuffleJsonResult(true, statusMessage, selectedPlaylist.LastShuffled?.ToString("o")));
     }
 
-    private async Task<IActionResult> ShuffleSpotifyPlaylistAsync(
+    private async Task<IActionResult> ShuffleSpotifyPlaylistJsonAsync(
         PlaylistSource source, Playlist selectedPlaylist, ShufflePlaylistFormInput input)
     {
         var result = await _spotifyAuth.ShufflePlaylistAsync(
             source.AccessToken!, selectedPlaylist.Id, input.RandomnessLevel);
 
         if (!result.Succeeded)
-        {
-            return View(ShufflePlaylistPage.Create(source.Playlists, input, statusMessage: result.Error ?? string.Empty));
-        }
+            return Json(new ShuffleJsonResult(false, result.Error ?? "Shuffle failed.", null));
 
         var statusMessage = $"Shuffle completed for '{selectedPlaylist.Name}'. " +
             $"Tracks: {result.TrackCount}, moved: {result.MovedCount}, randomness: {input.RandomnessLevel}.";
-        return View(ShufflePlaylistPage.Create(
-            source.Playlists, input, statusMessage, shuffledAtUtc: DateTime.UtcNow));
+        return Json(new ShuffleJsonResult(true, statusMessage, DateTime.UtcNow.ToString("o")));
     }
+
+    private sealed record ShuffleJsonResult(bool Success, string Message, string? ShuffledAtUtc);
 
     // Picks the playlist source from the current login: Spotify if connected, otherwise
     // the local database for a signed-in app user, otherwise an error for anonymous users.

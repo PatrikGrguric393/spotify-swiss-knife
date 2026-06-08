@@ -55,9 +55,12 @@ public class ArtistsApiController : ApiControllerBase
         return Ok(ArtistDto.FromEntity(artist));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
     [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<ArtistDto> Create([FromBody] ArtistCreateDto dto)
     {
@@ -85,9 +88,12 @@ public class ArtistsApiController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = artist.Id }, ArtistDto.FromEntity(created));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<ArtistDto> Update(string id, [FromBody] ArtistUpdateDto dto)
@@ -116,8 +122,11 @@ public class ArtistsApiController : ApiControllerBase
         return Ok(ArtistDto.FromEntity(updated));
     }
 
+    [Authorize(Roles = "Admin,Editor")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Delete(string id)
     {

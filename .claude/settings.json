@@ -5,7 +5,15 @@
       "Bash(git -C /home/pg/Documents/spotify-swiss-knife diff --stat HEAD)",
       "Bash(grep -E '\\\\.\\(html|css|js|ts|razor|cshtml|scss\\)$')",
       "Bash(dotnet add *)",
-      "Bash(grep -E \"\\\\.\\(html|cshtml|css|js\\)$\")"
+      "Bash(grep -E \"\\\\.\\(html|cshtml|css|js\\)$\")",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes)",
+      "Bash(dotnet new *)",
+      "Bash(rm -f spotify-swiss-knife.Tests/UnitTest1.cs)",
+      "Bash(dotnet sln *)",
+      "Bash(dotnet test *)",
+      "Bash(grep -E \"\\\\.\\(cs|cshtml|js\\)$\")"
     ]
   }
 }

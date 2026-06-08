@@ -37,7 +37,27 @@
 
             var tdName = document.createElement('td');
             tdName.setAttribute('data-label', 'Name');
-            tdName.textContent = r.name;
+            var nameWrap = document.createElement('div');
+            nameWrap.className = 'album-row-name';
+            if (r.hasCover) {
+                var thumb = document.createElement('img');
+                thumb.className = 'album-row-thumb';
+                thumb.src = '/lib/albums/cover/' + encodeURIComponent(r.id);
+                thumb.alt = '';
+                thumb.loading = 'lazy';
+                nameWrap.appendChild(thumb);
+            } else {
+                var placeholder = document.createElement('span');
+                placeholder.className = 'album-row-thumb album-row-thumb--placeholder';
+                placeholder.setAttribute('aria-hidden', 'true');
+                placeholder.innerHTML = '&#9835;';
+                nameWrap.appendChild(placeholder);
+            }
+            var nameTitle = document.createElement('span');
+            nameTitle.className = 'album-row-title';
+            nameTitle.textContent = r.name;
+            nameWrap.appendChild(nameTitle);
+            tdName.appendChild(nameWrap);
 
             var tdArtists = document.createElement('td');
             tdArtists.setAttribute('data-label', 'Artists');
@@ -62,7 +82,9 @@
             var script = document.createElement('script');
             script.type = 'application/json';
             script.id = detailsId;
-            script.textContent = JSON.stringify({ Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate });
+            var detailData = { Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate };
+            if (r.hasCover) detailData.Cover = '/lib/albums/cover/' + encodeURIComponent(r.id);
+            script.textContent = JSON.stringify(detailData);
 
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
@@ -99,7 +121,7 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 renderRows(data.map(function(item) {
-                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate };
+                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate, hasCover: item.hasCover };
                 }));
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })

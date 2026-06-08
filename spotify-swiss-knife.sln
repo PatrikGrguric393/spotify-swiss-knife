@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "spotify-swiss-knife", "spotify-swiss-knife\spotify-swiss-knife.csproj", "{46B63DFE-FF63-4E2D-A6CC-A5DE06D14287}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "spotify-swiss-knife.Tests", "spotify-swiss-knife.Tests\spotify-swiss-knife.Tests.csproj", "{4AE19C48-8545-403D-A348-F2FDC72B6640}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{46B63DFE-FF63-4E2D-A6CC-A5DE06D14287}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46B63DFE-FF63-4E2D-A6CC-A5DE06D14287}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46B63DFE-FF63-4E2D-A6CC-A5DE06D14287}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AE19C48-8545-403D-A348-F2FDC72B6640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AE19C48-8545-403D-A348-F2FDC72B6640}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AE19C48-8545-403D-A348-F2FDC72B6640}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AE19C48-8545-403D-A348-F2FDC72B6640}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -34,4 +34,7 @@ public abstract class AlbumFormModel
 	[MinLength(1, ErrorMessage = "Select at least one artist")]
 	[Display(Name = "Select Artists")]
 	public List<string> ArtistIds { get; set; } = [];
+
+	[Display(Name = "Album Cover")]
+	public IFormFile? CoverImage { get; set; }
 }
