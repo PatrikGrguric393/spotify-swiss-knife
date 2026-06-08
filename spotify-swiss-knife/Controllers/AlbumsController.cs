@@ -35,7 +35,7 @@ public class AlbumsController : Controller
     [HttpGet("albums/create")]
     public IActionResult CreateAlbum()
     {
-        var model = new Models.FormModels.AlbumCreateModel();
+        var model = new Models.FormModels.AlbumCreateForm();
         PopulateTrackOptions(model.TrackIds);
         PopulateArtistOptions(model.ArtistIds);
         return View(model);
@@ -43,7 +43,7 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateModel model)
+    public async Task<IActionResult> CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateForm model)
     {
         ValidateAlbumTypeAndTrackCount(model);
         ValidateCoverImage(model.CoverImage);
@@ -129,7 +129,7 @@ public class AlbumsController : Controller
         PopulateTrackOptions(trackIds);
         PopulateArtistOptions(artistIds);
 
-        return View(new Models.FormModels.AlbumEditModel
+        return View(new Models.FormModels.AlbumEditForm
         {
             Id = album.Id,
             Name = ToTitleCase(album.Name),
@@ -145,7 +145,7 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditModel model)
+    public async Task<IActionResult> EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditForm model)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
@@ -335,7 +335,7 @@ public class AlbumsController : Controller
         return _artistRepository.GetAll().Where(a => wanted.Contains(a.Id)).ToList();
     }
 
-    private void ValidateAlbumTypeAndTrackCount(Models.FormModels.AlbumFormModel model)
+    private void ValidateAlbumTypeAndTrackCount(Models.FormModels.AlbumForm model)
     {
         model.AlbumType = NormalizeAlbumType(model.AlbumType);
         if (!AllowedAlbumTypes.Contains(model.AlbumType))
@@ -359,7 +359,7 @@ public class AlbumsController : Controller
     {
         if (cover is null || cover.Length == 0) return;
         if (!AlbumCoverStorage.IsAllowed(cover))
-            ModelState.AddModelError(nameof(Models.FormModels.AlbumFormModel.CoverImage), "Cover image must be a JPG, PNG, GIF, or WebP file.");
+            ModelState.AddModelError(nameof(Models.FormModels.AlbumForm.CoverImage), "Cover image must be a JPG, PNG, GIF, or WebP file.");
     }
 
     private static string NormalizeAlbumType(string? albumType) =>

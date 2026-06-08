@@ -26,7 +26,7 @@ public class ArtistsApiTests : IntegrationTestBase
         var response = await Client.GetAsync(BaseUrl);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var artists = await response.Content.ReadFromJsonAsync<List<ArtistSummaryDto>>();
+        var artists = await response.Content.ReadFromJsonAsync<List<ArtistListDto>>();
         artists!.Should().Contain(a => a.Id == artist.Id && a.Name == "Findable Artist");
     }
 
@@ -39,7 +39,7 @@ public class ArtistsApiTests : IntegrationTestBase
         var response = await Client.GetAsync($"{BaseUrl}/{artist.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<ArtistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<ArtistDetailDto>();
         dto!.Id.Should().Be(artist.Id);
         dto.Name.Should().Be("Lookup Artist");
     }
@@ -63,7 +63,7 @@ public class ArtistsApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
 
-        var dto = await response.Content.ReadFromJsonAsync<ArtistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<ArtistDetailDto>();
         dto!.Name.Should().Be("New Artist");
 
         using var scope = NewScope();
@@ -109,7 +109,7 @@ public class ArtistsApiTests : IntegrationTestBase
         var response = await Client.PutAsync($"{BaseUrl}/{artist.Id}", JsonBody(ValidPayload("After Update")));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<ArtistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<ArtistDetailDto>();
         dto!.Name.Should().Be("After Update");
 
         using var assert = NewScope();

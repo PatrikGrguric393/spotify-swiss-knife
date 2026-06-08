@@ -1,0 +1,92 @@
+@using System.Text.Json
+@model List<spotify_swiss_knife.Models.Track>
+
+@{
+    ViewData["Title"] = "Library - Songs";
+}
+
+<section class="library-page">
+    <h1>Library: Songs</h1>
+    <div class="library-filters">
+        <div class="library-actions">
+            <div class="search-box">
+                <label for="songSearch" class="visually-hidden">Search</label>
+                <input id="songSearch" name="q" type="search" class="search-input" placeholder="Search songs..." aria-label="Search songs" />
+                <span class="search-status" aria-live="polite"></span>
+            </div>
+        </div>
+        <div class="duration-range-filters">
+            <div class="duration-input-group">
+                <label for="songDurationMin" class="duration-label">Min</label>
+                <input id="songDurationMin" type="text" class="duration-input" placeholder="0:00" aria-label="Minimum duration (m:ss)" data-no-marquee />
+            </div>
+            <div class="duration-input-group">
+                <label for="songDurationMax" class="duration-label">Max</label>
+                <input id="songDurationMax" type="text" class="duration-input" placeholder="—" aria-label="Maximum duration (m:ss)" data-no-marquee />
+            </div>
+            <button type="button" id="songDurationClear" class="dpc-clear">Clear</button>
+        </div>
+    </div>
+    <p>All songs from the mock repository.</p>
+
+    <div class="table-actions">
+        <a class="btn btn-primary" href="@Url.Action("CreateTrack", "Tracks")">Create Song</a>
+    </div>
+
+    <div class="table-wrap">
+        <table class="entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Artists</th>
+                    <th>Duration</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var song in Model)
+            {
+                var duration = TimeSpan.FromMilliseconds(song.DurationMs);
+                var artists = string.Join(", ", song.Artists.Select(artist => artist.Name));
+                var detailsId = $"track-details-{song.Id}";
+                var detailPayload = new
+                {
+                    song.Name,
+                    Artists = artists,
+                    Duration = duration.ToString(@"m\:ss"),
+                    Disc = song.DiscNumber,
+                    TrackNumber = song.TrackNumber,
+                    Local = song.IsLocal ? "Yes" : "No"
+                };
+
+                <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Song" aria-label="View details for @song.Name">
+                    <td data-label="Name">@song.Name</td>
+                    <td data-label="Artists">@artists</td>
+                    <td data-label="Duration">@duration.ToString(@"m\:ss")</td>
+                    <td data-label="Actions" class="cell-actions">
+                        <a class="btn" href="@Url.Action("EditTrack", "Tracks", new { id = song.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("DeleteTrack", "Tracks", new { id = song.Id })">Delete</a>
+                        <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
+    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
+        <div class="entity-detail-header">
+            <h2 id="entityDetailTitle">Details</h2>
+            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
+        </div>
+        <div class="entity-detail-body">
+            <div class="entity-detail-content" id="entityDetailContent"></div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/library-songs.js" asp-append-version="true"></script>
+}

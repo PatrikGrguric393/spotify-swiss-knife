@@ -34,7 +34,7 @@ public class AlbumsApiTests : IntegrationTestBase
         var response = await Client.GetAsync(BaseUrl);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var albums = await response.Content.ReadFromJsonAsync<List<AlbumSummaryDto>>();
+        var albums = await response.Content.ReadFromJsonAsync<List<AlbumListDto>>();
         albums.Should().NotBeNull();
         albums!.Should().Contain(a => a.Id == album.Id && a.Name == "Findable Album");
     }
@@ -48,9 +48,28 @@ public class AlbumsApiTests : IntegrationTestBase
         var response = await Client.GetAsync($"{BaseUrl}/{album.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<AlbumDto>();
+        var dto = await response.Content.ReadFromJsonAsync<AlbumDetailDto>();
         dto!.Id.Should().Be(album.Id);
         dto.Name.Should().Be("Lookup Album");
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsTracksWithNameAndUrl()
+    {
+        using var scope = NewScope();
+        var db = Db(scope);
+        var album = await SeedData.CreateAlbumAsync(db, "Track URL Album");
+        await SeedData.CreateTrackAsync(db, "Featured Track",
+            albumId: album.Id,
+            spotifyUrl: "https://open.spotify.com/track/abc123");
+
+        var response = await Client.GetAsync($"{BaseUrl}/{album.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<AlbumDetailDto>();
+        var t = dto!.Tracks.Should().ContainSingle().Subject;
+        t.Name.Should().Be("Featured Track");
+        t.SpotifyUrl.Should().Be("https://open.spotify.com/track/abc123");
     }
 
     [Fact]
@@ -71,7 +90,7 @@ public class AlbumsApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
 
-        var dto = await response.Content.ReadFromJsonAsync<AlbumDto>();
+        var dto = await response.Content.ReadFromJsonAsync<AlbumDetailDto>();
         dto!.Name.Should().Be("Brand New Album");
 
         using var scope = NewScope();
@@ -99,7 +118,7 @@ public class AlbumsApiTests : IntegrationTestBase
         var response = await Client.PostAsync(BaseUrl, JsonBody(payload));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var dto = await response.Content.ReadFromJsonAsync<AlbumDto>();
+        var dto = await response.Content.ReadFromJsonAsync<AlbumDetailDto>();
         dto!.Artists.Should().ContainSingle(a => a.Id == artist.Id);
     }
 
@@ -181,7 +200,7 @@ public class AlbumsApiTests : IntegrationTestBase
         var response = await Client.PutAsync($"{BaseUrl}/{album.Id}", JsonBody(payload));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<AlbumDto>();
+        var dto = await response.Content.ReadFromJsonAsync<AlbumDetailDto>();
         dto!.Name.Should().Be("After Update");
         dto.Popularity.Should().Be(80);
 

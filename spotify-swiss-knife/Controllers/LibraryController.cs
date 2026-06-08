@@ -8,6 +8,6 @@ public class LibraryController : Controller
     [HttpGet("")]
     public IActionResult Index()
     {
-        return Redirect("/lib/songs");
+        return Redirect("/lib/tracks");
     }
 }

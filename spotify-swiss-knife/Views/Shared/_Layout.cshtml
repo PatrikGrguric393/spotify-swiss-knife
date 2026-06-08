@@ -13,9 +13,9 @@
     @{
         var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
-        var isShufflePlaylist = currentController == "Services" && currentAction == "ShufflePlaylist";
+        var isShufflePlaylist = currentController == "Shuffle" && currentAction == "ShufflePlaylist";
         var isServices = isShufflePlaylist;
-        var isLibrary = currentController is "Songs" or "Albums" or "Artists" or "Playlists";
+        var isLibrary = currentController is "Tracks" or "Albums" or "Artists" or "Playlists";
         var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
         var appUserRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Editor") ? "Editor" : string.Empty;
         var isProfile = (currentController == "Account" || currentController == "Files");
@@ -39,7 +39,7 @@
                             Services
                         </button>
                         <ul class="dropdown-menu" id="servicesMenu" aria-label="Services menu">
-                            <li><a asp-controller="Services" asp-action="ShufflePlaylist" class="nav-submenu-link @(isShufflePlaylist ? "active" : string.Empty)">Shuffle playlist</a></li>
+                            <li><a asp-controller="Shuffle" asp-action="ShufflePlaylist" class="nav-submenu-link @(isShufflePlaylist ? "active" : string.Empty)">Shuffle playlist</a></li>
                         </ul>
                     </li>
                     <li class="nav-dropdown @(isLibrary ? "active" : string.Empty)" id="libraryDropdown">
@@ -47,7 +47,7 @@
                             Library
                         </button>
                         <ul class="dropdown-menu" id="libraryMenu" aria-label="Library menu">
-                            <li><a asp-controller="Songs" asp-action="Songs" class="nav-submenu-link @(currentController == "Songs" ? "active" : string.Empty)">Songs</a></li>
+                            <li><a asp-controller="Tracks" asp-action="Tracks" class="nav-submenu-link @(currentController == "Tracks" ? "active" : string.Empty)">Songs</a></li>
                             <li><a asp-controller="Albums" asp-action="Albums" class="nav-submenu-link @(currentController == "Albums" ? "active" : string.Empty)">Albums</a></li>
                             <li><a asp-controller="Artists" asp-action="Artists" class="nav-submenu-link @(currentController == "Artists" ? "active" : string.Empty)">Artists</a></li>
                             <li><a asp-controller="Playlists" asp-action="Playlists" class="nav-submenu-link @(currentController == "Playlists" ? "active" : string.Empty)">Playlists</a></li>
@@ -83,7 +83,7 @@
                             </button>
                             <ul class="dropdown-menu" id="profileMenu" aria-label="Profile menu">
                                 <li>
-                                    <form asp-controller="Auth" asp-action="Logout" method="post" class="nav-submenu-logout-form">
+                                    <form asp-controller="SpotifyAuth" asp-action="Logout" method="post" class="nav-submenu-logout-form">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="nav-submenu-link nav-submenu-logout-btn">Disconnect</button>
                                     </form>
@@ -114,6 +114,7 @@
 
     <script src="~/js/layout.js" asp-append-version="true"></script>
     <script src="~/js/global-search.js" asp-append-version="true"></script>
+    <script src="~/js/marquee-placeholder.js" asp-append-version="true"></script>
     <script src="~/js/library-details.js" asp-append-version="true"></script>
     <script src="~/js/validation.js" asp-append-version="true"></script>
 

@@ -34,7 +34,7 @@ public class TracksApiTests : IntegrationTestBase
         var response = await Client.GetAsync(BaseUrl);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var tracks = await response.Content.ReadFromJsonAsync<List<TrackSummaryDto>>();
+        var tracks = await response.Content.ReadFromJsonAsync<List<TrackListDto>>();
         tracks!.Should().Contain(t => t.Id == track.Id && t.Name == "Findable Track");
     }
 
@@ -47,7 +47,7 @@ public class TracksApiTests : IntegrationTestBase
         var response = await Client.GetAsync($"{BaseUrl}/{track.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<TrackDto>();
+        var dto = await response.Content.ReadFromJsonAsync<TrackDetailDto>();
         dto!.Id.Should().Be(track.Id);
         dto.Name.Should().Be("Lookup Track");
     }
@@ -70,7 +70,7 @@ public class TracksApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
 
-        var dto = await response.Content.ReadFromJsonAsync<TrackDto>();
+        var dto = await response.Content.ReadFromJsonAsync<TrackDetailDto>();
         dto!.Name.Should().Be("Brand New Track");
 
         using var scope = NewScope();
@@ -86,7 +86,7 @@ public class TracksApiTests : IntegrationTestBase
         var response = await Client.PostAsync(BaseUrl, JsonBody(ValidPayload("Album Track", album.Id)));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var dto = await response.Content.ReadFromJsonAsync<TrackDto>();
+        var dto = await response.Content.ReadFromJsonAsync<TrackDetailDto>();
         dto!.Album!.Id.Should().Be(album.Id);
     }
 
@@ -162,7 +162,7 @@ public class TracksApiTests : IntegrationTestBase
         var response = await Client.PutAsync($"{BaseUrl}/{track.Id}", JsonBody(payload));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<TrackDto>();
+        var dto = await response.Content.ReadFromJsonAsync<TrackDetailDto>();
         dto!.Name.Should().Be("After Update");
         dto.DurationMs.Should().Be(220000);
 

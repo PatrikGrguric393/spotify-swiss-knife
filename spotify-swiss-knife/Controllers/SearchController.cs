@@ -50,7 +50,7 @@ public class SearchController : Controller
             _trackRepository.GetAll(), query,
             t => [t.Name, t.TrackNumber.ToString(), t.DiscNumber.ToString(), t.DurationMs.ToString(), t.IsLocal ? "local" : "streaming", t.Album?.Name, string.Join(" ", t.Artists.Select(a => a.Name))],
             t => t.Name,
-            t => new GlobalSearchResult { EntityType = "Track", Title = t.Name.Trim(), Subtitle = BuildTrackSubtitle(t), Url = BuildSelectionUrl("Songs", t.Id) }
+            t => new GlobalSearchResult { EntityType = "Track", Title = t.Name.Trim(), Subtitle = BuildTrackSubtitle(t), Url = BuildSelectionUrl("Tracks", t.Id) }
         ));
         results.AddRange(SearchEntities(
             _playlistRepository.GetAll(), query,

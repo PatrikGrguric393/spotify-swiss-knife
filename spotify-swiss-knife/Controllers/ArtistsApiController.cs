@@ -20,8 +20,8 @@ public class ArtistsApiController : ApiControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ArtistSummaryDto>), StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<ArtistSummaryDto>> GetAll(
+    [ProducesResponseType(typeof(IEnumerable<ArtistListDto>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<ArtistListDto>> GetAll(
         [FromQuery] string? q,
         [FromQuery] bool includeDeleted = false)
     {
@@ -37,7 +37,7 @@ public class ArtistsApiController : ApiControllerBase
 
         var result = artists
             .OrderBy(artist => artist.Name)
-            .Select(ArtistSummaryDto.FromEntity)
+            .Select(ArtistListDto.FromEntity)
             .ToList();
 
         return Ok(result);
@@ -45,24 +45,24 @@ public class ArtistsApiController : ApiControllerBase
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ArtistDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ArtistDto> GetById(string id, [FromQuery] bool includeDeleted = false)
+    public ActionResult<ArtistDetailDto> GetById(string id, [FromQuery] bool includeDeleted = false)
     {
         var artist = _artistRepository.GetById(id, includeDeleted);
         if (artist is null) return NotFound();
 
-        return Ok(ArtistDto.FromEntity(artist));
+        return Ok(ArtistDetailDto.FromEntity(artist));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
-    [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ArtistDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<ArtistDto> Create([FromBody] ArtistCreateDto dto)
+    public ActionResult<ArtistDetailDto> Create([FromBody] ArtistCreateDto dto)
     {
         if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
         {
@@ -85,18 +85,18 @@ public class ArtistsApiController : ApiControllerBase
         _artistRepository.Add(artist);
 
         var created = _artistRepository.GetById(artist.Id) ?? artist;
-        return CreatedAtAction(nameof(GetById), new { id = artist.Id }, ArtistDto.FromEntity(created));
+        return CreatedAtAction(nameof(GetById), new { id = artist.Id }, ArtistDetailDto.FromEntity(created));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(ArtistDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ArtistDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<ArtistDto> Update(string id, [FromBody] ArtistUpdateDto dto)
+    public ActionResult<ArtistDetailDto> Update(string id, [FromBody] ArtistUpdateDto dto)
     {
         var artist = _artistRepository.GetById(id, includeDeleted: true);
         if (artist is null) return NotFound();
@@ -119,7 +119,7 @@ public class ArtistsApiController : ApiControllerBase
         _artistRepository.Update(artist);
 
         var updated = _artistRepository.GetById(id, includeDeleted: true) ?? artist;
-        return Ok(ArtistDto.FromEntity(updated));
+        return Ok(ArtistDetailDto.FromEntity(updated));
     }
 
     [Authorize(Roles = "Admin,Editor")]

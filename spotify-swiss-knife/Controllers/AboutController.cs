@@ -4,7 +4,7 @@ namespace spotify_swiss_knife.Controllers;
 
 public class AboutController : Controller
 {
-    [HttpGet("/description")]
+    [HttpGet("/about")]
     public IActionResult Index()
     {
         return View();

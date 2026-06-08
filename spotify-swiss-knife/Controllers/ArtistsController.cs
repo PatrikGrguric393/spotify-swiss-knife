@@ -30,7 +30,7 @@ public class ArtistsController : Controller
 
     [HttpPost("artists/create")]
     [ValidateAntiForgeryToken]
-    public IActionResult CreateArtist([FromForm] Models.FormModels.ArtistCreateModel model)
+    public IActionResult CreateArtist([FromForm] Models.FormModels.ArtistCreateForm model)
     {
         if (!ModelState.IsValid)
             return View("CreateArtist", model);
@@ -64,7 +64,7 @@ public class ArtistsController : Controller
         var artist = _artistRepository.GetById(id);
         if (artist is null) return NotFound();
 
-        return View(new Models.FormModels.ArtistEditModel
+        return View(new Models.FormModels.ArtistEditForm
         {
             Id = artist.Id,
             Name = artist.Name ?? string.Empty,
@@ -74,7 +74,7 @@ public class ArtistsController : Controller
 
     [HttpPost("artists/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult EditArtistPost(string id, [FromForm] Models.FormModels.ArtistEditModel model)
+    public IActionResult EditArtistPost(string id, [FromForm] Models.FormModels.ArtistEditForm model)
     {
         var artist = _artistRepository.GetById(id, includeDeleted: true);
         if (artist is null) return NotFound();

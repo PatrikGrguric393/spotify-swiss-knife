@@ -84,7 +84,7 @@ ul, ol {
 .search-box {
     display: grid;
     gap: 0.35rem;
-    width: min(100%, 360px);
+    width: 100%;
 }
 
 .search-input {
@@ -1674,4 +1674,84 @@ body.entity-detail-open .app-scroll-area {
 .files-delete-btn:hover {
     background: #0f0;
     color: #000;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Generalized marquee placeholder (shared component)
+ * Built at runtime by marquee-placeholder.js for every eligible text input.
+ * Mirrors the bespoke .global-search-placeholder effect; --mp-inset is set
+ * per-input by JS so the leading text inset and edge fade match that input's
+ * own horizontal padding.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.marquee-field {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.marquee-placeholder {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    color: #4d8f4d;
+    line-height: 1.35;
+    display: flex;
+    align-items: center;
+    --mp-inset: 0.7rem;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--mp-inset), #000 calc(100% - calc(var(--mp-inset) + 0.2rem)), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 var(--mp-inset), #000 calc(100% - calc(var(--mp-inset) + 0.2rem)), transparent 100%);
+}
+
+.marquee-placeholder[hidden] {
+    display: none !important;
+}
+
+.marquee-placeholder-track {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    width: max-content;
+    --mp-gap: 3rem;
+    will-change: transform;
+}
+
+.marquee-placeholder-text {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    padding-inline-start: var(--mp-inset);
+    padding-inline-end: var(--mp-gap);
+}
+
+/* Second copy is laid out (for seamless geometry) but only painted while scrolling. */
+.marquee-placeholder-text + .marquee-placeholder-text {
+    visibility: hidden;
+}
+.marquee-placeholder.is-overflowing .marquee-placeholder-text + .marquee-placeholder-text {
+    visibility: visible;
+}
+
+.marquee-placeholder.is-overflowing .marquee-placeholder-track {
+    animation: marquee-placeholder-scroll 12s linear infinite;
+}
+
+/* Pause on hover/focus so the full string can be read. */
+.marquee-field:hover .marquee-placeholder.is-overflowing .marquee-placeholder-track,
+.marquee-field:focus-within .marquee-placeholder.is-overflowing .marquee-placeholder-track {
+    animation-play-state: paused;
+}
+
+@keyframes marquee-placeholder-scroll {
+    0%   { transform: translateX(0); }
+    11%  { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-placeholder.is-overflowing .marquee-placeholder-track {
+        animation: none;
+        transform: none;
+    }
 }

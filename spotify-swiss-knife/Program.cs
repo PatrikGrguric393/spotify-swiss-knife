@@ -5,10 +5,6 @@ using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 
-
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -113,11 +109,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapControllerRoute(
-    name: "shuffle",
-    pattern: "shuffle",
-    defaults: new { controller = "Services", action = "ShufflePlaylist" });
 
 app.MapControllerRoute(
     name: "default",

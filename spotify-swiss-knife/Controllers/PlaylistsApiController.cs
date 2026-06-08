@@ -23,8 +23,8 @@ public class PlaylistsApiController : ApiControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<PlaylistSummaryDto>), StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<PlaylistSummaryDto>> GetAll([FromQuery] string? q)
+    [ProducesResponseType(typeof(IEnumerable<PlaylistListDto>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<PlaylistListDto>> GetAll([FromQuery] string? q)
     {
         var playlists = _playlistRepository.GetAll();
 
@@ -36,29 +36,29 @@ public class PlaylistsApiController : ApiControllerBase
                 .ToList();
         }
 
-        return Ok(playlists.OrderBy(p => p.Name).Select(PlaylistSummaryDto.FromEntity));
+        return Ok(playlists.OrderBy(p => p.Name).Select(PlaylistListDto.FromEntity));
     }
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PlaylistDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<PlaylistDto> GetById(string id)
+    public ActionResult<PlaylistDetailDto> GetById(string id)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
 
-        return Ok(PlaylistDto.FromEntity(playlist));
+        return Ok(PlaylistDetailDto.FromEntity(playlist));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
-    [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(PlaylistDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<PlaylistDto> Create([FromBody] PlaylistCreateDto dto)
+    public ActionResult<PlaylistDetailDto> Create([FromBody] PlaylistCreateDto dto)
     {
         if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
         {
@@ -102,18 +102,18 @@ public class PlaylistsApiController : ApiControllerBase
         _playlistRepository.Add(playlist);
 
         var created = _playlistRepository.GetById(playlist.Id) ?? playlist;
-        return CreatedAtAction(nameof(GetById), new { id = playlist.Id }, PlaylistDto.FromEntity(created));
+        return CreatedAtAction(nameof(GetById), new { id = playlist.Id }, PlaylistDetailDto.FromEntity(created));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(PlaylistDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PlaylistDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<PlaylistDto> Update(string id, [FromBody] PlaylistUpdateDto dto)
+    public ActionResult<PlaylistDetailDto> Update(string id, [FromBody] PlaylistUpdateDto dto)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
@@ -154,7 +154,7 @@ public class PlaylistsApiController : ApiControllerBase
         _playlistRepository.Save(playlist);
 
         var updated = _playlistRepository.GetById(id) ?? playlist;
-        return Ok(PlaylistDto.FromEntity(updated));
+        return Ok(PlaylistDetailDto.FromEntity(updated));
     }
 
     [Authorize(Roles = "Admin,Editor")]

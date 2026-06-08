@@ -4,6 +4,8 @@
 	color: #0f0;
 	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
 	padding: 8px 12px;
+	width: 100%;
+	box-sizing: border-box;
 	transition: all 0.2s ease;
 }
 

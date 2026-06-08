@@ -23,8 +23,8 @@ public class TracksApiController : ApiControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<TrackSummaryDto>), StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<TrackSummaryDto>> GetAll([FromQuery] string? q)
+    [ProducesResponseType(typeof(IEnumerable<TrackListDto>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<TrackListDto>> GetAll([FromQuery] string? q)
     {
         var tracks = _trackRepository.GetAll();
 
@@ -36,29 +36,29 @@ public class TracksApiController : ApiControllerBase
                 .ToList();
         }
 
-        return Ok(tracks.OrderBy(t => t.Name).Select(TrackSummaryDto.FromEntity));
+        return Ok(tracks.OrderBy(t => t.Name).Select(TrackListDto.FromEntity));
     }
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(TrackDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TrackDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<TrackDto> GetById(string id)
+    public ActionResult<TrackDetailDto> GetById(string id)
     {
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
 
-        return Ok(TrackDto.FromEntity(track));
+        return Ok(TrackDetailDto.FromEntity(track));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
-    [ProducesResponseType(typeof(TrackDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(TrackDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<TrackDto> Create([FromBody] TrackCreateDto dto)
+    public ActionResult<TrackDetailDto> Create([FromBody] TrackCreateDto dto)
     {
         if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
         {
@@ -97,17 +97,17 @@ public class TracksApiController : ApiControllerBase
         _trackRepository.Add(track);
 
         var created = _trackRepository.GetById(track.Id) ?? track;
-        return CreatedAtAction(nameof(GetById), new { id = track.Id }, TrackDto.FromEntity(created));
+        return CreatedAtAction(nameof(GetById), new { id = track.Id }, TrackDetailDto.FromEntity(created));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(TrackDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TrackDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<TrackDto> Update(string id, [FromBody] TrackUpdateDto dto)
+    public ActionResult<TrackDetailDto> Update(string id, [FromBody] TrackUpdateDto dto)
     {
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
@@ -158,7 +158,7 @@ public class TracksApiController : ApiControllerBase
         _context.SaveChanges();
 
         var updated = _trackRepository.GetById(id) ?? track;
-        return Ok(TrackDto.FromEntity(updated));
+        return Ok(TrackDetailDto.FromEntity(updated));
     }
 
     [Authorize(Roles = "Admin,Editor")]

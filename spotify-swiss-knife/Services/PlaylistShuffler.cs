@@ -21,7 +21,6 @@ public static class PlaylistShuffler
                 FisherYates(shuffled);
                 FisherYates(shuffled);
                 break;
-            case ShuffleRandomnessLevel.Medium:
             default:
                 FisherYates(shuffled);
                 break;

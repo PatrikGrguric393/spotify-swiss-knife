@@ -29,12 +29,12 @@ public class PlaylistsController : Controller
     public IActionResult CreatePlaylist()
     {
         PopulateTrackOptions([]);
-        return View(new Models.FormModels.PlaylistCreateModel());
+        return View(new Models.FormModels.PlaylistCreateForm());
     }
 
     [HttpPost("playlists/create")]
     [ValidateAntiForgeryToken]
-    public IActionResult CreatePlaylistPost([FromForm] Models.FormModels.PlaylistCreateModel model)
+    public IActionResult CreatePlaylistPost([FromForm] Models.FormModels.PlaylistCreateForm model)
     {
         if (!ModelState.IsValid)
         {
@@ -80,7 +80,7 @@ public class PlaylistsController : Controller
         var trackIds = playlist.Tracks.Items.Select(item => item.Track.Id).ToList();
         PopulateTrackOptions(trackIds);
 
-        return View(new Models.FormModels.PlaylistEditModel
+        return View(new Models.FormModels.PlaylistEditForm
         {
             Id = playlist.Id,
             Name = playlist.Name,
@@ -91,7 +91,7 @@ public class PlaylistsController : Controller
 
     [HttpPost("playlists/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult EditPlaylistPost(string id, [FromForm] Models.FormModels.PlaylistEditModel model)
+    public IActionResult EditPlaylistPost(string id, [FromForm] Models.FormModels.PlaylistEditForm model)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();

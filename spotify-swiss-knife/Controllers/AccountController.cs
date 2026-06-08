@@ -44,12 +44,12 @@ public class AccountController : Controller
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
-        return View(new RegisterModel());
+        return View(new UserRegisterForm());
     }
 
     [HttpPost("register")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterModel model, string? returnUrl = null)
+    public async Task<IActionResult> Register(UserRegisterForm model, string? returnUrl = null)
     {
         if (await IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
@@ -92,12 +92,12 @@ public class AccountController : Controller
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
-        return View(new LoginModel());
+        return View(new UserLoginForm());
     }
 
     [HttpPost("login")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(UserLoginForm model, string? returnUrl = null)
     {
         if (await IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
@@ -185,7 +185,7 @@ public class AccountController : Controller
 
         var roles = await _userManager.GetRolesAsync(user);
         ViewBag.Roles = IdentitySeeder.Roles;
-        return View(new EditUserModel
+        return View(new UserEditForm
         {
             Id = user.Id,
             Email = user.Email ?? user.UserName ?? string.Empty,
@@ -201,7 +201,7 @@ public class AccountController : Controller
     [HttpPost("users/{id}/edit")]
     [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditUser(string id, EditUserModel model)
+    public async Task<IActionResult> EditUser(string id, UserEditForm model)
     {
         ViewBag.Roles = IdentitySeeder.Roles;
         if (!ModelState.IsValid)

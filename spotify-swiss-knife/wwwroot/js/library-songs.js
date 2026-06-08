@@ -61,11 +61,11 @@
             tdActions.className = 'cell-actions';
             var edit = document.createElement('a');
             edit.className = 'btn';
-            edit.href = '/lib/songs/edit/' + encodeURIComponent(r.id);
+            edit.href = '/lib/tracks/edit/' + encodeURIComponent(r.id);
             edit.textContent = 'Edit';
             var del = document.createElement('a');
             del.className = 'btn btn-danger';
-            del.href = '/lib/songs/delete/' + encodeURIComponent(r.id);
+            del.href = '/lib/tracks/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
 
             var script = document.createElement('script');
@@ -112,7 +112,7 @@
         if (minSec !== null) params.set('durationMin', minSec);
         if (maxSec !== null) params.set('durationMax', maxSec);
 
-        fetch('/lib/songs/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+        fetch('/lib/tracks/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 renderRows(data);

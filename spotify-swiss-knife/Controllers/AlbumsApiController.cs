@@ -24,8 +24,8 @@ public class AlbumsApiController : ApiControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AlbumSummaryDto>), StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<AlbumSummaryDto>> GetAll([FromQuery] string? q)
+    [ProducesResponseType(typeof(IEnumerable<AlbumListDto>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<AlbumListDto>> GetAll([FromQuery] string? q)
     {
         var albums = _albumRepository.GetAll();
 
@@ -37,29 +37,29 @@ public class AlbumsApiController : ApiControllerBase
                 .ToList();
         }
 
-        return Ok(albums.OrderBy(a => a.Name).Select(AlbumSummaryDto.FromEntity));
+        return Ok(albums.OrderBy(a => a.Name).Select(AlbumListDto.FromEntity));
     }
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(AlbumDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AlbumDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<AlbumDto> GetById(string id)
+    public ActionResult<AlbumDetailDto> GetById(string id)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
 
-        return Ok(AlbumDto.FromEntity(album));
+        return Ok(AlbumDetailDto.FromEntity(album));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPost]
-    [ProducesResponseType(typeof(AlbumDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(AlbumDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<AlbumDto> Create([FromBody] AlbumCreateDto dto)
+    public ActionResult<AlbumDetailDto> Create([FromBody] AlbumCreateDto dto)
     {
         if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
         {
@@ -100,18 +100,18 @@ public class AlbumsApiController : ApiControllerBase
         }
 
         var created = _albumRepository.GetById(album.Id) ?? album;
-        return CreatedAtAction(nameof(GetById), new { id = album.Id }, AlbumDto.FromEntity(created));
+        return CreatedAtAction(nameof(GetById), new { id = album.Id }, AlbumDetailDto.FromEntity(created));
     }
 
     [Authorize(Roles = "Admin,Editor")]
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(AlbumDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AlbumDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<AlbumDto> Update(string id, [FromBody] AlbumUpdateDto dto)
+    public ActionResult<AlbumDetailDto> Update(string id, [FromBody] AlbumUpdateDto dto)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
@@ -158,7 +158,7 @@ public class AlbumsApiController : ApiControllerBase
         _context.SaveChanges();
 
         var updated = _albumRepository.GetById(id) ?? album;
-        return Ok(AlbumDto.FromEntity(updated));
+        return Ok(AlbumDetailDto.FromEntity(updated));
     }
 
     [Authorize(Roles = "Admin,Editor")]

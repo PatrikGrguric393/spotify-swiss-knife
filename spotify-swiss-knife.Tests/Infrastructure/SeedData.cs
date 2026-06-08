@@ -42,7 +42,7 @@ public static class SeedData
         return artist;
     }
 
-    public static async Task<Track> CreateTrackAsync(SpotifyDbContext db, string name = "Seed Track", string? albumId = null)
+    public static async Task<Track> CreateTrackAsync(SpotifyDbContext db, string name = "Seed Track", string? albumId = null, string? spotifyUrl = null)
     {
         var track = new Track
         {
@@ -53,7 +53,7 @@ public static class SeedData
             TrackNumber = 1,
             IsLocal = false,
             AlbumId = albumId,
-            ExternalUrls = new ExternalUrls { Spotify = string.Empty }
+            ExternalUrls = new ExternalUrls { Spotify = spotifyUrl ?? string.Empty }
         };
 
         db.Tracks.Add(track);

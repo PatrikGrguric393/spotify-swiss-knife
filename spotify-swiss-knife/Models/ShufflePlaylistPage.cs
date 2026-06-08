@@ -6,7 +6,7 @@ public class ShufflePlaylistPage
 {
     public List<Playlist> Playlists { get; set; } = [];
 
-    public ShufflePlaylistFormInput Input { get; set; } = new();
+    public PlaylistShuffleForm Input { get; set; } = new();
 
     public string StatusMessage { get; set; } = string.Empty;
 
@@ -20,7 +20,7 @@ public class ShufflePlaylistPage
 
     public static ShufflePlaylistPage Create(
         List<Playlist> playlists,
-        ShufflePlaylistFormInput? input = null,
+        PlaylistShuffleForm? input = null,
         string statusMessage = "",
         string? errorMessage = "",
         DateTime? shuffledAtUtc = null)
@@ -28,7 +28,7 @@ public class ShufflePlaylistPage
         return new ShufflePlaylistPage
         {
             Playlists = playlists,
-            Input = input ?? new ShufflePlaylistFormInput(),
+            Input = input ?? new PlaylistShuffleForm(),
             StatusMessage = statusMessage,
             ErrorMessage = errorMessage ?? string.Empty,
             ShuffledAtUtc = shuffledAtUtc

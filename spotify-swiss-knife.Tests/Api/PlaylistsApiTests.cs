@@ -31,7 +31,7 @@ public class PlaylistsApiTests : IntegrationTestBase
         var response = await Client.GetAsync(BaseUrl);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var playlists = await response.Content.ReadFromJsonAsync<List<PlaylistSummaryDto>>();
+        var playlists = await response.Content.ReadFromJsonAsync<List<PlaylistListDto>>();
         playlists!.Should().Contain(p => p.Id == playlist.Id && p.Name == "Findable Playlist");
     }
 
@@ -44,7 +44,7 @@ public class PlaylistsApiTests : IntegrationTestBase
         var response = await Client.GetAsync($"{BaseUrl}/{playlist.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<PlaylistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
         dto!.Id.Should().Be(playlist.Id);
         dto.Name.Should().Be("Lookup Playlist");
     }
@@ -61,8 +61,26 @@ public class PlaylistsApiTests : IntegrationTestBase
         var response = await Client.GetAsync($"{BaseUrl}/{playlist.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<PlaylistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
         dto!.Tracks.Select(t => t.Name).Should().Equal("First Track", "Second Track");
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsTracksWithNameAndUrl()
+    {
+        using var scope = NewScope();
+        var db = Db(scope);
+        var track = await SeedData.CreateTrackAsync(db, "Playlist Track",
+            spotifyUrl: "https://open.spotify.com/track/xyz789");
+        var playlist = await SeedData.CreatePlaylistAsync(db, "URL Playlist", track.Id);
+
+        var response = await Client.GetAsync($"{BaseUrl}/{playlist.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
+        var t = dto!.Tracks.Should().ContainSingle().Subject;
+        t.Name.Should().Be("Playlist Track");
+        t.SpotifyUrl.Should().Be("https://open.spotify.com/track/xyz789");
     }
 
     [Fact]
@@ -83,7 +101,7 @@ public class PlaylistsApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
 
-        var dto = await response.Content.ReadFromJsonAsync<PlaylistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
         dto!.Name.Should().Be("Brand New Playlist");
 
         using var scope = NewScope();
@@ -100,7 +118,7 @@ public class PlaylistsApiTests : IntegrationTestBase
             JsonBody(ValidPayload("Tracked Playlist", new[] { track.Id })));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var dto = await response.Content.ReadFromJsonAsync<PlaylistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
         dto!.Tracks.Should().ContainSingle(t => t.Name == "Playlist Track");
     }
 
@@ -164,7 +182,7 @@ public class PlaylistsApiTests : IntegrationTestBase
         var response = await Client.PutAsync($"{BaseUrl}/{playlist.Id}", JsonBody(payload));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var dto = await response.Content.ReadFromJsonAsync<PlaylistDto>();
+        var dto = await response.Content.ReadFromJsonAsync<PlaylistDetailDto>();
         dto!.Name.Should().Be("After Update");
         dto.Description.Should().Be("Updated description");
 
