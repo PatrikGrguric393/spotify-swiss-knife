@@ -60,3 +60,4 @@ nuget.exe
 
 # Lab files
 lab/*
+*playwright*
