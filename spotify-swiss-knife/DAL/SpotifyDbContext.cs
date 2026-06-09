@@ -154,6 +154,10 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 				.WithMany()
 				.HasForeignKey(f => f.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
+			entity.HasOne(f => f.LinkedAlbum)
+				.WithMany()
+				.HasForeignKey(f => f.LinkedAlbumId)
+				.OnDelete(DeleteBehavior.SetNull);
 		});
 
 		modelBuilder.Entity<PlaylistTrackEntry>(entity =>

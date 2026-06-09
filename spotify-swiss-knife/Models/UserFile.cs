@@ -10,5 +10,8 @@ public class UserFile
     public long FileSize { get; set; }
     public DateTime UploadedAt { get; set; }
 
+    public string? LinkedAlbumId { get; set; }
+
     public AppUser? User { get; set; }
+    public Album? LinkedAlbum { get; set; }
 }

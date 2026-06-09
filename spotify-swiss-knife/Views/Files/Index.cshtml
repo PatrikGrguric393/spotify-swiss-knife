@@ -64,8 +64,8 @@
             return new Date(iso).toLocaleString(navigator.language);
         }
 
-        async function deleteFile(id) {
-            if (!confirm('Delete this file?')) return;
+        async function deleteFile(id, confirmMsg) {
+            if (!confirm(confirmMsg || 'Delete this file?')) return;
             try {
                 const res = await fetch(`/files/${id}`, {
                     method: 'DELETE',
@@ -90,18 +90,26 @@
                     return;
                 }
 
-                const rows = files.map(f => `
+                const rows = files.map(f => {
+                    const albumBadge = f.linkedAlbumId
+                        ? `<span class="files-album-cover-badge">Album cover &middot; <a href="/lib/albums/edit/${f.linkedAlbumId}">${escapeHtml(f.linkedAlbumName || f.linkedAlbumId)}</a></span>`
+                        : '';
+                    const deleteConfirm = f.linkedAlbumId
+                        ? 'Delete this file? This will also remove the cover from the album.'
+                        : 'Delete this file?';
+                    return `
                     <tr>
-                        <td data-label="Name">${escapeHtml(f.name)}</td>
+                        <td data-label="Name">${escapeHtml(f.name)}${albumBadge}</td>
                         <td data-label="Size">${formatSize(f.size)}</td>
                         <td data-label="Type">${escapeHtml(f.contentType || '—')}</td>
                         <td data-label="Uploaded">${formatDate(f.uploadedAt)}</td>
                         <td data-label="Actions" class="cell-actions">
                             <a class="btn" href="/files/download/${f.id}" download="${escapeHtml(f.name)}">Download</a>
-                            <button class="btn btn-danger files-delete-btn" data-id="${f.id}">Delete</button>
+                            <button class="btn btn-danger files-delete-btn" data-id="${f.id}" data-confirm="${escapeHtml(deleteConfirm)}">Delete</button>
                         </td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
 
                 container.innerHTML = `
                     <div class="table-wrap">
@@ -121,7 +129,7 @@
                 `;
 
                 container.querySelectorAll('.files-delete-btn').forEach(btn => {
-                    btn.addEventListener('click', () => deleteFile(btn.dataset.id));
+                    btn.addEventListener('click', () => deleteFile(btn.dataset.id, btn.dataset.confirm));
                 });
             } catch (e) {
                 container.innerHTML = `<p class="files-empty">${escapeHtml(e.message)}</p>`;

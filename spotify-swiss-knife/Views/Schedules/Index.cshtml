@@ -53,7 +53,7 @@
                         <td data-label="Next run">
                             @if (schedule.NextRunAt.HasValue)
                             {
-                                <time class="shuffle-time" data-utc="@schedule.NextRunAt.Value.UtcDateTime.ToString("O")">@schedule.NextRunAt.Value.UtcDateTime.ToString("O")</time>
+                                <time class="shuffle-time shuffle-time--pending" data-utc="@schedule.NextRunAt.Value.UtcDateTime.ToString("O")">@schedule.NextRunAt.Value.UtcDateTime.ToString("O")</time>
                             }
                             else
                             {
@@ -63,7 +63,7 @@
                         <td data-label="Last run">
                             @if (schedule.LastRunAt.HasValue)
                             {
-                                <time class="shuffle-time" data-utc="@schedule.LastRunAt.Value.UtcDateTime.ToString("O")">@schedule.LastRunAt.Value.UtcDateTime.ToString("O")</time>
+                                <time class="shuffle-time shuffle-time--pending" data-utc="@schedule.LastRunAt.Value.UtcDateTime.ToString("O")">@schedule.LastRunAt.Value.UtcDateTime.ToString("O")</time>
                             }
                             else
                             {
@@ -74,13 +74,16 @@
                             <div class="schedule-actions">
                                 <form method="post" action="@Url.Action("Toggle", "Schedules", new { id = schedule.Id })">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="shuffle-submit">
+                                    <button type="submit" class="shuffle-submit"
+                                            aria-label="@(schedule.IsEnabled ? "Disable" : "Enable") schedule for @schedule.PlaylistName">
                                         @(schedule.IsEnabled ? "Disable" : "Enable")
                                     </button>
                                 </form>
                                 <form method="post" action="@Url.Action("Delete", "Schedules", new { id = schedule.Id })">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="shuffle-submit btn-danger">Delete</button>
+                                    <button type="submit" class="shuffle-submit btn-danger"
+                                            aria-label="Delete schedule for @schedule.PlaylistName"
+                                            data-confirm="Delete schedule for @schedule.PlaylistName?">Delete</button>
                                 </form>
                             </div>
                         </td>
@@ -95,11 +98,22 @@
 @section Scripts {
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Replace raw ISO strings with locale-formatted dates, then reveal
         document.querySelectorAll('.shuffle-time[data-utc]').forEach(function (el) {
             var parsed = new Date(el.dataset.utc);
             if (!Number.isNaN(parsed.getTime())) {
                 el.textContent = parsed.toLocaleString();
             }
+            el.classList.remove('shuffle-time--pending');
+        });
+
+        // Confirm before destructive delete actions
+        document.querySelectorAll('button[data-confirm]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                if (!window.confirm(btn.dataset.confirm)) {
+                    e.preventDefault();
+                }
+            });
         });
     });
     </script>

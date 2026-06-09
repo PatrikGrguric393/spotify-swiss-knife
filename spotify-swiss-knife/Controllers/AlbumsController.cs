@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 using System.Globalization;
 
@@ -16,13 +20,17 @@ public class AlbumsController : Controller
     private readonly TrackRepository _trackRepository;
     private readonly ArtistRepository _artistRepository;
     private readonly AlbumCoverStorage _coverStorage;
+    private readonly SpotifyDbContext _db;
+    private readonly UserManager<AppUser> _userManager;
 
-    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage)
+    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage, SpotifyDbContext db, UserManager<AppUser> userManager)
     {
         _albumRepository = albumRepository;
         _trackRepository = trackRepository;
         _artistRepository = artistRepository;
         _coverStorage = coverStorage;
+        _db = db;
+        _userManager = userManager;
     }
 
     [AllowAnonymous]
@@ -95,13 +103,31 @@ public class AlbumsController : Controller
             Artists = selectedArtists
         };
 
+        IFormFile? coverImage = null;
         if (model.CoverImage is { Length: > 0 })
         {
-            album.CoverImageFileName = await _coverStorage.SaveAsync(model.CoverImage);
-            album.CoverImageContentType = AlbumCoverStorage.ResolveContentType(model.CoverImage.FileName);
+            coverImage = model.CoverImage;
+            album.CoverImageFileName = await _coverStorage.SaveAsync(coverImage);
+            album.CoverImageContentType = AlbumCoverStorage.ResolveContentType(coverImage.FileName);
         }
 
         _albumRepository.Add(album);
+
+        if (coverImage is not null)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            _db.UserFiles.Add(new UserFile
+            {
+                UserId = userId,
+                OriginalFileName = coverImage.FileName,
+                StoredFileName = album.CoverImageFileName!,
+                ContentType = album.CoverImageContentType!,
+                FileSize = coverImage.Length,
+                UploadedAt = DateTime.UtcNow,
+                LinkedAlbumId = album.Id
+            });
+            await _db.SaveChangesAsync();
+        }
 
         foreach (var track in selectedTracks)
         {
@@ -210,6 +236,22 @@ public class AlbumsController : Controller
             album.CoverImageFileName = await _coverStorage.SaveAsync(model.CoverImage);
             album.CoverImageContentType = AlbumCoverStorage.ResolveContentType(model.CoverImage.FileName);
             _coverStorage.Delete(previousCover);
+
+            var existingCoverFile = await _db.UserFiles.FirstOrDefaultAsync(f => f.LinkedAlbumId == id);
+            if (existingCoverFile is not null)
+                _db.UserFiles.Remove(existingCoverFile);
+
+            var userId = _userManager.GetUserId(User)!;
+            _db.UserFiles.Add(new UserFile
+            {
+                UserId = userId,
+                OriginalFileName = model.CoverImage.FileName,
+                StoredFileName = album.CoverImageFileName!,
+                ContentType = album.CoverImageContentType!,
+                FileSize = model.CoverImage.Length,
+                UploadedAt = DateTime.UtcNow,
+                LinkedAlbumId = id
+            });
         }
         else if (model.RemoveCoverImage && album.HasCover)
         {
@@ -217,6 +259,10 @@ public class AlbumsController : Controller
             album.CoverImageFileName = null;
             album.CoverImageContentType = null;
             _coverStorage.Delete(previousCover);
+
+            var existingCoverFile = _db.UserFiles.FirstOrDefault(f => f.LinkedAlbumId == id);
+            if (existingCoverFile is not null)
+                _db.UserFiles.Remove(existingCoverFile);
         }
 
         _albumRepository.Update(album);
@@ -250,6 +296,10 @@ public class AlbumsController : Controller
     {
         var album = _albumRepository.GetById(id);
         var coverFileName = album?.CoverImageFileName;
+
+        var coverFile = _db.UserFiles.FirstOrDefault(f => f.LinkedAlbumId == id);
+        if (coverFile is not null)
+            _db.UserFiles.Remove(coverFile);
 
         _albumRepository.Delete(id);
         _coverStorage.Delete(coverFileName);

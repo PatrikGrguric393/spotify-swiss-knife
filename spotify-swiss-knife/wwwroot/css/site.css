@@ -473,6 +473,14 @@ ul, ol {
     color: #000;
 }
 
+/* Anchor elements acting as buttons: override global a:hover {color:#fff} */
+a.shuffle-submit:hover,
+a.shuffle-submit:focus-visible {
+    color: #000;
+    text-decoration: none;
+    outline-offset: 1px;
+}
+
 .shuffle-validation {
     color: #ffa48f;
     font-size: 0.88rem;
@@ -495,6 +503,17 @@ ul, ol {
 
 .shuffle-last-run .shuffle-time {
     color: #9cff9c;
+}
+
+/* Table context: prevent long ISO strings from wrapping mid-value */
+.entity-table .shuffle-time {
+    white-space: nowrap;
+    color: #b6ffb6;
+}
+
+/* Hide raw ISO string until JS replaces it with a locale string */
+.shuffle-time--pending {
+    visibility: hidden;
 }
 
 .shuffle-notice {
@@ -966,7 +985,7 @@ body.entity-detail-open .app-scroll-area {
         padding: 0;
         border: 0;
         overflow: hidden;
-        clip: rect(0 0 0 0);
+        clip: rect(0, 0, 0, 0);
         clip-path: inset(50%);
         white-space: nowrap;
     }
@@ -1547,6 +1566,23 @@ body.entity-detail-open .app-scroll-area {
     margin: 1rem 0;
 }
 
+.files-album-cover-badge {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: #5a9e5a;
+    line-height: 1.4;
+}
+
+.files-album-cover-badge a {
+    color: #7fbf7f;
+    text-decoration: underline;
+}
+
+.files-album-cover-badge a:hover {
+    color: #b6ffb6;
+}
+
 .files-delete-btn {
     border: 1px solid #0f0;
     background: #000;
@@ -1632,6 +1668,15 @@ body.entity-detail-open .app-scroll-area {
 .btn-danger:focus-visible {
     background-color: #ff5c5c;
     color: #000;
+}
+
+/* Keep cron expression code elements on-theme */
+.entity-table code {
+    font-family: inherit;
+    font-size: inherit;
+    background: transparent;
+    color: #9cff9c;
+    white-space: nowrap;
 }
 
 .schedule-badge {

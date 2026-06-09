@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
+using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
@@ -13,12 +14,14 @@ public class FilesController : Controller
 {
     private readonly SpotifyDbContext _db;
     private readonly UserManager<AppUser> _userManager;
+    private readonly AlbumCoverStorage _coverStorage;
     private readonly string _uploadPath;
 
-    public FilesController(SpotifyDbContext db, UserManager<AppUser> userManager, IConfiguration configuration, IWebHostEnvironment env)
+    public FilesController(SpotifyDbContext db, UserManager<AppUser> userManager, AlbumCoverStorage coverStorage, IConfiguration configuration, IWebHostEnvironment env)
     {
         _db = db;
         _userManager = userManager;
+        _coverStorage = coverStorage;
 
         var configuredPath = configuration["FileStorage:Path"];
         _uploadPath = string.IsNullOrWhiteSpace(configuredPath)
@@ -44,7 +47,9 @@ public class FilesController : Controller
                 name = f.OriginalFileName,
                 size = f.FileSize,
                 f.ContentType,
-                f.UploadedAt
+                f.UploadedAt,
+                linkedAlbumId = f.LinkedAlbumId,
+                linkedAlbumName = f.LinkedAlbum != null ? f.LinkedAlbum.Name : null
             })
             .ToListAsync();
 
@@ -99,7 +104,16 @@ public class FilesController : Controller
         if (file is null)
             return NotFound();
 
-        var filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
+        string filePath;
+        if (file.LinkedAlbumId is not null)
+        {
+            filePath = _coverStorage.GetPhysicalPath(file.StoredFileName) ?? string.Empty;
+        }
+        else
+        {
+            filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
+        }
+
         if (!System.IO.File.Exists(filePath))
             return NotFound();
 
@@ -115,9 +129,22 @@ public class FilesController : Controller
         if (file is null)
             return NotFound();
 
-        var filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
-        if (System.IO.File.Exists(filePath))
-            System.IO.File.Delete(filePath);
+        if (file.LinkedAlbumId is not null)
+        {
+            var album = await _db.Albums.FirstOrDefaultAsync(a => a.Id == file.LinkedAlbumId);
+            if (album is not null)
+            {
+                album.CoverImageFileName = null;
+                album.CoverImageContentType = null;
+            }
+            _coverStorage.Delete(file.StoredFileName);
+        }
+        else
+        {
+            var filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.Delete(filePath);
+        }
 
         _db.UserFiles.Remove(file);
         await _db.SaveChangesAsync();
