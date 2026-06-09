@@ -83,6 +83,8 @@ Actions being done in the application should be indicated with a spinning cog ic
 
 The settings page contains a list of settings, with a description on the left, and the toggle/input for that setting on the right side of the screen.
 
+Every date display in the application should follow the format defined by the client's locale settings in the browser.
+
 ### Resolution compatibility
 
 The UI must be responsive and functional across a range of screen sizes, from mobile to desktop. Design should prioritize content and functionality while maintaining visual consistency.

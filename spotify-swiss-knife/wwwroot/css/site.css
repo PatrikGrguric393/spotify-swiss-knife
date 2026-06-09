@@ -392,7 +392,8 @@ ul, ol {
     gap: 0.35rem;
 }
 
-.shuffle-form-row label {
+.shuffle-form-row label,
+.shuffle-form-label {
     color: #9cff9c;
     font-weight: 700;
 }
@@ -1681,8 +1682,44 @@ body.entity-detail-open .app-scroll-area {
     text-decoration: none;
 }
 
-.schedule-time-input {
-    max-width: 10rem;
+.schedule-time-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+}
+
+.schedule-time-part {
+    width: 3.5rem;
+    text-align: center;
+    font-family: inherit;
+    font-size: 0.95rem;
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+.schedule-time-part::-webkit-outer-spin-button,
+.schedule-time-part::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.schedule-time-sep {
+    color: #0f0;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.schedule-time-zone,
+.schedule-time-utc-hint {
+    color: #9cff9c;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.schedule-time-utc-hint {
+    font-weight: 700;
 }
 
 /* Pause on hover/focus so the full string can be read. */

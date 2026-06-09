@@ -59,8 +59,25 @@
             </div>
 
             <div class="shuffle-form-row">
-                <label asp-for="TimeUtc">Time (UTC)</label>
-                <input asp-for="TimeUtc" type="time" class="shuffle-input schedule-time-input" />
+                @{
+                    var timeParts = (Model.TimeUtc ?? "08:00").Split(':');
+                    var hourValue = timeParts.Length > 0 ? timeParts[0] : "08";
+                    var minuteValue = timeParts.Length > 1 ? timeParts[1] : "00";
+                }
+                <span class="shuffle-form-label" id="timeUtcLabel">Time (your local time)</span>
+                <div class="schedule-time-picker" role="group" aria-labelledby="timeUtcLabel">
+                    <input type="number" id="TimeUtcHour" class="shuffle-input schedule-time-part"
+                           min="0" max="23" step="1" inputmode="numeric" autocomplete="off"
+                           value="@hourValue" aria-label="Hour (00 to 23)" />
+                    <span class="schedule-time-sep" aria-hidden="true">:</span>
+                    <input type="number" id="TimeUtcMinute" class="shuffle-input schedule-time-part"
+                           min="0" max="59" step="1" inputmode="numeric" autocomplete="off"
+                           value="@minuteValue" aria-label="Minute (00 to 59)" />
+                </div>
+                <span class="schedule-time-zone" id="scheduleTimeZone" hidden></span>
+                <span class="schedule-time-utc-hint" id="scheduleTimeUtcHint" aria-live="polite" hidden></span>
+                <input asp-for="TimeUtc" type="hidden" />
+                <input type="hidden" name="TimezoneOffsetMinutes" id="TimezoneOffsetMinutes" />
                 <span class="shuffle-validation" asp-validation-for="TimeUtc"></span>
             </div>
 
@@ -97,6 +114,70 @@
             syncName();
             select.addEventListener('change', syncName);
         }
+    }());
+
+    (function () {
+        var hourEl = document.getElementById('TimeUtcHour');
+        var minuteEl = document.getElementById('TimeUtcMinute');
+        var hidden = document.getElementById('TimeUtc');
+        var offsetEl = document.getElementById('TimezoneOffsetMinutes');
+        var zoneEl = document.getElementById('scheduleTimeZone');
+        var utcHintEl = document.getElementById('scheduleTimeUtcHint');
+        if (!hourEl || !minuteEl || !hidden) { return; }
+
+        function pad(value, max) {
+            var n = parseInt(value, 10);
+            if (isNaN(n)) { n = 0; }
+            if (n < 0) { n = 0; }
+            if (n > max) { n = max; }
+            return ('0' + n).slice(-2);
+        }
+
+        // Same value the server reads: minutes to add to local time to reach UTC.
+        function offsetMinutes() {
+            return new Date().getTimezoneOffset();
+        }
+
+        function setOffset() {
+            if (offsetEl) { offsetEl.value = String(offsetMinutes()); }
+        }
+
+        function setZone() {
+            if (!zoneEl) { return; }
+            var zone = '';
+            try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { zone = ''; }
+            if (zone) {
+                zoneEl.textContent = 'Detected timezone: ' + zone;
+                zoneEl.hidden = false;
+            }
+        }
+
+        function updateUtcHint() {
+            if (!utcHintEl) { return; }
+            var totalLocal = parseInt(pad(hourEl.value, 23), 10) * 60 + parseInt(pad(minuteEl.value, 59), 10);
+            var totalUtc = ((totalLocal + offsetMinutes()) % 1440 + 1440) % 1440;
+            utcHintEl.textContent = '= ' + pad(Math.floor(totalUtc / 60), 23) + ':' + pad(totalUtc % 60, 59) + ' UTC';
+            utcHintEl.hidden = false;
+        }
+
+        function sync() {
+            hidden.value = pad(hourEl.value, 23) + ':' + pad(minuteEl.value, 59);
+            setOffset();
+            updateUtcHint();
+        }
+
+        function clamp(el, max) {
+            el.value = pad(el.value, max);
+        }
+
+        hourEl.addEventListener('input', sync);
+        minuteEl.addEventListener('input', sync);
+        hourEl.addEventListener('blur', function () { clamp(hourEl, 23); sync(); });
+        minuteEl.addEventListener('blur', function () { clamp(minuteEl, 59); sync(); });
+        hourEl.form.addEventListener('submit', function () { clamp(hourEl, 23); clamp(minuteEl, 59); sync(); });
+
+        setZone();
+        sync();
     }());
     </script>
 }
