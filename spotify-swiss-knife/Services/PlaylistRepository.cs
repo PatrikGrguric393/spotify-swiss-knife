@@ -33,7 +33,20 @@ public class PlaylistRepository
 
     public Playlist? GetById(string id)
     {
-        return GetAll().FirstOrDefault(playlist => playlist.Id == id);
+        var playlist = _context.Playlists
+            .Include(p => p.TrackEntries)
+                .ThenInclude(entry => entry.Track)
+                    .ThenInclude(track => track.Artists)
+            .Include(p => p.TrackEntries)
+                .ThenInclude(entry => entry.Track)
+                    .ThenInclude(track => track.Images)
+            .AsTracking()
+            .FirstOrDefault(p => p.Id == id);
+
+        if (playlist is null) return null;
+
+        SyncPlaylistWrappers(playlist);
+        return playlist;
     }
 
     public void Add(Playlist playlist)

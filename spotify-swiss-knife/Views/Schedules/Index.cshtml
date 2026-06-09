@@ -1,0 +1,106 @@
+@model List<spotify_swiss_knife.Models.ScheduledShuffle>
+
+@{
+    ViewData["Title"] = "Scheduled Shuffles";
+}
+
+<section class="library-page shuffle-page">
+    <h1>Scheduled Shuffles</h1>
+
+    <div class="library-actions">
+        <a href="@Url.Action("Create", "Schedules")" class="shuffle-submit">New schedule</a>
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <section class="shuffle-notice" role="status" aria-labelledby="scheduleEmptyTitle">
+            <h2 id="scheduleEmptyTitle" class="shuffle-notice-title">No scheduled shuffles</h2>
+            <p class="shuffle-notice-text">You have not set up any scheduled shuffles yet. Use the "New schedule" button above to create one.</p>
+        </section>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="entity-table">
+                <thead>
+                    <tr>
+                        <th>Playlist</th>
+                        <th>Randomness</th>
+                        <th>Schedule</th>
+                        <th>Status</th>
+                        <th>Next run</th>
+                        <th>Last run</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var schedule in Model)
+                {
+                    <tr>
+                        <td data-label="Playlist">@schedule.PlaylistName</td>
+                        <td data-label="Randomness">@schedule.RandomnessLevel</td>
+                        <td data-label="Schedule"><code>@schedule.CronExpression</code></td>
+                        <td data-label="Status">
+                            @if (schedule.IsEnabled)
+                            {
+                                <span class="schedule-badge schedule-badge--enabled">Enabled</span>
+                            }
+                            else
+                            {
+                                <span class="schedule-badge schedule-badge--disabled">Disabled</span>
+                            }
+                        </td>
+                        <td data-label="Next run">
+                            @if (schedule.NextRunAt.HasValue)
+                            {
+                                <time class="shuffle-time" data-utc="@schedule.NextRunAt.Value.UtcDateTime.ToString("O")">@schedule.NextRunAt.Value.UtcDateTime.ToString("O")</time>
+                            }
+                            else
+                            {
+                                <span class="schedule-never">—</span>
+                            }
+                        </td>
+                        <td data-label="Last run">
+                            @if (schedule.LastRunAt.HasValue)
+                            {
+                                <time class="shuffle-time" data-utc="@schedule.LastRunAt.Value.UtcDateTime.ToString("O")">@schedule.LastRunAt.Value.UtcDateTime.ToString("O")</time>
+                            }
+                            else
+                            {
+                                <span class="schedule-never">Never</span>
+                            }
+                        </td>
+                        <td data-label="Actions" class="cell-actions">
+                            <div class="schedule-actions">
+                                <form method="post" action="@Url.Action("Toggle", "Schedules", new { id = schedule.Id })">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="shuffle-submit">
+                                        @(schedule.IsEnabled ? "Disable" : "Enable")
+                                    </button>
+                                </form>
+                                <form method="post" action="@Url.Action("Delete", "Schedules", new { id = schedule.Id })">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="shuffle-submit btn-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.shuffle-time[data-utc]').forEach(function (el) {
+            var parsed = new Date(el.dataset.utc);
+            if (!Number.isNaN(parsed.getTime())) {
+                el.textContent = parsed.toLocaleString();
+            }
+        });
+    });
+    </script>
+}

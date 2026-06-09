@@ -12,8 +12,6 @@ public class ShuffleController : Controller
     private readonly PlaylistRepository _playlistRepository;
     private readonly SpotifyAuthService _spotifyAuth;
 
-    private const string SpotifyScheme = "SpotifyConnect";
-
     public ShuffleController(PlaylistRepository playlistRepository, SpotifyAuthService spotifyAuth)
     {
         _playlistRepository = playlistRepository;
@@ -21,7 +19,7 @@ public class ShuffleController : Controller
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> ShufflePlaylist()
+    public async Task<IActionResult> Index()
     {
         var source = await ResolvePlaylistsAsync();
         var viewModel = ShufflePlaylistPage.Create(source.Playlists, errorMessage: source.Error);
@@ -30,7 +28,7 @@ public class ShuffleController : Controller
 
     [HttpPost("")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ShufflePlaylist([FromForm] ShufflePlaylistFormInput input)
+    public async Task<IActionResult> Index([FromForm] PlaylistShuffleForm input)
     {
         var source = await ResolvePlaylistsAsync();
 
@@ -52,7 +50,7 @@ public class ShuffleController : Controller
     }
 
     private async Task<IActionResult> ShuffleSpotifyPlaylistJsonAsync(
-        PlaylistSource source, Playlist selectedPlaylist, ShufflePlaylistFormInput input)
+        PlaylistSource source, Playlist selectedPlaylist, PlaylistShuffleForm input)
     {
         var result = await _spotifyAuth.ShufflePlaylistAsync(
             source.AccessToken!, selectedPlaylist.Id, input.RandomnessLevel);
@@ -71,7 +69,7 @@ public class ShuffleController : Controller
     // the local database for a signed-in app user, otherwise an error for anonymous users.
     private async Task<PlaylistSource> ResolvePlaylistsAsync()
     {
-        var spotifyAuth = await HttpContext.AuthenticateAsync(SpotifyScheme);
+        var spotifyAuth = await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
         if (spotifyAuth.Succeeded)
         {
             var accessToken = spotifyAuth.Principal?.FindFirst("access_token")?.Value;

@@ -12,7 +12,6 @@ public class SpotifyAuthController : Controller
     private readonly SpotifyAuthService _spotifyAuth;
 
     private const string StateCookieKey = "spotify_oauth_state";
-    private const string SpotifyScheme = "SpotifyConnect";
 
     public SpotifyAuthController(SpotifyAuthService spotifyAuth)
     {
@@ -22,7 +21,7 @@ public class SpotifyAuthController : Controller
     [HttpGet("login")]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
-        if ((await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded)
+        if ((await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme)).Succeeded)
             return LocalRedirect(returnUrl ?? "/");
 
         // A local account and Spotify are mutually exclusive: refuse to start the
@@ -119,7 +118,7 @@ public class SpotifyAuthController : Controller
         if (!string.IsNullOrEmpty(refreshToken))
             claims.Add(new Claim("refresh_token", refreshToken));
 
-        var identity = new ClaimsIdentity(claims, SpotifyScheme);
+        var identity = new ClaimsIdentity(claims, SpotifyAuthDefaults.Scheme);
         var principal = new ClaimsPrincipal(identity);
         var authProps = new AuthenticationProperties
         {
@@ -128,7 +127,8 @@ public class SpotifyAuthController : Controller
             AllowRefresh = true,
         };
 
-        await HttpContext.SignInAsync(SpotifyScheme, principal, authProps);
+        await HttpContext.SignInAsync(SpotifyAuthDefaults.Scheme, principal, authProps);
+        await _spotifyAuth.PersistTokensAsync(userId, accessToken, refreshToken ?? string.Empty, expiresIn);
         return RedirectToAction("Index", "Home");
     }
 
@@ -136,7 +136,7 @@ public class SpotifyAuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync(SpotifyScheme);
+        await HttpContext.SignOutAsync(SpotifyAuthDefaults.Scheme);
         return RedirectToAction("Index", "Home");
     }
 }

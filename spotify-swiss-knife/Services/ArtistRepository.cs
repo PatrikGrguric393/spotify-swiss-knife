@@ -47,14 +47,6 @@ public class ArtistRepository
         _context.SaveChanges();
     }
 
-    public void Restore(string id)
-    {
-        var artist = _context.Artists.FirstOrDefault(a => a.Id == id);
-        if (artist is null) return;
-        artist.DeletedAt = null;
-        _context.SaveChanges();
-    }
-
     public void Add(Artist artist)
     {
         _context.Artists.Add(artist);
@@ -74,7 +66,7 @@ public class ArtistRepository
 
         var query = _context.Artists.AsQueryable()
             .Where(a => a.DeletedAt == null && a.Name != null);
-        if (!string.IsNullOrEmpty(excludeId))
+        if (!string.IsNullOrWhiteSpace(excludeId))
             query = query.Where(a => a.Id != excludeId);
 
         return query.Any(a => a.Name.Trim().ToLower() == normalized);

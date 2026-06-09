@@ -18,7 +18,7 @@
     <p>All artists from the mock repository.</p>
 
     <div class="table-actions">
-        <a class="btn btn-primary" href="@Url.Action("CreateArtist", "Artists")">Create Artist</a>
+        <a class="btn btn-primary" href="@Url.Action("Create", "Artists")">Create Artist</a>
     </div>
 
     <div class="table-wrap">
@@ -54,8 +54,8 @@
                         }
                     </td>
                     <td data-label="Actions" class="cell-actions">
-                        <a class="btn" href="@Url.Action("EditArtist", "Artists", new { id = artist.Id })">Edit</a>
-                        <a class="btn btn-danger" href="@Url.Action("DeleteArtist", "Artists", new { id = artist.Id })">Delete</a>
+                        <a class="btn" href="@Url.Action("Edit", "Artists", new { id = artist.Id })">Edit</a>
+                        <a class="btn btn-danger" href="@Url.Action("Delete", "Artists", new { id = artist.Id })">Delete</a>
                         <script type="application/json" id="@detailsId">@Html.Raw(JsonSerializer.Serialize(detailPayload))</script>
                     </td>
                 </tr>

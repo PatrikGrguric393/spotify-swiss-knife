@@ -12,12 +12,11 @@
     <form method="post" id="createArtistForm" data-validate="true">
         @Html.AntiForgeryToken()
 
-        <partial name="_NameInput" model="Model" />
-        <partial name="_SpotifyUrlInput" model="Model" />
+        <partial name="_ArtistFormFields" model="Model" />
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Artist</button>
-            <a href="@Url.Action("Artists", "Artists")" class="btn btn-secondary">Cancel</a>
+            <a href="@Url.Action("Index", "Artists")" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

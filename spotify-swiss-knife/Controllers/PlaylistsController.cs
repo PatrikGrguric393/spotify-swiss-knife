@@ -20,13 +20,13 @@ public class PlaylistsController : Controller
 
     [AllowAnonymous]
     [HttpGet("playlists")]
-    public IActionResult Playlists()
+    public IActionResult Index()
     {
         return View(_playlistRepository.GetAll());
     }
 
     [HttpGet("playlists/create")]
-    public IActionResult CreatePlaylist()
+    public IActionResult Create()
     {
         PopulateTrackOptions([]);
         return View(new Models.FormModels.PlaylistCreateForm());
@@ -34,12 +34,12 @@ public class PlaylistsController : Controller
 
     [HttpPost("playlists/create")]
     [ValidateAntiForgeryToken]
-    public IActionResult CreatePlaylistPost([FromForm] Models.FormModels.PlaylistCreateForm model)
+    public IActionResult CreatePost([FromForm] Models.FormModels.PlaylistCreateForm model)
     {
         if (!ModelState.IsValid)
         {
             PopulateTrackOptions(model.TrackIds);
-            return View("CreatePlaylist", model);
+            return View("Create", model);
         }
 
         var wantedIds = new HashSet<string>(model.TrackIds ?? []);
@@ -49,7 +49,7 @@ public class PlaylistsController : Controller
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected songs are invalid.");
             PopulateTrackOptions(model.TrackIds);
-            return View("CreatePlaylist", model);
+            return View("Create", model);
         }
 
         var items = (model.TrackIds ?? [])
@@ -68,11 +68,11 @@ public class PlaylistsController : Controller
             Tracks = new Models.PlaylistTracksPage { Items = items, Total = items.Count, Limit = items.Count, Offset = 0 }
         });
 
-        return RedirectToAction(nameof(Playlists));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("playlists/edit/{id}")]
-    public IActionResult EditPlaylist(string id)
+    public IActionResult Edit(string id)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
@@ -91,7 +91,7 @@ public class PlaylistsController : Controller
 
     [HttpPost("playlists/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult EditPlaylistPost(string id, [FromForm] Models.FormModels.PlaylistEditForm model)
+    public IActionResult EditPost(string id, [FromForm] Models.FormModels.PlaylistEditForm model)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
@@ -99,7 +99,7 @@ public class PlaylistsController : Controller
         if (!ModelState.IsValid)
         {
             PopulateTrackOptions(model.TrackIds);
-            return View("EditPlaylist", model);
+            return View("Edit", model);
         }
 
         var wantedIds = new HashSet<string>(model.TrackIds ?? []);
@@ -109,7 +109,7 @@ public class PlaylistsController : Controller
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected songs are invalid.");
             PopulateTrackOptions(model.TrackIds);
-            return View("EditPlaylist", model);
+            return View("Edit", model);
         }
 
         playlist.Name = model.Name.Trim();
@@ -136,11 +136,11 @@ public class PlaylistsController : Controller
         };
 
         _playlistRepository.Save(playlist);
-        return RedirectToAction(nameof(Playlists));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("playlists/delete/{id}")]
-    public IActionResult DeletePlaylist(string id)
+    public IActionResult Delete(string id)
     {
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
@@ -149,10 +149,10 @@ public class PlaylistsController : Controller
 
     [HttpPost("playlists/delete/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeletePlaylistConfirmed(string id)
+    public IActionResult DeleteConfirmed(string id)
     {
         _playlistRepository.Delete(id);
-        return RedirectToAction(nameof(Playlists));
+        return RedirectToAction(nameof(Index));
     }
 
     [AllowAnonymous]

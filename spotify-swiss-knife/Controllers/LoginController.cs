@@ -6,15 +6,13 @@ namespace spotify_swiss_knife.Controllers;
 [Route("login")]
 public class LoginController : Controller
 {
-    private const string SpotifyScheme = "SpotifyConnect";
-
     // Landing page where the user picks a single login method. Local accounts and
     // Spotify are mutually exclusive, so anyone already signed in by either method
     // skips the chooser entirely.
     [HttpGet("")]
     public async Task<IActionResult> Index(string? returnUrl = null)
     {
-        var spotifyConnected = (await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded;
+        var spotifyConnected = (await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme)).Succeeded;
         if (User.Identity?.IsAuthenticated == true || spotifyConnected)
             return LocalRedirect(returnUrl ?? "/");
 

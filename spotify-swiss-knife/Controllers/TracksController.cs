@@ -23,14 +23,14 @@ public class TracksController : Controller
 
     [AllowAnonymous]
     [HttpGet("tracks")]
-    public IActionResult Tracks()
+    public IActionResult Index()
     {
         var tracks = _trackRepository.GetAll();
         return View(tracks);
     }
 
     [HttpGet("tracks/create")]
-    public IActionResult CreateTrack()
+    public IActionResult Create()
     {
         PopulateArtistOptions([]);
         return View(new Models.FormModels.TrackCreateForm());
@@ -38,7 +38,7 @@ public class TracksController : Controller
 
     [HttpPost("tracks/create")]
     [ValidateAntiForgeryToken]
-    public IActionResult CreateTrackPost([FromForm] Models.FormModels.TrackCreateForm model)
+    public IActionResult CreatePost([FromForm] Models.FormModels.TrackCreateForm model)
     {
         if (!TryParseDuration(model.Duration, out var durationMs))
             ModelState.AddModelError(nameof(model.Duration), "Enter duration as seconds (e.g. 213) or minutes:seconds (e.g. 3:33), up to 1 hour.");
@@ -46,7 +46,7 @@ public class TracksController : Controller
         if (!ModelState.IsValid)
         {
             PopulateArtistOptions(model.ArtistIds);
-            return View("CreateTrack", model);
+            return View("Create", model);
         }
 
         var track = new Models.Track
@@ -62,11 +62,11 @@ public class TracksController : Controller
         };
 
         _trackRepository.Add(track);
-        return RedirectToAction(nameof(Tracks));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("tracks/edit/{id}")]
-    public IActionResult EditTrack(string id)
+    public IActionResult Edit(string id)
     {
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
@@ -88,7 +88,7 @@ public class TracksController : Controller
 
     [HttpPost("tracks/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult EditTrackPost(string id, [FromForm] Models.FormModels.TrackEditForm model)
+    public IActionResult EditPost(string id, [FromForm] Models.FormModels.TrackEditForm model)
     {
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
@@ -99,7 +99,7 @@ public class TracksController : Controller
         if (!ModelState.IsValid)
         {
             PopulateArtistOptions(model.ArtistIds);
-            return View("EditTrack", model);
+            return View("Edit", model);
         }
 
         track.Name = model.Name.Trim();
@@ -110,11 +110,11 @@ public class TracksController : Controller
         track.Artists = GetSelectedArtists(model.ArtistIds);
 
         _trackRepository.Update(track);
-        return RedirectToAction(nameof(Tracks));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("tracks/delete/{id}")]
-    public IActionResult DeleteTrack(string id)
+    public IActionResult Delete(string id)
     {
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
@@ -123,10 +123,10 @@ public class TracksController : Controller
 
     [HttpPost("tracks/delete/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteTrackConfirmed(string id)
+    public IActionResult DeleteConfirmed(string id)
     {
         _trackRepository.Delete(id);
-        return RedirectToAction(nameof(Tracks));
+        return RedirectToAction(nameof(Index));
     }
 
     [AllowAnonymous]

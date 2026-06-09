@@ -1,7 +1,8 @@
 @model dynamic
 
 @{
-    var value = Model?.Name ?? "";
+    var nameValue = Model?.Name ?? "";
+    var urlValue = Model?.SpotifyUrl ?? string.Empty;
     var excludeIdSelector = ViewData["ExcludeIdSelector"] as string ?? string.Empty;
 }
 
@@ -12,7 +13,7 @@
         id="Name"
         name="Name"
         class="form-control"
-        value="@value"
+        value="@nameValue"
         required
         maxlength="300"
         data-val-length-max="300"
@@ -25,7 +26,7 @@
         @Html.Raw(string.IsNullOrWhiteSpace(excludeIdSelector) ? string.Empty : $" data-exclude-id-selector=\"{excludeIdSelector}\"")
     />
 
-    @{ 
+    @{
         var nameErrors = ViewData.ModelState["Name"]?.Errors;
         if (nameErrors != null && nameErrors.Count > 0)
         {
@@ -39,6 +40,35 @@
         else
         {
             <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
+        }
+    }
+</div>
+
+<div class="form-group">
+    <label for="SpotifyUrl">Spotify URL</label>
+    <input
+        type="url"
+        id="SpotifyUrl"
+        name="SpotifyUrl"
+        class="form-control"
+        value="@urlValue"
+        maxlength="500"
+        placeholder="https://open.spotify.com/artist/..."
+        aria-describedby="error-SpotifyUrl"
+        data-validate-spotify="true"
+    />
+
+    @{
+        var urlErrors = ViewData.ModelState["SpotifyUrl"]?.Errors;
+        if (urlErrors != null && urlErrors.Count > 0)
+        {
+            <div class="validation-error show" id="error-SpotifyUrl" role="alert" aria-live="polite">
+                <div class="validation-error-message">@urlErrors[0].ErrorMessage</div>
+            </div>
+        }
+        else
+        {
+            <div class="validation-error" id="error-SpotifyUrl" role="alert" aria-live="polite"></div>
         }
     }
 </div>

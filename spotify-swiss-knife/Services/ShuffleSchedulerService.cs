@@ -1,0 +1,127 @@
+using Cronos;
+using Microsoft.EntityFrameworkCore;
+using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Models;
+
+namespace spotify_swiss_knife.Services;
+
+public class ShuffleSchedulerService : BackgroundService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<ShuffleSchedulerService> _logger;
+
+    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(60);
+
+    public ShuffleSchedulerService(IServiceScopeFactory scopeFactory, ILogger<ShuffleSchedulerService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await RunDueSchedulesAsync(stoppingToken);
+            await Task.Delay(TickInterval, stoppingToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task RunDueSchedulesAsync(CancellationToken ct)
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<SpotifyDbContext>();
+        var spotifyAuth = scope.ServiceProvider.GetRequiredService<SpotifyAuthService>();
+
+        var now = DateTimeOffset.UtcNow;
+        var due = await db.ScheduledShuffles
+            .Where(s => s.IsEnabled && s.NextRunAt <= now)
+            .ToListAsync(ct);
+
+        foreach (var schedule in due)
+        {
+            await RunScheduleAsync(schedule, db, spotifyAuth, now, ct);
+        }
+    }
+
+    private async Task RunScheduleAsync(
+        ScheduledShuffle schedule,
+        SpotifyDbContext db,
+        SpotifyAuthService spotifyAuth,
+        DateTimeOffset now,
+        CancellationToken ct)
+    {
+        try
+        {
+            var accessToken = await spotifyAuth.GetValidAccessTokenAsync(schedule.UserId);
+            if (accessToken is null)
+            {
+                _logger.LogWarning(
+                    "Scheduled shuffle {Id} skipped: no valid token for user {UserId}.",
+                    schedule.Id, schedule.UserId);
+                AdvanceNextRun(schedule, now);
+                await db.SaveChangesAsync(ct);
+                return;
+            }
+
+            var result = await spotifyAuth.ShufflePlaylistAsync(accessToken, schedule.PlaylistId, schedule.RandomnessLevel);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation(
+                    "Scheduled shuffle {Id} completed for playlist {PlaylistId}. Tracks: {Tracks}, moved: {Moved}.",
+                    schedule.Id, schedule.PlaylistId, result.TrackCount, result.MovedCount);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Scheduled shuffle {Id} failed for playlist {PlaylistId}: {Error}",
+                    schedule.Id, schedule.PlaylistId, result.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Unhandled error in scheduled shuffle {Id} for playlist {PlaylistId}.",
+                schedule.Id, schedule.PlaylistId);
+        }
+        finally
+        {
+            schedule.LastRunAt = now;
+            AdvanceNextRun(schedule, now);
+            await db.SaveChangesAsync(ct);
+        }
+    }
+
+    // Computes the next occurrence after `after` and writes it to schedule.NextRunAt.
+    // On parse failure the schedule is disabled to prevent a tight error loop.
+    private void AdvanceNextRun(ScheduledShuffle schedule, DateTimeOffset after)
+    {
+        try
+        {
+            var cron = CronExpression.Parse(schedule.CronExpression);
+            schedule.NextRunAt = cron.GetNextOccurrence(after, TimeZoneInfo.Utc);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Invalid cron expression \"{Cron}\" on schedule {Id}; disabling.",
+                schedule.CronExpression, schedule.Id);
+            schedule.IsEnabled = false;
+        }
+    }
+
+    // Computes the first next occurrence for a newly created or toggled schedule.
+    public static DateTimeOffset? ComputeNextRun(string cronExpression, DateTimeOffset from)
+    {
+        try
+        {
+            var cron = CronExpression.Parse(cronExpression);
+            return cron.GetNextOccurrence(from, TimeZoneInfo.Utc);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}

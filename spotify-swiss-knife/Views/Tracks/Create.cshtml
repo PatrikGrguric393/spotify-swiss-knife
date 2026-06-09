@@ -10,7 +10,7 @@
 <div class="form-container">
     <h2>Create New Song</h2>
 
-    <form method="post" action="@Url.Action("CreateTrackPost", "Tracks")" id="createSongForm" data-validate="true">
+    <form method="post" action="@Url.Action("CreatePost", "Tracks")" id="createSongForm" data-validate="true">
         @Html.AntiForgeryToken()
 
         <div class="form-group">
@@ -169,7 +169,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Song</button>
-            <a href="@Url.Action("Tracks", "Tracks")" class="btn btn-secondary">Cancel</a>
+            <a href="@Url.Action("Index", "Tracks")" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

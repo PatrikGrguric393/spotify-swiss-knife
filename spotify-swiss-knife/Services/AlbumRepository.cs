@@ -39,7 +39,25 @@ public class AlbumRepository
 
     public Album? GetById(string id)
     {
-        return GetAll().FirstOrDefault(album => album.Id == id);
+        var album = _context.Albums
+            .Include(a => a.Artists)
+            .Include(a => a.Images)
+            .Include(a => a.TrackList).ThenInclude(track => track.Artists)
+            .Include(a => a.TrackList).ThenInclude(track => track.Images)
+            .AsTracking()
+            .FirstOrDefault(a => a.Id == id);
+
+        if (album is null) return null;
+
+        album.Tracks = new AlbumTracksPage
+        {
+            Total = album.TrackList.Count,
+            Limit = album.TrackList.Count,
+            Offset = 0,
+            Items = album.TrackList.ToList()
+        };
+
+        return album;
     }
 
     public void Add(Album album)

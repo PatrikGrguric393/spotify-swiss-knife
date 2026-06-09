@@ -20,7 +20,7 @@
         <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
             <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
 
-            <form action="@Url.Action("ShufflePlaylist", "Shuffle")" method="post" class="shuffle-form">
+            <form action="@Url.Action("Index", "Shuffle")" method="post" class="shuffle-form">
                 @Html.AntiForgeryToken()
 
                 <div class="shuffle-form-pair">

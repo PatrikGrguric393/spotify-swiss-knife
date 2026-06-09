@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
@@ -13,6 +15,7 @@ public class SpotifyAuthService
     private readonly string _clientSecret;
     private readonly string _redirectUri;
     private readonly HttpClient _httpClient;
+    private readonly SpotifyDbContext _db;
 
     private const string AuthorizeUrl = "https://accounts.spotify.com/authorize";
     private const string TokenUrl = "https://accounts.spotify.com/api/token";
@@ -22,7 +25,7 @@ public class SpotifyAuthService
     private const string Scopes = "user-read-private user-read-email playlist-read-private " +
         "playlist-read-collaborative playlist-modify-public playlist-modify-private";
 
-    public SpotifyAuthService(IConfiguration config, IHttpClientFactory httpClientFactory)
+    public SpotifyAuthService(IConfiguration config, IHttpClientFactory httpClientFactory, SpotifyDbContext db)
     {
         _clientId = config["Spotify:ClientId"]
             ?? throw new InvalidOperationException("Spotify:ClientId is not configured.");
@@ -31,6 +34,51 @@ public class SpotifyAuthService
         _redirectUri = config["Spotify:RedirectUri"]
             ?? throw new InvalidOperationException("Spotify:RedirectUri is not configured.");
         _httpClient = httpClientFactory.CreateClient("spotify");
+        _db = db;
+    }
+
+    // Writes or updates the stored token set for a Spotify user. Called after every
+    // successful OAuth exchange or refresh so background jobs can authenticate.
+    public async Task PersistTokensAsync(string spotifyUserId, string accessToken, string refreshToken, int expiresIn)
+    {
+        var record = await _db.SpotifyTokens
+            .FirstOrDefaultAsync(t => t.SpotifyUserId == spotifyUserId);
+
+        if (record is null)
+        {
+            record = new SpotifyToken { SpotifyUserId = spotifyUserId };
+            _db.SpotifyTokens.Add(record);
+        }
+
+        record.AccessToken = accessToken;
+        // Spotify only returns a new refresh token occasionally; keep the old one when absent.
+        if (!string.IsNullOrEmpty(refreshToken))
+            record.RefreshToken = refreshToken;
+        record.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresIn - 60); // 60-second safety buffer
+        await _db.SaveChangesAsync();
+    }
+
+    // Returns a valid access token for the given Spotify user, refreshing if necessary.
+    // Returns null if no token is stored or the refresh fails.
+    public async Task<string?> GetValidAccessTokenAsync(string spotifyUserId)
+    {
+        var record = await _db.SpotifyTokens
+            .FirstOrDefaultAsync(t => t.SpotifyUserId == spotifyUserId);
+
+        if (record is null || string.IsNullOrEmpty(record.RefreshToken))
+            return null;
+
+        if (record.ExpiresAt > DateTimeOffset.UtcNow)
+            return record.AccessToken;
+
+        var refreshed = await RefreshTokenAsync(record.RefreshToken);
+        if (refreshed?.AccessToken is null || refreshed.Error is not null)
+            return null;
+
+        await PersistTokensAsync(spotifyUserId, refreshed.AccessToken,
+            refreshed.RefreshToken ?? record.RefreshToken, refreshed.ExpiresIn);
+
+        return refreshed.AccessToken;
     }
 
     public string GenerateState()

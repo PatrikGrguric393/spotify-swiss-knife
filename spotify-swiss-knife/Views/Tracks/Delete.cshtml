@@ -1,19 +1,19 @@
-@model spotify_swiss_knife.Models.Artist
+@model spotify_swiss_knife.Models.Track
 
 @{
-    ViewData["Title"] = "Delete Artist";
+    ViewData["Title"] = "Delete Song";
 }
 
 <div class="form-container">
-    <h2>Delete Artist</h2>
+    <h2>Delete Song</h2>
 
-    <p>Are you sure you want to delete the artist <strong>@Model.Name</strong>?</p>
+    <p>Are you sure you want to delete the song <strong>@Model.Name</strong>?</p>
 
-    <form method="post" id="deleteArtistForm">
+    <form method="post" id="deleteSongForm">
         @Html.AntiForgeryToken()
         <div class="form-actions">
             <button type="submit" class="btn btn-danger">Yes, delete</button>
-            <a href="@Url.Action("Artists", "Artists")" class="btn btn-secondary">Cancel</a>
+            <a href="@Url.Action("Index", "Tracks")" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
@@ -21,7 +21,7 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var form = document.getElementById('deleteArtistForm');
+            var form = document.getElementById('deleteSongForm');
             if (!form) return;
             form.addEventListener('submit', function () {
                 var button = form.querySelector('button[type=submit]');

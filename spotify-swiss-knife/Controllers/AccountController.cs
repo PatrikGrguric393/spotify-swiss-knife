@@ -15,8 +15,6 @@ public class AccountController : Controller
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
 
-    private const string SpotifyScheme = "SpotifyConnect";
-
     public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
     {
         _userManager = userManager;
@@ -26,7 +24,7 @@ public class AccountController : Controller
     // A local account and Spotify are mutually exclusive: a local sign-in/register is
     // refused while Spotify is connected.
     private async Task<bool> IsSpotifyConnectedAsync() =>
-        (await HttpContext.AuthenticateAsync(SpotifyScheme)).Succeeded;
+        (await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme)).Succeeded;
 
     private IActionResult RedirectToChooserForSpotifyConflict()
     {

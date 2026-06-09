@@ -1,8 +1,12 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
+using spotify_swiss_knife;
 using spotify_swiss_knife.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +34,9 @@ builder.Services.AddSingleton<AlbumCoverStorage>();
 
 builder.Services.AddHttpClient("spotify");
 builder.Services.AddScoped<SpotifyAuthService>();
+builder.Services.AddSingleton<SigningKeyProvider>();
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddHostedService<ShuffleSchedulerService>();
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     {
@@ -68,16 +75,40 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-// Spotify OAuth is kept as a separate, optional connection on its own scheme so it
-// does not reset the Identity defaults used for app login and authorization.
-builder.Services.AddAuthentication().AddCookie("SpotifyConnect", options =>
-{
-    options.Cookie.Name = "SpotifySSK";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    options.SlidingExpiration = false;
-});
+// Spotify OAuth and the API's JWT bearer scheme are both added as separate, optional
+// schemes so they do not reset the Identity defaults used for app login and authorization.
+builder.Services.AddAuthentication()
+    .AddCookie(SpotifyAuthDefaults.Scheme, options =>
+    {
+        options.Cookie.Name = "SpotifySSK";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.SlidingExpiration = false;
+    })
+    .AddJwtBearer();
+
+// The HS256 signing key is generated once and persisted in the database (see
+// SigningKeyProvider), not read from config. Bound via the DI-aware options builder and
+// resolved through a key resolver so the key is read lazily — the row is created at
+// startup, after the database has migrated.
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<SigningKeyProvider>((options, keyProvider) =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "spotify-swiss-knife",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "spotify-swiss-knife-api",
+            IssuerSigningKeyResolver = (_, _, _, _) => new[] { keyProvider.GetSigningKey() },
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role,
+        };
+    });
 
 var app = builder.Build();
 
@@ -88,6 +119,9 @@ using (var scope = app.Services.CreateScope())
         await db.Database.MigrateAsync();
     else
         await db.Database.EnsureCreatedAsync();
+
+    // Generate and persist the JWT signing key on first run, now that the schema exists.
+    scope.ServiceProvider.GetRequiredService<SigningKeyProvider>().GetSigningKey();
 }
 
 await IdentitySeeder.SeedAsync(app.Services);

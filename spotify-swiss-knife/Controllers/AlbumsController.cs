@@ -27,13 +27,13 @@ public class AlbumsController : Controller
 
     [AllowAnonymous]
     [HttpGet("albums")]
-    public IActionResult Albums()
+    public IActionResult Index()
     {
         return View(_albumRepository.GetAll());
     }
 
     [HttpGet("albums/create")]
-    public IActionResult CreateAlbum()
+    public IActionResult Create()
     {
         var model = new Models.FormModels.AlbumCreateForm();
         PopulateTrackOptions(model.TrackIds);
@@ -43,7 +43,7 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateAlbumPost([FromForm] Models.FormModels.AlbumCreateForm model)
+    public async Task<IActionResult> CreatePost([FromForm] Models.FormModels.AlbumCreateForm model)
     {
         ValidateAlbumTypeAndTrackCount(model);
         ValidateCoverImage(model.CoverImage);
@@ -52,7 +52,7 @@ public class AlbumsController : Controller
         {
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("CreateAlbum", model);
+            return View("Create", model);
         }
 
         if (_albumRepository.ExistsByName(model.Name))
@@ -60,7 +60,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("CreateAlbum", model);
+            return View("Create", model);
         }
 
         var selectedTracks = GetSelectedTracks(model.TrackIds);
@@ -69,7 +69,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("CreateAlbum", model);
+            return View("Create", model);
         }
 
         var selectedArtists = GetSelectedArtists(model.ArtistIds);
@@ -78,7 +78,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("CreateAlbum", model);
+            return View("Create", model);
         }
 
         var album = new Models.Album
@@ -109,11 +109,11 @@ public class AlbumsController : Controller
             _trackRepository.Update(track);
         }
 
-        return RedirectToAction(nameof(Albums));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("albums/edit/{id}")]
-    public IActionResult EditAlbum(string id)
+    public IActionResult Edit(string id)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
@@ -145,7 +145,7 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/edit/{id}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditAlbumPost(string id, [FromForm] Models.FormModels.AlbumEditForm model)
+    public async Task<IActionResult> EditPost(string id, [FromForm] Models.FormModels.AlbumEditForm model)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
@@ -159,7 +159,7 @@ public class AlbumsController : Controller
         {
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("EditAlbum", model);
+            return View("Edit", model);
         }
 
         // Use route id to exclude current album from duplicate check
@@ -168,7 +168,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("EditAlbum", model);
+            return View("Edit", model);
         }
 
         var allTracks = _trackRepository.GetAll();
@@ -180,7 +180,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("EditAlbum", model);
+            return View("Edit", model);
         }
 
         var selectedArtists = GetSelectedArtists(model.ArtistIds);
@@ -189,7 +189,7 @@ public class AlbumsController : Controller
             ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
             PopulateTrackOptions(model.TrackIds);
             PopulateArtistOptions(model.ArtistIds);
-            return View("EditAlbum", model);
+            return View("Edit", model);
         }
 
         var previousTrackIds = new HashSet<string>(allTracks.Where(t => t.AlbumId == id).Select(t => t.Id));
@@ -233,11 +233,11 @@ public class AlbumsController : Controller
             _trackRepository.Update(track);
         }
 
-        return RedirectToAction(nameof(Albums));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet("albums/delete/{id}")]
-    public IActionResult DeleteAlbum(string id)
+    public IActionResult Delete(string id)
     {
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
@@ -246,7 +246,7 @@ public class AlbumsController : Controller
 
     [HttpPost("albums/delete/{id}")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteAlbumConfirmed(string id)
+    public IActionResult DeleteConfirmed(string id)
     {
         var album = _albumRepository.GetById(id);
         var coverFileName = album?.CoverImageFileName;
@@ -254,7 +254,7 @@ public class AlbumsController : Controller
         _albumRepository.Delete(id);
         _coverStorage.Delete(coverFileName);
 
-        return RedirectToAction(nameof(Albums));
+        return RedirectToAction(nameof(Index));
     }
 
     [AllowAnonymous]

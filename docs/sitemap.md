@@ -2,13 +2,13 @@
 
 ### Core
 
-| URL          | Controller         | Akcija                                               | View(s)                                              |
-| ------------ | ------------------ | ---------------------------------------------------- | ---------------------------------------------------- |
-| /            | HomeController     | Index                                                | Shared/_Layout.cshtml, Home/Index.cshtml             |
-| /description | AboutController    | Index                                                | Shared/_Layout.cshtml, About/Index.cshtml            |
-| /login       | LoginController    | Index                                                | Shared/_Layout.cshtml, Login/Index.cshtml            |
-| /shuffle     | ServicesController | GET -> ShufflePlaylist, POST -> ShufflePlaylist(...) | Shared/_Layout.cshtml, Services/ShufflePlaylist.cshtml |
-| /search      | SearchController   | Index                                                | — (JSON)                                             |
+| URL      | Controller         | Akcija                            | View(s)                                       |
+| -------- | ------------------ | --------------------------------- | --------------------------------------------- |
+| /        | HomeController     | Index                             | Shared/_Layout.cshtml, Home/Index.cshtml      |
+| /about   | AboutController    | Index                             | Shared/_Layout.cshtml, About/Index.cshtml     |
+| /login   | LoginController    | Index                             | Shared/_Layout.cshtml, Login/Index.cshtml     |
+| /shuffle | ShuffleController  | GET -> Index, POST -> Index(...)  | Shared/_Layout.cshtml, Shuffle/Index.cshtml   |
+| /search  | SearchController   | GET -> Index(q)                   | — (JSON)                                       |
 
 ### Local account — `AccountController` (`/account`)
 
@@ -23,41 +23,55 @@
 | /account/users/{id}/edit  | AccountController | GET -> EditUser, POST -> EditUser(...) `[Admin]` | Shared/_Layout.cshtml, Account/EditUser.cshtml    |
 | /account/users/{id}/delete| AccountController | POST -> DeleteUser `[Admin]`                    | — (redirect to /account/users)                    |
 
-### Spotify OAuth — `AuthController` (`/auth`)
+### Spotify OAuth — `SpotifyAuthController` (`/auth`)
 
-| URL           | Controller     | Akcija                               | View(s)                                       |
-| ------------- | -------------- | ------------------------------------ | --------------------------------------------- |
-| /auth/login   | AuthController | Login                                | — (redirect to Spotify authorization URL)     |
-| /auth/callback| AuthController | Callback                             | — (redirect to /auth/confirm)                 |
-| /auth/confirm | AuthController | GET -> Confirm, POST -> ConfirmPost  | Shared/_Layout.cshtml, Auth/Confirm.cshtml    |
-| /auth/logout  | AuthController | POST -> Logout                       | — (redirect to /)                             |
+| URL           | Controller           | Akcija                               | View(s)                                          |
+| ------------- | -------------------- | ------------------------------------ | ------------------------------------------------ |
+| /auth/login   | SpotifyAuthController | Login                                | — (redirect to Spotify authorization URL)        |
+| /auth/callback| SpotifyAuthController | Callback                             | — (redirect to /auth/confirm)                    |
+| /auth/confirm | SpotifyAuthController | GET -> Confirm, POST -> ConfirmPost  | Shared/_Layout.cshtml, SpotifyAuth/Confirm.cshtml |
+| /auth/logout  | SpotifyAuthController | POST -> Logout                       | — (redirect to /)                                |
 
 ### Library — `/lib`
 
+Library list controllers (`Tracks`, `Albums`, `Artists`, `Playlists`) carry a class-level `[Authorize(Roles = "Admin,Editor")]`; the index, search, and validation actions are `[AllowAnonymous]`, so listing and search are public while create/edit/delete require the `Admin` or `Editor` role.
+
 | URL                       | Controller         | Akcija                                                    | View(s)                                               |
 | ------------------------- | ------------------ | --------------------------------------------------------- | ----------------------------------------------------- |
-| /lib                      | LibraryController  | Index                                                     | — (redirect to /lib/songs)                            |
-| /lib/songs                | SongsController    | Songs                                                     | Shared/_Layout.cshtml, Songs/Songs.cshtml             |
-| /lib/songs/create         | SongsController    | GET -> CreateSong, POST -> CreateSongPost `[Admin,Editor]`| Shared/_Layout.cshtml, Songs/CreateSong.cshtml        |
-| /lib/songs/edit/{id}      | SongsController    | GET -> EditSong, POST -> EditSongPost `[Admin,Editor]`    | Shared/_Layout.cshtml, Songs/EditSong.cshtml          |
-| /lib/songs/delete/{id}    | SongsController    | GET -> DeleteSong, POST -> DeleteSongConfirmed `[Admin,Editor]` | Shared/_Layout.cshtml, Songs/DeleteSong.cshtml  |
-| /lib/songs/search         | SongsController    | SearchSongs                                               | — (JSON)                                              |
-| /lib/albums               | AlbumsController   | Albums                                                    | Shared/_Layout.cshtml, Albums/Albums.cshtml           |
-| /lib/albums/create        | AlbumsController   | GET -> CreateAlbum, POST -> CreateAlbumPost `[Admin,Editor]` | Shared/_Layout.cshtml, Albums/CreateAlbum.cshtml   |
-| /lib/albums/edit/{id}     | AlbumsController   | GET -> EditAlbum, POST -> EditAlbumPost `[Admin,Editor]`  | Shared/_Layout.cshtml, Albums/EditAlbum.cshtml        |
-| /lib/albums/delete/{id}   | AlbumsController   | GET -> DeleteAlbum, POST -> DeleteAlbumConfirmed `[Admin,Editor]` | Shared/_Layout.cshtml, Albums/DeleteAlbum.cshtml |
+| /lib                      | LibraryController  | Index                                                     | — (redirect to /lib/tracks)                           |
+| /lib/tracks               | TracksController   | Index                                                     | Shared/_Layout.cshtml, Tracks/Index.cshtml            |
+| /lib/tracks/create        | TracksController   | GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Tracks/Create.cshtml           |
+| /lib/tracks/edit/{id}     | TracksController   | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Tracks/Edit.cshtml             |
+| /lib/tracks/delete/{id}   | TracksController   | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Tracks/Delete.cshtml           |
+| /lib/tracks/search        | TracksController   | SearchTracks                                              | — (JSON)                                              |
+| /lib/albums               | AlbumsController   | Index                                                     | Shared/_Layout.cshtml, Albums/Index.cshtml            |
+| /lib/albums/create        | AlbumsController   | GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Albums/Create.cshtml           |
+| /lib/albums/edit/{id}     | AlbumsController   | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Albums/Edit.cshtml             |
+| /lib/albums/delete/{id}   | AlbumsController   | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Albums/Delete.cshtml           |
+| /lib/albums/cover/{id}    | AlbumsController   | AlbumCover                                                | — (image stream)                                      |
 | /lib/albums/search        | AlbumsController   | SearchAlbums                                              | — (JSON)                                              |
-| /lib/artists              | ArtistsController  | Artists                                                   | Shared/_Layout.cshtml, Artists/Artists.cshtml         |
-| /lib/artists/create       | ArtistsController  | GET -> CreateArtist, POST -> CreateArtist(...) `[Admin,Editor]` | Shared/_Layout.cshtml, Artists/CreateArtist.cshtml |
-| /lib/artists/edit/{id}    | ArtistsController  | GET -> EditArtist, POST -> EditArtistPost `[Admin,Editor]`| Shared/_Layout.cshtml, Artists/EditArtist.cshtml      |
-| /lib/artists/delete/{id}  | ArtistsController  | GET -> DeleteArtist, POST -> DeleteArtistConfirmed `[Admin,Editor]` | Shared/_Layout.cshtml, Artists/DeleteArtist.cshtml |
+| /lib/artists              | ArtistsController  | Index                                                     | Shared/_Layout.cshtml, Artists/Index.cshtml           |
+| /lib/artists/create       | ArtistsController  | GET -> Create, POST -> Create(...) `[Admin,Editor]`       | Shared/_Layout.cshtml, Artists/Create.cshtml          |
+| /lib/artists/edit/{id}    | ArtistsController  | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Artists/Edit.cshtml            |
+| /lib/artists/delete/{id}  | ArtistsController  | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Artists/Delete.cshtml          |
 | /lib/artists/search       | ArtistsController  | SearchArtists                                             | — (JSON)                                              |
 | /lib/artists/validate-name| ArtistsController  | ValidateArtistName                                        | — (JSON)                                              |
-| /lib/playlists            | PlaylistsController| Playlists                                                 | Shared/_Layout.cshtml, Playlists/Playlists.cshtml     |
-| /lib/playlists/create     | PlaylistsController| GET -> CreatePlaylist, POST -> CreatePlaylistPost `[Admin,Editor]` | Shared/_Layout.cshtml, Playlists/CreatePlaylist.cshtml |
-| /lib/playlists/edit/{id}  | PlaylistsController| GET -> EditPlaylist, POST -> EditPlaylistPost `[Admin,Editor]` | Shared/_Layout.cshtml, Playlists/EditPlaylist.cshtml |
-| /lib/playlists/delete/{id}| PlaylistsController| GET -> DeletePlaylist, POST -> DeletePlaylistConfirmed `[Admin,Editor]` | Shared/_Layout.cshtml, Playlists/DeletePlaylist.cshtml |
+| /lib/playlists            | PlaylistsController| Index                                                     | Shared/_Layout.cshtml, Playlists/Index.cshtml         |
+| /lib/playlists/create     | PlaylistsController| GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Playlists/Create.cshtml        |
+| /lib/playlists/edit/{id}  | PlaylistsController| GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Playlists/Edit.cshtml          |
+| /lib/playlists/delete/{id}| PlaylistsController| GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Playlists/Delete.cshtml        |
 | /lib/playlists/search     | PlaylistsController| SearchPlaylists                                           | — (JSON)                                              |
+
+### Scheduled shuffles — `SchedulesController` (`/schedules`)
+
+Every action requires a connected Spotify account (the `SpotifyConnect` scheme is checked in-action; callers without it are redirected to login).
+
+| URL                      | Controller         | Akcija                            | View(s)                                          |
+| ------------------------ | ------------------ | --------------------------------- | ------------------------------------------------ |
+| /schedules               | SchedulesController | Index                             | Shared/_Layout.cshtml, Schedules/Index.cshtml    |
+| /schedules/create        | SchedulesController | GET -> Create, POST -> Create(...)| Shared/_Layout.cshtml, Schedules/Create.cshtml   |
+| /schedules/{id}/toggle   | SchedulesController | POST -> Toggle                    | — (redirect to /schedules)                       |
+| /schedules/{id}/delete   | SchedulesController | POST -> Delete                    | — (redirect to /schedules)                       |
 
 ### Files — `FilesController` (`/files`) — requires `[Authorize]`
 
@@ -73,36 +87,48 @@
 
 REST API controllers inherit from `ApiControllerBase` (`[ApiController]`). All routes are prefixed with `api/` and exchange JSON DTOs.
 
-**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]`. POST/PUT/DELETE endpoints require `[Authorize(Roles = "Admin,Editor")]` — unauthenticated callers receive `401`, authenticated callers without the required role receive `403`.
+**Authentication:** The `api/` surface authenticates exclusively via **JWT bearer tokens** (scheme `Bearer`); the Identity (`SSKAuth`) cookie is no longer accepted on `api/` routes. Obtain a token from `POST /api/auth/token` and send it as the `Authorization: Bearer <access_token>` header. Tokens are HS256-signed with a key generated on first run and persisted in the `JwtSigningKeys` table.
+
+**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]` and need no token. POST/PUT/DELETE endpoints require a bearer token whose holder has the `Admin` or `Editor` role — unauthenticated callers receive `401`, authenticated callers without the required role receive `403`.
+
+### Auth — `AuthApiController` (`api/auth`)
+
+All endpoints are `[AllowAnonymous]`. `TokenResponseDto` is `{ token_type, access_token, expires_in, refresh_token }`. The access token is short-lived (`Jwt:AccessTokenMinutes`, default 60); `refresh` rotates the refresh token (the presented one is revoked and a new pair issued).
+
+| Method | Route             | Akcija  | Request body                          | Responses                          |
+| ------ | ----------------- | ------- | ------------------------------------- | ---------------------------------- |
+| POST   | /api/auth/token   | Token   | `TokenRequestDto` (username, password)| 200 `TokenResponseDto`, 400, 401   |
+| POST   | /api/auth/refresh | Refresh | `RefreshRequestDto` (refresh_token)   | 200 `TokenResponseDto`, 400, 401   |
+| POST   | /api/auth/revoke  | Revoke  | `RefreshRequestDto` (refresh_token)   | 204                                |
 
 ### Albums — `AlbumsApiController` (`api/albums`)
 
 | Method | Route             | Akcija     | Request body     | Responses                          |
 | ------ | ----------------- | ---------- | ---------------- | ---------------------------------- |
-| GET    | /api/albums?q=    | GetAll     | —                | 200 `IEnumerable<AlbumSummaryDto>` |
-| GET    | /api/albums/{id}  | GetById    | —                | 200 `AlbumDto`, 404                |
-| POST   | /api/albums       | Create     | `AlbumCreateDto` | 201 `AlbumDto`, 400, 401, 403, 422           |
-| PUT    | /api/albums/{id}  | Update     | `AlbumUpdateDto` | 200 `AlbumDto`, 400, 401, 403, 404, 422      |
+| GET    | /api/albums?q=    | GetAll     | —                | 200 `IEnumerable<AlbumListDto>`    |
+| GET    | /api/albums/{id}  | GetById    | —                | 200 `AlbumDetailDto`, 404          |
+| POST   | /api/albums       | Create     | `AlbumCreateDto` | 201 `AlbumDetailDto`, 400, 401, 403, 422     |
+| PUT    | /api/albums/{id}  | Update     | `AlbumUpdateDto` | 200 `AlbumDetailDto`, 400, 401, 403, 404, 422|
 | DELETE | /api/albums/{id}  | Delete     | —                | 204, 401, 403, 404                           |
 
 ### Tracks — `TracksApiController` (`api/tracks`)
 
 | Method | Route             | Akcija     | Request body     | Responses                          |
 | ------ | ----------------- | ---------- | ---------------- | ---------------------------------- |
-| GET    | /api/tracks?q=    | GetAll     | —                | 200 `IEnumerable<TrackSummaryDto>` |
-| GET    | /api/tracks/{id}  | GetById    | —                | 200 `TrackDto`, 404                |
-| POST   | /api/tracks       | Create     | `TrackCreateDto` | 201 `TrackDto`, 400, 401, 403, 404           |
-| PUT    | /api/tracks/{id}  | Update     | `TrackUpdateDto` | 200 `TrackDto`, 401, 403, 404                |
+| GET    | /api/tracks?q=    | GetAll     | —                | 200 `IEnumerable<TrackListDto>`    |
+| GET    | /api/tracks/{id}  | GetById    | —                | 200 `TrackDetailDto`, 404          |
+| POST   | /api/tracks       | Create     | `TrackCreateDto` | 201 `TrackDetailDto`, 400, 401, 403, 404     |
+| PUT    | /api/tracks/{id}  | Update     | `TrackUpdateDto` | 200 `TrackDetailDto`, 401, 403, 404          |
 | DELETE | /api/tracks/{id}  | Delete     | —                | 204, 401, 403, 404                           |
 
 ### Playlists — `PlaylistsApiController` (`api/playlists`)
 
 | Method | Route                | Akcija | Request body        | Responses                             |
 | ------ | -------------------- | ------ | ------------------- | ------------------------------------- |
-| GET    | /api/playlists?q=    | GetAll | —                   | 200 `IEnumerable<PlaylistSummaryDto>` |
-| GET    | /api/playlists/{id}  | GetById| —                   | 200 `PlaylistDto`, 404                |
-| POST   | /api/playlists       | Create | `PlaylistCreateDto` | 201 `PlaylistDto`, 400, 401, 403, 422           |
-| PUT    | /api/playlists/{id}  | Update | `PlaylistUpdateDto` | 200 `PlaylistDto`, 401, 403, 404, 422           |
+| GET    | /api/playlists?q=    | GetAll | —                   | 200 `IEnumerable<PlaylistListDto>`    |
+| GET    | /api/playlists/{id}  | GetById| —                   | 200 `PlaylistDetailDto`, 404          |
+| POST   | /api/playlists       | Create | `PlaylistCreateDto` | 201 `PlaylistDetailDto`, 400, 401, 403, 422     |
+| PUT    | /api/playlists/{id}  | Update | `PlaylistUpdateDto` | 200 `PlaylistDetailDto`, 401, 403, 404, 422     |
 | DELETE | /api/playlists/{id}  | Delete | —                   | 204, 401, 403, 404                              |
 
 ### Artists — `ArtistsApiController` (`api/artists`)
@@ -111,8 +137,8 @@ Supports soft delete; GET endpoints accept an optional `includeDeleted` query pa
 
 | Method | Route                            | Akcija     | Request body      | Responses                           |
 | ------ | -------------------------------- | ---------- | ----------------- | ----------------------------------- |
-| GET    | /api/artists?q=&includeDeleted=  | GetAll     | —                 | 200 `IEnumerable<ArtistSummaryDto>` |
-| GET    | /api/artists/{id}?includeDeleted=| GetById    | —                 | 200 `ArtistDto`, 404                |
-| POST   | /api/artists                     | Create     | `ArtistCreateDto` | 201 `ArtistDto`, 400, 401, 403, 422           |
-| PUT    | /api/artists/{id}                | Update     | `ArtistUpdateDto` | 200 `ArtistDto`, 401, 403, 404, 422           |
+| GET    | /api/artists?q=&includeDeleted=  | GetAll     | —                 | 200 `IEnumerable<ArtistListDto>`    |
+| GET    | /api/artists/{id}?includeDeleted=| GetById    | —                 | 200 `ArtistDetailDto`, 404          |
+| POST   | /api/artists                     | Create     | `ArtistCreateDto` | 201 `ArtistDetailDto`, 400, 401, 403, 422     |
+| PUT    | /api/artists/{id}                | Update     | `ArtistUpdateDto` | 200 `ArtistDetailDto`, 401, 403, 404, 422     |
 | DELETE | /api/artists/{id}                | SoftDelete | —                 | 204, 401, 403, 404                            |

@@ -1,0 +1,102 @@
+@using spotify_swiss_knife.Models
+@model spotify_swiss_knife.Models.FormModels.CreateScheduleForm
+
+@{
+    ViewData["Title"] = "New Scheduled Shuffle";
+    var playlists = (ViewBag.Playlists as IEnumerable<spotify_swiss_knife.Models.Playlist>) ?? Enumerable.Empty<spotify_swiss_knife.Models.Playlist>();
+}
+
+<section class="library-page shuffle-page">
+    <h1>New Scheduled Shuffle</h1>
+
+    <section class="shuffle-panel" aria-labelledby="createScheduleTitle">
+        <h2 id="createScheduleTitle" class="shuffle-panel-title">Configure schedule</h2>
+
+        <form method="post" action="@Url.Action("Create", "Schedules")" class="shuffle-form">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="PlaylistName" id="PlaylistName" value="@Model.PlaylistName" />
+
+            <div class="shuffle-form-row">
+                <label for="PlaylistId">Playlist</label>
+                <select id="PlaylistId" name="PlaylistId" class="shuffle-input" required>
+                    <option value="">Select playlist</option>
+                    @foreach (var playlist in playlists)
+                    {
+                        <option value="@playlist.Id" selected="@(Model.PlaylistId == playlist.Id ? "selected" : null)">@playlist.Name</option>
+                    }
+                </select>
+                <span class="shuffle-validation" asp-validation-for="PlaylistId"></span>
+            </div>
+
+            <div class="shuffle-form-row">
+                <label asp-for="RandomnessLevel">Randomness level</label>
+                <select asp-for="RandomnessLevel" class="shuffle-input">
+                    @foreach (var level in Enum.GetValues<ShuffleRandomnessLevel>())
+                    {
+                        <option value="@((int)level)">@level</option>
+                    }
+                </select>
+                <span class="shuffle-validation" asp-validation-for="RandomnessLevel"></span>
+            </div>
+
+            <div class="shuffle-form-row">
+                <label>Days of week</label>
+                <div class="schedule-days">
+                    @{
+                        var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+                        for (int d = 0; d <= 6; d++)
+                        {
+                            var isChecked = Model.DaysOfWeek != null && Model.DaysOfWeek.Contains(d);
+                            <label class="shuffle-checkbox">
+                                <input type="checkbox" name="DaysOfWeek" value="@d" @(isChecked ? "checked" : null) />
+                                @dayNames[d]
+                            </label>
+                        }
+                    }
+                </div>
+                <span class="shuffle-validation" asp-validation-for="DaysOfWeek"></span>
+            </div>
+
+            <div class="shuffle-form-row">
+                <label asp-for="TimeUtc">Time (UTC)</label>
+                <input asp-for="TimeUtc" type="time" class="shuffle-input schedule-time-input" />
+                <span class="shuffle-validation" asp-validation-for="TimeUtc"></span>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="shuffle-notice shuffle-notice-error" role="alert" aria-labelledby="scheduleValidationTitle">
+                    <h3 id="scheduleValidationTitle" class="shuffle-notice-title">Please fix the following errors</h3>
+                    <div asp-validation-summary="ModelOnly" class="shuffle-notice-text"></div>
+                </div>
+            }
+
+            <div class="shuffle-form-actions">
+                <div class="schedule-form-buttons">
+                    <button type="submit" class="shuffle-submit">Create schedule</button>
+                    <a href="@Url.Action("Index", "Schedules")" class="shuffle-submit schedule-cancel-link">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </section>
+</section>
+
+@section Scripts {
+    <script>
+    (function () {
+        var select = document.getElementById('PlaylistId');
+        var hidden = document.getElementById('PlaylistName');
+
+        function syncName() {
+            var opt = select.options[select.selectedIndex];
+            hidden.value = opt && opt.value ? opt.text : '';
+        }
+
+        if (select) {
+            syncName();
+            select.addEventListener('change', syncName);
+        }
+    }());
+    </script>
+}

@@ -19,6 +19,10 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 	public DbSet<PlaylistTrackEntry> PlaylistTrackEntries => Set<PlaylistTrackEntry>();
 	public DbSet<Track> Tracks => Set<Track>();
 	public DbSet<UserFile> UserFiles => Set<UserFile>();
+	public DbSet<SpotifyToken> SpotifyTokens => Set<SpotifyToken>();
+	public DbSet<ScheduledShuffle> ScheduledShuffles => Set<ScheduledShuffle>();
+	public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+	public DbSet<JwtSigningKey> JwtSigningKeys => Set<JwtSigningKey>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -208,5 +212,30 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 						new { ArtistId = "artist-neon-meadow", TrackId = "track-solar-echo" },
 						new { ArtistId = "artist-ember-kite", TrackId = "track-solar-echo" });
 				});
+
+		modelBuilder.Entity<SpotifyToken>(entity =>
+		{
+			entity.HasKey(t => t.Id);
+			entity.HasIndex(t => t.SpotifyUserId).IsUnique();
+		});
+
+		modelBuilder.Entity<ScheduledShuffle>(entity =>
+		{
+			entity.HasKey(s => s.Id);
+			entity.HasIndex(s => s.UserId);
+		});
+
+		modelBuilder.Entity<RefreshToken>(entity =>
+		{
+			entity.HasKey(t => t.Id);
+			entity.HasIndex(t => t.TokenHash).IsUnique();
+			entity.HasIndex(t => t.UserId);
+		});
+
+		modelBuilder.Entity<JwtSigningKey>(entity =>
+		{
+			entity.HasKey(k => k.Id);
+			entity.HasIndex(k => k.Purpose).IsUnique();
+		});
 	}
 }

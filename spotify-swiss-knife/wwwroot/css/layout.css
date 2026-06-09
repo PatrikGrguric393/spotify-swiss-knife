@@ -538,28 +538,6 @@
     }
 }
 
-/* Logout form: strip default form chrome so it sits inline */
-.nav-auth-logout-form {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-}
-
-/*
- * Logout button: visually identical to a standard nav-link.
- * All font/color/cursor properties must be explicitly set because <button>
- * carries browser UA styles that override inherited values.
- */
-.nav-auth-logout-btn {
-    background: none;
-    appearance: none;
-    -webkit-appearance: none;
-    font-family: inherit;
-    font-size: 1rem;
-    line-height: 1.2;
-}
-
 /* ── Auth confirm card ───────────────────────────────────── */
 
 /*
@@ -683,31 +661,10 @@
 
 /* ── Auth zones: Spotify connection vs app account ──────── */
 
-/* "Connect Spotify" link: same emphasised border treatment as the login btn */
-.nav-spotify-connect-btn {
-    border: 2px solid #0f0 !important;
-    color: #0f0;
-    padding: 0.3rem 0.85rem;
-    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.nav-spotify-connect-btn:hover {
-    background-color: #0f0;
-    color: #000;
-    border-color: #0f0 !important;
-    box-shadow: 0 0 6px rgba(0, 255, 0, 0.35);
-    border-bottom: 2px solid #0f0 !important;
-}
-
 /* Connected status label: green check, slightly brighter than the dim name */
 .nav-spotify-status {
     color: #7fff7f;
     max-width: none;
-}
-
-/* Register link: lighter, secondary treatment next to the bordered Login btn */
-.nav-register-btn {
-    color: #9cff9c;
 }
 
 /* Role pill shown after the account name in the nav */
