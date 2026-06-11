@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 
@@ -10,6 +12,37 @@ namespace spotify_swiss_knife.Tests.Infrastructure;
 /// </summary>
 public static class SeedData
 {
+    /// <summary>
+    /// Creates an Identity user assigned to <paramref name="role"/> (creating the role if the
+    /// database reset wiped it) and returns the username so a test can log in as that user.
+    /// </summary>
+    public static async Task<string> CreateUserAsync(IServiceScope scope, string role, string password)
+    {
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+
+        var username = $"{role.ToLowerInvariant()}-{Guid.NewGuid():N}@ssk.local";
+        var user = new AppUser
+        {
+            UserName = username,
+            Email = username,
+            EmailConfirmed = true,
+            OIB = "00000000000",
+            JMBAG = "0000000000"
+        };
+
+        var result = await userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                "Could not create test user: " + string.Join("; ", result.Errors.Select(e => e.Description)));
+
+        await userManager.AddToRoleAsync(user, role);
+        return username;
+    }
+
     public static async Task<Album> CreateAlbumAsync(SpotifyDbContext db, string name = "Seed Album")
     {
         var album = new Album

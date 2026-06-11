@@ -39,10 +39,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
-    /// <summary>
-    /// Resets the in-memory store back to the seeded baseline. Called before each
-    /// test so individual tests stay independent of one another's mutations.
-    /// </summary>
     public void ResetDatabase()
     {
         using var scope = Services.CreateScope();

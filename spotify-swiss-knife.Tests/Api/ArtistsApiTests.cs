@@ -52,6 +52,56 @@ public class ArtistsApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAll_WithSearchQuery_ReturnsOnlyMatchingArtists()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreateArtistAsync(Db(scope), "Daft Punk");
+        await SeedData.CreateArtistAsync(Db(scope), "The Beatles");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q=daft");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var artists = await response.Content.ReadFromJsonAsync<List<ArtistListDto>>();
+        artists!.Should().ContainSingle(a => a.Id == match.Id);
+    }
+
+    // ---------- Authorization ----------
+
+    [Fact]
+    public async Task Create_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().PostAsync(BaseUrl, JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Update_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().PutAsync($"{BaseUrl}/{MissingId}", JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().DeleteAsync($"{BaseUrl}/{MissingId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Create_AsInsufficientRole_ReturnsForbidden()
+    {
+        var client = await CreateClientAsAsync("User");
+
+        var response = await client.PostAsync(BaseUrl, JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
     // ---------- Create ----------
 
     [Fact]

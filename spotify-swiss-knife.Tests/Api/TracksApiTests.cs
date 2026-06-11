@@ -60,6 +60,56 @@ public class TracksApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAll_WithSearchQuery_ReturnsOnlyMatchingTracks()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreateTrackAsync(Db(scope), "Get Lucky");
+        await SeedData.CreateTrackAsync(Db(scope), "Come Together");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q=lucky");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tracks = await response.Content.ReadFromJsonAsync<List<TrackListDto>>();
+        tracks!.Should().ContainSingle(t => t.Id == match.Id);
+    }
+
+    // ---------- Authorization ----------
+
+    [Fact]
+    public async Task Create_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().PostAsync(BaseUrl, JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Update_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().PutAsync($"{BaseUrl}/{MissingId}", JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await AnonymousClient().DeleteAsync($"{BaseUrl}/{MissingId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Create_AsInsufficientRole_ReturnsForbidden()
+    {
+        var client = await CreateClientAsAsync("User");
+
+        var response = await client.PostAsync(BaseUrl, JsonBody(ValidPayload()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
     // ---------- Create ----------
 
     [Fact]
