@@ -282,6 +282,7 @@ public class AlbumsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("albums/delete/{id}")]
     public IActionResult Delete(string id)
     {
@@ -290,6 +291,7 @@ public class AlbumsController : Controller
         return View(album);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("albums/delete/{id}")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(string id)

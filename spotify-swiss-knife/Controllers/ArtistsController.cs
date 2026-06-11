@@ -95,6 +95,7 @@ public class ArtistsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("artists/delete/{id}")]
     public IActionResult Delete(string id)
     {
@@ -103,6 +104,7 @@ public class ArtistsController : Controller
         return View(artist);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("artists/delete/{id}")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(string id)

@@ -113,6 +113,7 @@ public class TracksController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("tracks/delete/{id}")]
     public IActionResult Delete(string id)
     {
@@ -121,6 +122,7 @@ public class TracksController : Controller
         return View(track);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("tracks/delete/{id}")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(string id)

@@ -158,7 +158,7 @@ public class PlaylistsApiController : ApiControllerBase
         return Ok(PlaylistDetailDto.FromEntity(updated));
     }
 
-    [Authorize(Roles = "Admin,Editor")]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

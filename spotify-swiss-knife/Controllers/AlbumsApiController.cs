@@ -162,7 +162,7 @@ public class AlbumsApiController : ApiControllerBase
         return Ok(AlbumDetailDto.FromEntity(updated));
     }
 
-    [Authorize(Roles = "Admin,Editor")]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

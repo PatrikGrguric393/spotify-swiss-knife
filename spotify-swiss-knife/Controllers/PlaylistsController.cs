@@ -139,6 +139,7 @@ public class PlaylistsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("playlists/delete/{id}")]
     public IActionResult Delete(string id)
     {
@@ -147,6 +148,7 @@ public class PlaylistsController : Controller
         return View(playlist);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("playlists/delete/{id}")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(string id)
