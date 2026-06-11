@@ -8,6 +8,16 @@
 
     @Html.AntiForgeryToken()
 
+    <div class="library-filters">
+        <div class="library-actions">
+            <div class="search-box">
+                <label for="fileSearch" class="visually-hidden">Search</label>
+                <input id="fileSearch" name="q" type="search" class="search-input" placeholder="Search files..." aria-label="Search files" disabled />
+                <span class="search-status" aria-live="polite"></span>
+            </div>
+        </div>
+    </div>
+
     <div class="files-section">
         <div id="files-list-container">
             <p class="files-empty">Loading...</p>
@@ -46,26 +56,37 @@
             }
         }
 
-        async function loadFiles() {
+        let allFiles = [];
+
+        function fileHaystack(f) {
+            return [
+                f.name,
+                formatSize(f.size),
+                f.contentType || '',
+                formatDate(f.uploadedAt)
+            ].join(' ').toLowerCase();
+        }
+
+        function filterFiles(query) {
+            const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+            if (!tokens.length) return allFiles;
+            return allFiles.filter(f => {
+                const haystack = fileHaystack(f);
+                return tokens.every(t => haystack.includes(t));
+            });
+        }
+
+        function renderFiles(files) {
             const container = document.getElementById('files-list-container');
-            try {
-                const res = await fetch('/files/list');
-                if (!res.ok) throw new Error('Failed to load files.');
-                const files = await res.json();
 
-                if (!files.length) {
-                    container.innerHTML = '<p class="files-empty">No files uploaded yet.</p>';
-                    return;
-                }
-
-                const rows = files.map(f => {
-                    const albumBadge = f.linkedAlbumId
-                        ? `<span class="files-album-cover-badge">Album cover &middot; <a href="/lib/albums/edit/${f.linkedAlbumId}">${escapeHtml(f.linkedAlbumName || f.linkedAlbumId)}</a></span>`
-                        : '';
-                    const deleteConfirm = f.linkedAlbumId
-                        ? 'Delete this file? This will also remove the cover from the album.'
-                        : 'Delete this file?';
-                    return `
+            const rows = files.map(f => {
+                const albumBadge = f.linkedAlbumId
+                    ? `<span class="files-album-cover-badge">Album cover &middot; <a href="/lib/albums/edit/${f.linkedAlbumId}">${escapeHtml(f.linkedAlbumName || f.linkedAlbumId)}</a></span>`
+                    : '';
+                const deleteConfirm = f.linkedAlbumId
+                    ? 'Delete this file? This will also remove the cover from the album.'
+                    : 'Delete this file?';
+                return `
                     <tr>
                         <td data-label="Name">${escapeHtml(f.name)}${albumBadge}</td>
                         <td data-label="Size">${formatSize(f.size)}</td>
@@ -77,29 +98,60 @@
                         </td>
                     </tr>
                 `;
-                }).join('');
+            }).join('');
 
-                container.innerHTML = `
-                    <div class="table-wrap">
-                        <table class="entity-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Size</th>
-                                    <th>Type</th>
-                                    <th>Uploaded</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                        </table>
-                    </div>
-                `;
+            const body = files.length
+                ? rows
+                : '<tr><td colspan="5" style="padding: 0.6rem 0.75rem; color: #b6ffb6;">No results</td></tr>';
 
-                container.querySelectorAll('.files-delete-btn').forEach(btn => {
-                    btn.addEventListener('click', () => deleteFile(btn.dataset.id, btn.dataset.confirm));
-                });
+            container.innerHTML = `
+                <div class="table-wrap">
+                    <table class="entity-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Size</th>
+                                <th>Type</th>
+                                <th>Uploaded</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${body}</tbody>
+                    </table>
+                </div>
+            `;
+
+            container.querySelectorAll('.files-delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteFile(btn.dataset.id, btn.dataset.confirm));
+            });
+        }
+
+        function applyFilter() {
+            const searchInput = document.getElementById('fileSearch');
+            const status = document.querySelector('.search-status');
+            const filtered = filterFiles(searchInput.value.trim());
+            renderFiles(filtered);
+            if (status) status.textContent = filtered.length === 0 ? 'No results' : '';
+        }
+
+        async function loadFiles() {
+            const container = document.getElementById('files-list-container');
+            const searchInput = document.getElementById('fileSearch');
+            try {
+                const res = await fetch('/files/list');
+                if (!res.ok) throw new Error('Failed to load files.');
+                allFiles = await res.json();
+
+                if (!allFiles.length) {
+                    if (searchInput) searchInput.disabled = true;
+                    container.innerHTML = '<p class="files-empty">No files uploaded yet.</p>';
+                    return;
+                }
+
+                if (searchInput) searchInput.disabled = false;
+                applyFilter();
             } catch (e) {
+                if (searchInput) searchInput.disabled = true;
                 container.innerHTML = `<p class="files-empty">${escapeHtml(e.message)}</p>`;
             }
         }
@@ -112,6 +164,13 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
         }
+
+        const fileSearch = document.getElementById('fileSearch');
+        let searchTimer = 0;
+        fileSearch.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(applyFilter, 250);
+        });
 
         loadFiles();
     </script>

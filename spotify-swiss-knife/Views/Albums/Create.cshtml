@@ -6,6 +6,10 @@
     ViewData["Title"] = "Create Album";
 }
 
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
+}
+
 <div class="form-container">
     <h2>Create New Album</h2>
 
@@ -18,16 +22,25 @@
             <label asp-for="CoverImage"></label>
             <p class="album-cover-help">Optional. JPG, PNG, GIF or WebP.</p>
 
-            <div class="album-cover-preview" data-album-cover-preview hidden>
-                <img src="" alt="Selected album cover preview" data-album-cover-preview-img />
+            <div class="album-cover-dz-layout">
+                <div class="album-cover-preview" data-album-cover-preview hidden>
+                    <img src="" alt="Selected album cover preview" data-album-cover-preview-img />
+                </div>
+
+                <div class="dropzone album-cover-dropzone" data-album-cover-dz
+                     data-cover-input-target="[data-album-cover-input]"
+                     data-cover-default-message="Drop cover image here or click to select">
+                </div>
             </div>
 
             <input asp-for="CoverImage"
                    type="file"
-                   class="form-control album-cover-input"
+                   class="album-cover-input"
                    accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
                    data-album-cover-input
                    data-album-cover-preview-target="[data-album-cover-preview]"
+                   tabindex="-1"
+                   aria-hidden="true"
                    aria-describedby="error-CoverImage" />
             @{
                 var coverErrors = ViewData.ModelState["CoverImage"]?.Errors;
@@ -59,4 +72,6 @@
     <script src="~/js/album-track-picker.js" asp-append-version="true"></script>
     <script src="~/js/album-artist-picker.js" asp-append-version="true"></script>
     <script src="~/js/album-cover-preview.js" asp-append-version="true"></script>
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script src="~/js/album-cover-dropzone.js" asp-append-version="true"></script>
 }

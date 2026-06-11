@@ -25,32 +25,43 @@
 
             <input type="hidden" asp-for="HasExistingCover" />
 
-            @if (Model.HasExistingCover)
-            {
-                <div class="album-cover-current" data-album-cover-current>
-                    <img src="@Url.Action("AlbumCover", "Albums", new { id = Model.Id })"
-                         alt="Current cover for @Model.Name" class="album-cover-thumb" />
-                    <span class="album-cover-current-caption">Current cover</span>
+            <div class="album-cover-dz-layout">
+                @if (Model.HasExistingCover)
+                {
+                    <div class="album-cover-current" data-album-cover-current>
+                        <img src="@Url.Action("AlbumCover", "Albums", new { id = Model.Id })"
+                             alt="Current cover for @Model.Name" class="album-cover-thumb" />
+                        <span class="album-cover-current-caption">Current cover</span>
+                    </div>
+                }
+
+                <div class="album-cover-preview" data-album-cover-preview hidden>
+                    <img src="" alt="Selected album cover preview" data-album-cover-preview-img />
                 </div>
 
+                <div class="dropzone album-cover-dropzone" data-album-cover-dz
+                     data-cover-input-target="[data-album-cover-input]"
+                     data-cover-default-message="@(Model.HasExistingCover ? "Drop a new cover to replace, or click to select" : "Drop cover image here or click to select")">
+                </div>
+            </div>
+
+            @if (Model.HasExistingCover)
+            {
                 <label class="album-cover-remove">
                     <input type="checkbox" asp-for="RemoveCoverImage" data-album-cover-remove />
                     <span>Remove current cover</span>
                 </label>
             }
 
-            <div class="album-cover-preview" data-album-cover-preview hidden>
-                <img src="" alt="Selected album cover preview" data-album-cover-preview-img />
-            </div>
-
-            <label class="album-cover-replace-label" asp-for="CoverImage">@(Model.HasExistingCover ? "Replace cover" : "Upload cover")</label>
             <input asp-for="CoverImage"
                    type="file"
-                   class="form-control album-cover-input"
+                   class="album-cover-input"
                    accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
                    data-album-cover-input
                    data-album-cover-preview-target="[data-album-cover-preview]"
                    data-album-cover-remove-target="[data-album-cover-remove]"
+                   tabindex="-1"
+                   aria-hidden="true"
                    aria-describedby="error-CoverImage" />
             @{
                 var coverErrors = ViewData.ModelState["CoverImage"]?.Errors;
@@ -94,5 +105,6 @@
     <script src="~/js/album-artist-picker.js" asp-append-version="true"></script>
     <script src="~/js/album-cover-preview.js" asp-append-version="true"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script src="~/js/album-cover-dropzone.js" asp-append-version="true"></script>
     <script src="~/js/album-attachments.js" asp-append-version="true"></script>
 }
