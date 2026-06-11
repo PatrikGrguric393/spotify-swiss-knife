@@ -94,6 +94,20 @@ public class AlbumsApiTests : IntegrationTestBase
         albums!.Should().ContainSingle(a => a.Id == match.Id);
     }
 
+    [Fact]
+    public async Task GetAll_WithIdQuery_ReturnsExactMatch()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreateAlbumAsync(Db(scope), "Random Access Memories");
+        await SeedData.CreateAlbumAsync(Db(scope), "Abbey Road");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q={match.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var albums = await response.Content.ReadFromJsonAsync<List<AlbumListDto>>();
+        albums!.Should().ContainSingle(a => a.Id == match.Id);
+    }
+
     // ---------- Authorization ----------
 
     [Fact]

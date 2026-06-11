@@ -86,17 +86,6 @@
             <a href="@Url.Action("Index", "Albums")" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
-
-    <div class="files-section album-attachments">
-        <h3>Attachments</h3>
-        <form id="album-attachments-dz" class="dropzone files-dropzone"
-              action="@Url.Action("UploadAttachment", "Albums", new { albumId = Model.Id })"
-              method="post" enctype="multipart/form-data"></form>
-        <div id="attachmentList"
-             data-list-url="@Url.Action("GetAttachments", "Albums", new { albumId = Model.Id })">
-            <p class="files-empty">Loading…</p>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
@@ -106,5 +95,4 @@
     <script src="~/js/album-cover-preview.js" asp-append-version="true"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="~/js/album-cover-dropzone.js" asp-append-version="true"></script>
-    <script src="~/js/album-attachments.js" asp-append-version="true"></script>
 }

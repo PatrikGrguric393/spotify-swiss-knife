@@ -2,7 +2,7 @@ BASE=https://ssk.grghomelab.me
 
 TOKEN=$(curl -s -X POST "$BASE/api/auth/token" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"YOUR_PASSWORD"}' | jq -r .accessToken)
+  -d '{"username":"admin@ssk.local","password":"Admin123!"}' | jq -r .access_token)
 echo "$TOKEN"
 
 curl -s "$BASE/api/artists" | jq

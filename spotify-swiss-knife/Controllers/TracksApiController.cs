@@ -32,7 +32,8 @@ public class TracksApiController : ApiControllerBase
         {
             var term = q.Trim();
             tracks = tracks
-                .Where(t => t.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .Where(t => t.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
+                            || t.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 

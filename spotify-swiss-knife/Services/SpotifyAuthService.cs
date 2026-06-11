@@ -27,14 +27,19 @@ public class SpotifyAuthService
 
     public SpotifyAuthService(IConfiguration config, IHttpClientFactory httpClientFactory, SpotifyDbContext db)
     {
-        _clientId = config["Spotify:ClientId"]
-            ?? throw new InvalidOperationException("Spotify:ClientId is not configured.");
-        _clientSecret = config["Spotify:ClientSecret"]
-            ?? throw new InvalidOperationException("Spotify:ClientSecret is not configured.");
-        _redirectUri = config["Spotify:RedirectUri"]
-            ?? throw new InvalidOperationException("Spotify:RedirectUri is not configured.");
+        _clientId = Required(config, "Spotify:ClientId");
+        _clientSecret = Required(config, "Spotify:ClientSecret");
+        _redirectUri = Required(config, "Spotify:RedirectUri");
         _httpClient = httpClientFactory.CreateClient("spotify");
         _db = db;
+
+        static string Required(IConfiguration config, string key)
+        {
+            var value = config[key];
+            if (string.IsNullOrWhiteSpace(value))
+                throw new InvalidOperationException($"{key} is not configured.");
+            return value;
+        }
     }
 
     // Writes or updates the stored token set for a Spotify user. Called after every

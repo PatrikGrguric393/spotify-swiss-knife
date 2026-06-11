@@ -32,7 +32,8 @@ public class PlaylistsApiController : ApiControllerBase
         {
             var term = q.Trim();
             playlists = playlists
-                .Where(p => p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
+                            || p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 

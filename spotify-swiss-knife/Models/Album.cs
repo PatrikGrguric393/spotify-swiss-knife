@@ -53,9 +53,6 @@ public class Album
 	[JsonIgnore]
 	public string? CoverImageContentType { get; set; }
 
-	[JsonIgnore]
-	public virtual ICollection<Attachment> Attachments { get; set; } = new HashSet<Attachment>();
-
 	[NotMapped]
 	[JsonIgnore]
 	public bool HasCover => !string.IsNullOrEmpty(CoverImageFileName);

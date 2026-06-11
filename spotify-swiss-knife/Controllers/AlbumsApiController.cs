@@ -33,7 +33,8 @@ public class AlbumsApiController : ApiControllerBase
         {
             var term = q.Trim();
             albums = albums
-                .Where(a => a.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .Where(a => a.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
+                            || a.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 

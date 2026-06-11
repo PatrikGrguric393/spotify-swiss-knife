@@ -66,6 +66,20 @@ public class ArtistsApiTests : IntegrationTestBase
         artists!.Should().ContainSingle(a => a.Id == match.Id);
     }
 
+    [Fact]
+    public async Task GetAll_WithIdQuery_ReturnsExactMatch()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreateArtistAsync(Db(scope), "Daft Punk");
+        await SeedData.CreateArtistAsync(Db(scope), "The Beatles");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q={match.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var artists = await response.Content.ReadFromJsonAsync<List<ArtistListDto>>();
+        artists!.Should().ContainSingle(a => a.Id == match.Id);
+    }
+
     // ---------- Authorization ----------
 
     [Fact]

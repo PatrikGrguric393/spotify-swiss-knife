@@ -31,7 +31,8 @@ public class ArtistsApiController : ApiControllerBase
         {
             var term = q.Trim();
             artists = artists
-                .Where(artist => artist.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .Where(artist => artist.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
+                                 || artist.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 

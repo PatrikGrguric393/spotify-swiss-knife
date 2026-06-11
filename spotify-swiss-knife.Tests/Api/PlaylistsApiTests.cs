@@ -105,6 +105,20 @@ public class PlaylistsApiTests : IntegrationTestBase
         playlists!.Should().ContainSingle(p => p.Id == match.Id);
     }
 
+    [Fact]
+    public async Task GetAll_WithIdQuery_ReturnsExactMatch()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreatePlaylistAsync(Db(scope), "Workout Mix");
+        await SeedData.CreatePlaylistAsync(Db(scope), "Chill Evening");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q={match.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var playlists = await response.Content.ReadFromJsonAsync<List<PlaylistListDto>>();
+        playlists!.Should().ContainSingle(p => p.Id == match.Id);
+    }
+
     // ---------- Authorization ----------
 
     [Fact]

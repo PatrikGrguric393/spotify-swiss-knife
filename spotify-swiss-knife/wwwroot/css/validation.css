@@ -292,26 +292,10 @@
 	line-height: 1.4;
 }
 
+/* Model-binding carrier only. The .album-cover-dropzone owns all interaction;
+   this input is populated via DataTransfer and must never render visible chrome. */
 .album-cover-input {
-	display: block;
-	width: 100%;
-	cursor: pointer;
-}
-
-.album-cover-input::file-selector-button {
-	font-family: inherit;
-	background: #000;
-	color: #0f0;
-	border: 1px solid #0f0;
-	padding: 4px 10px;
-	margin-right: 10px;
-	cursor: pointer;
-	transition: background-color 0.12s ease, color 0.12s ease;
-}
-
-.album-cover-input::file-selector-button:hover {
-	background: #0f0;
-	color: #000;
+	display: none;
 }
 
 .album-cover-current,

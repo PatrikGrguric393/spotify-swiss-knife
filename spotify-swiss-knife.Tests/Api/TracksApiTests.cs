@@ -74,6 +74,20 @@ public class TracksApiTests : IntegrationTestBase
         tracks!.Should().ContainSingle(t => t.Id == match.Id);
     }
 
+    [Fact]
+    public async Task GetAll_WithIdQuery_ReturnsExactMatch()
+    {
+        using var scope = NewScope();
+        var match = await SeedData.CreateTrackAsync(Db(scope), "Get Lucky");
+        await SeedData.CreateTrackAsync(Db(scope), "Come Together");
+
+        var response = await Client.GetAsync($"{BaseUrl}?q={match.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tracks = await response.Content.ReadFromJsonAsync<List<TrackListDto>>();
+        tracks!.Should().ContainSingle(t => t.Id == match.Id);
+    }
+
     // ---------- Authorization ----------
 
     [Fact]

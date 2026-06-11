@@ -19,7 +19,6 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 	public DbSet<PlaylistTrackEntry> PlaylistTrackEntries => Set<PlaylistTrackEntry>();
 	public DbSet<Track> Tracks => Set<Track>();
 	public DbSet<UserFile> UserFiles => Set<UserFile>();
-	public DbSet<Attachment> Attachments => Set<Attachment>();
 	public DbSet<SpotifyToken> SpotifyTokens => Set<SpotifyToken>();
 	public DbSet<ScheduledShuffle> ScheduledShuffles => Set<ScheduledShuffle>();
 	public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -159,15 +158,6 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 				.WithMany()
 				.HasForeignKey(f => f.LinkedAlbumId)
 				.OnDelete(DeleteBehavior.SetNull);
-		});
-
-		modelBuilder.Entity<Attachment>(entity =>
-		{
-			entity.HasKey(a => a.Id);
-			entity.HasOne(a => a.Album)
-				.WithMany(album => album.Attachments)
-				.HasForeignKey(a => a.AlbumId)
-				.OnDelete(DeleteBehavior.Cascade);
 		});
 
 		modelBuilder.Entity<PlaylistTrackEntry>(entity =>
