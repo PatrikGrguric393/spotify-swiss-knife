@@ -22,8 +22,11 @@ public class AlbumsController : Controller
     private readonly AlbumCoverStorage _coverStorage;
     private readonly SpotifyDbContext _db;
     private readonly UserManager<AppUser> _userManager;
+    private readonly IWebHostEnvironment _env;
 
-    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage, SpotifyDbContext db, UserManager<AppUser> userManager)
+    private const long MaxAttachmentBytes = 25 * 1024 * 1024;
+
+    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage, SpotifyDbContext db, UserManager<AppUser> userManager, IWebHostEnvironment env)
     {
         _albumRepository = albumRepository;
         _trackRepository = trackRepository;
@@ -31,6 +34,7 @@ public class AlbumsController : Controller
         _coverStorage = coverStorage;
         _db = db;
         _userManager = userManager;
+        _env = env;
     }
 
     [AllowAnonymous]
@@ -324,6 +328,75 @@ public class AlbumsController : Controller
             : album.CoverImageContentType;
 
         return PhysicalFile(filePath, contentType);
+    }
+
+    // Async file upload (Dropzone). Available only on Edit, where the album already has an id to link against.
+    [HttpPost("albums/{albumId}/attachments")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadAttachment(string albumId, IFormFile file)
+    {
+        var album = _albumRepository.GetById(albumId);
+        if (album is null)
+            return NotFound();
+
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "No file provided." });
+
+        if (file.Length > MaxAttachmentBytes)
+            return BadRequest(new { error = "File exceeds the 25 MB limit." });
+
+        // Use the trusted album id from the database, never the raw route value, when building the path.
+        var albumDir = Path.Combine(_env.WebRootPath, "uploads", "albums", album.Id);
+        Directory.CreateDirectory(albumDir);
+
+        var storedName = $"{Guid.NewGuid():N}{Path.GetExtension(file.FileName)}";
+        var physicalPath = Path.Combine(albumDir, storedName);
+
+        await using (var stream = System.IO.File.Create(physicalPath))
+            await file.CopyToAsync(stream);
+
+        _db.Attachments.Add(new Models.Attachment
+        {
+            AlbumId = album.Id,
+            FileName = file.FileName,
+            FilePath = $"/uploads/albums/{album.Id}/{storedName}",
+            ContentType = file.ContentType,
+            FileSize = file.Length,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+
+        return Json(new { success = true });
+    }
+
+    [HttpGet("albums/{albumId}/attachments")]
+    public IActionResult GetAttachments(string albumId)
+    {
+        var attachments = _db.Attachments
+            .Where(a => a.AlbumId == albumId)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToList();
+
+        return PartialView("_AttachmentList", attachments);
+    }
+
+    [HttpPost("albums/attachments/{id:int}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAttachment(int id)
+    {
+        var attachment = await _db.Attachments.FirstOrDefaultAsync(a => a.Id == id);
+        if (attachment is null)
+            return NotFound();
+
+        var relative = attachment.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var physicalPath = Path.Combine(_env.WebRootPath, relative);
+        if (System.IO.File.Exists(physicalPath))
+            System.IO.File.Delete(physicalPath);
+
+        _db.Attachments.Remove(attachment);
+        await _db.SaveChangesAsync();
+
+        return Json(new { success = true });
     }
 
     [AllowAnonymous]

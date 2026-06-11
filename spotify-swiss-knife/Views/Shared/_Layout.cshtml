@@ -16,10 +16,10 @@
         var isShufflePlaylist = currentController == "Shuffle" && currentAction == "Index";
         var isSchedules = currentController == "Schedules";
         var isServices = isShufflePlaylist || isSchedules;
-        var isLibrary = currentController is "Tracks" or "Albums" or "Artists" or "Playlists";
+        var isLibrary = currentController is "Tracks" or "Albums" or "Artists" or "Playlists" or "Files";
         var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
         var appUserRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Editor") ? "Editor" : string.Empty;
-        var isProfile = (currentController == "Account" || currentController == "Files");
+        var isProfile = (currentController == "Account");
     }
 
     <header class="app-header">
@@ -53,6 +53,7 @@
                             <li><a asp-controller="Albums" asp-action="Index" class="nav-submenu-link @(currentController == "Albums" ? "active" : string.Empty)">Albums</a></li>
                             <li><a asp-controller="Artists" asp-action="Index" class="nav-submenu-link @(currentController == "Artists" ? "active" : string.Empty)">Artists</a></li>
                             <li><a asp-controller="Playlists" asp-action="Index" class="nav-submenu-link @(currentController == "Playlists" ? "active" : string.Empty)">Playlists</a></li>
+                            <li><a asp-controller="Files" asp-action="Index" class="nav-submenu-link @(currentController == "Files" ? "active" : string.Empty)">Files</a></li>
                         </ul>
                     </li>
                     <li><a asp-controller="About" asp-action="Index" class="nav-link @(currentController == "About" ? "active" : string.Empty)">About</a></li>
@@ -67,7 +68,6 @@
                                 {
                                     <li><a asp-controller="Account" asp-action="Users" class="nav-submenu-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a></li>
                                 }
-                                <li><a asp-controller="Files" asp-action="Index" class="nav-submenu-link @(currentController == "Files" ? "active" : string.Empty)">Files</a></li>
                                 <li>
                                     <form asp-controller="Account" asp-action="Logout" method="post" class="nav-submenu-logout-form">
                                         @Html.AntiForgeryToken()

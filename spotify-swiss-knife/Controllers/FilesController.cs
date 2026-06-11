@@ -31,15 +31,23 @@ public class FilesController : Controller
                 : Path.Combine(env.ContentRootPath, configuredPath);
     }
 
+    // Admins and editors may see, download, and delete any user's file.
+    private bool CanAccessAnyFile() => User.IsInRole("Admin") || User.IsInRole("Editor");
+
     [HttpGet("")]
     public IActionResult Index() => View();
 
     [HttpGet("list")]
     public async Task<IActionResult> List()
     {
-        var userId = _userManager.GetUserId(User)!;
-        var files = await _db.UserFiles
-            .Where(f => f.UserId == userId)
+        var query = _db.UserFiles.AsQueryable();
+        if (!CanAccessAnyFile())
+        {
+            var userId = _userManager.GetUserId(User)!;
+            query = query.Where(f => f.UserId == userId);
+        }
+
+        var files = await query
             .OrderByDescending(f => f.UploadedAt)
             .Select(f => new
             {
@@ -99,9 +107,11 @@ public class FilesController : Controller
     [HttpGet("download/{id:int}")]
     public async Task<IActionResult> Download(int id)
     {
-        var userId = _userManager.GetUserId(User)!;
-        var file = await _db.UserFiles.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var file = await _db.UserFiles.FirstOrDefaultAsync(f => f.Id == id);
         if (file is null)
+            return NotFound();
+
+        if (!CanAccessAnyFile() && file.UserId != _userManager.GetUserId(User))
             return NotFound();
 
         string filePath;
@@ -111,7 +121,7 @@ public class FilesController : Controller
         }
         else
         {
-            filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
+            filePath = Path.Combine(_uploadPath, file.UserId, file.StoredFileName);
         }
 
         if (!System.IO.File.Exists(filePath))
@@ -124,9 +134,11 @@ public class FilesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var userId = _userManager.GetUserId(User)!;
-        var file = await _db.UserFiles.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var file = await _db.UserFiles.FirstOrDefaultAsync(f => f.Id == id);
         if (file is null)
+            return NotFound();
+
+        if (!CanAccessAnyFile() && file.UserId != _userManager.GetUserId(User))
             return NotFound();
 
         if (file.LinkedAlbumId is not null)
@@ -141,7 +153,7 @@ public class FilesController : Controller
         }
         else
         {
-            var filePath = Path.Combine(_uploadPath, userId, file.StoredFileName);
+            var filePath = Path.Combine(_uploadPath, file.UserId, file.StoredFileName);
             if (System.IO.File.Exists(filePath))
                 System.IO.File.Delete(filePath);
         }

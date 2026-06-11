@@ -1443,53 +1443,6 @@ body.entity-detail-open .app-scroll-area {
     text-transform: uppercase;
 }
 
-/* Inline set-role form sits as a single row: select + submit */
-.role-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-}
-
-.role-select {
-    background: #000;
-    color: #0f0;
-    border: 1px solid #0f0;
-    padding: 0.4rem 0.55rem;
-    font-family: inherit;
-    font-size: 0.92rem;
-    cursor: pointer;
-}
-
-.role-select:focus-visible {
-    outline: 2px solid #83ffcf;
-    outline-offset: 1px;
-}
-
-/* Keep the update button compact and not stretched by .btn-primary's flex:1 */
-.role-submit.btn-primary {
-    flex: 0 0 auto;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .role-form {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-    }
-
-    .role-select {
-        width: 100%;
-    }
-
-    .role-submit.btn-primary {
-        width: 100%;
-        max-width: none;
-    }
-}
-
 /* ── Files page ───────────────────────────────────────────── */
 
 .files-section {

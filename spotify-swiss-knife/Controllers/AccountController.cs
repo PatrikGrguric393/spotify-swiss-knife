@@ -151,28 +151,6 @@ public class AccountController : Controller
         return View(rows);
     }
 
-    [HttpPost("users/role")]
-    [Authorize(Roles = "Admin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetRole(string id, string role)
-    {
-        if (!IdentitySeeder.Roles.Contains(role))
-            return BadRequest("Unknown role.");
-
-        var user = await _userManager.FindByIdAsync(id);
-        if (user is null)
-            return NotFound();
-
-        if (await WouldOrphanLastAdminAsync(user, role))
-        {
-            TempData["UserError"] = "Cannot change the role of the last administrator.";
-            return RedirectToAction(nameof(Users));
-        }
-
-        await AssignSingleRoleAsync(user, role);
-        return RedirectToAction(nameof(Users));
-    }
-
     [HttpGet("users/{id}/edit")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> EditUser(string id)

@@ -7,14 +7,8 @@ using spotify_swiss_knife.DAL;
 
 namespace spotify_swiss_knife.Tests.Infrastructure;
 
-/// <summary>
-/// Boots the real application pipeline but swaps the PostgreSQL provider for an
-/// isolated in-memory database. The startup code in Program.cs falls back to
-/// EnsureCreated() for non-relational providers, which applies the HasData seed.
-/// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // Unique per factory instance so parallel test classes never share state.
     private readonly string _databaseName = $"ssk-tests-{Guid.NewGuid()}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

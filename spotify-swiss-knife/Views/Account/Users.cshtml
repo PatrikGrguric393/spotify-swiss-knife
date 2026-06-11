@@ -28,7 +28,6 @@
                     <th scope="col">OIB</th>
                     <th scope="col">JMBAG</th>
                     <th scope="col">Current role</th>
-                    <th scope="col">Set role</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
@@ -36,7 +35,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="7">No users found.</td>
+                        <td colspan="6">No users found.</td>
                     </tr>
                 }
                 else
@@ -50,29 +49,6 @@
                             <td data-label="JMBAG">@row.JMBAG</td>
                             <td data-label="Current role">
                                 <span class="role-badge">@(string.IsNullOrWhiteSpace(row.CurrentRole) ? "None" : row.CurrentRole)</span>
-                            </td>
-                            <td data-label="Set role" class="cell-actions">
-                                <form asp-controller="Account" asp-action="SetRole" method="post" class="role-form">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@row.Id" />
-                                    <label class="visually-hidden" for="role-@row.Id">Role for @row.Email</label>
-                                    <select name="role" id="role-@row.Id" class="role-select">
-                                        @foreach (var role in roles)
-                                        {
-                                            if (role == row.CurrentRole)
-                                            {
-                                                <option value="@role" selected>@role</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@role">@role</option>
-                                            }
-                                        }
-                                    </select>
-                                    <noscript>
-                                        <button type="submit" class="btn btn-primary role-submit">Update role</button>
-                                    </noscript>
-                                </form>
                             </td>
                             <td data-label="Actions" class="cell-actions">
                                 <a class="btn" href="@Url.Action("EditUser", "Account", new { id = row.Id })">Edit</a>
@@ -88,9 +64,5 @@
         </table>
     </div>
 </div>
-
-@section Scripts {
-    <script src="~/js/account-users.js" asp-append-version="true"></script>
-}
 </content>
 </invoke>
