@@ -65,23 +65,31 @@
         }
     }
 
-    function fetchSearch(q) {
+    function doSearch(q, opts) {
+        opts = opts || {};
         const status = document.querySelector('.search-status');
-        if (status) status.textContent = 'Loading...';
         const tbody = document.querySelector('.entity-table tbody');
-        if (tbody) {
-            tbody.innerHTML = '';
-            tbody.appendChild(makeStatusRow(3, 'Loading...'));
+        if (!opts.quiet) {
+            if (status) status.textContent = 'Loading...';
+            if (tbody) {
+                tbody.innerHTML = '';
+                tbody.appendChild(makeStatusRow(3, 'Loading...'));
+            }
         }
         const url = '/lib/artists/search?q=' + encodeURIComponent(q || '');
-        fetch(url, { headers: { 'Accept': 'application/json' } })
+        return fetch(url, { headers: { 'Accept': 'application/json' } })
             .then(r => r.json())
             .then(data => {
+                const scroll = document.querySelector('.table-wrap');
+                const top = scroll ? scroll.scrollTop : 0;
                 renderRows(data.map(item => ({ id: item.id, name: item.name, spotifyUrl: item.spotifyUrl })));
+                if (scroll) scroll.scrollTop = top;
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })
             .catch(err => console.error('Artist search failed', err));
     }
+
+    function fetchSearch(q) { return doSearch(q, {}); }
 
     document.addEventListener('DOMContentLoaded', function () {
         const input = document.getElementById('artistSearch');
@@ -102,5 +110,9 @@
         });
 
         fetchSearch('');
+
+        if (window.LibraryAutoRefresh) {
+            window.LibraryAutoRefresh.start(() => doSearch(input.value, { quiet: true }), 5000);
+        }
     });
 })();

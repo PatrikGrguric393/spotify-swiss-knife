@@ -67,13 +67,16 @@
         }
     }
 
-    function fetchSearch(q) {
+    function doSearch(q, opts) {
+        opts = opts || {};
         var status = document.querySelector('.search-status');
-        if (status) status.textContent = 'Loading...';
         var tbody = document.querySelector('.entity-table tbody');
-        if (tbody) {
-            tbody.innerHTML = '';
-            tbody.appendChild(makeStatusRow(5, 'Loading...'));
+        if (!opts.quiet) {
+            if (status) status.textContent = 'Loading...';
+            if (tbody) {
+                tbody.innerHTML = '';
+                tbody.appendChild(makeStatusRow(5, 'Loading...'));
+            }
         }
 
         var params = new URLSearchParams();
@@ -84,14 +87,19 @@
         if (dateFrom && dateFrom.value) params.set('dateFrom', dateFrom.value);
         if (dateTo && dateTo.value) params.set('dateTo', dateTo.value);
 
-        fetch('/lib/playlists/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+        return fetch('/lib/playlists/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                var scroll = document.querySelector('.table-wrap');
+                var top = scroll ? scroll.scrollTop : 0;
                 renderRows(data);
+                if (scroll) scroll.scrollTop = top;
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })
             .catch(function(err) { console.error('Playlist search failed', err); });
     }
+
+    function fetchSearch(q) { return doSearch(q, {}); }
 
     document.addEventListener('DOMContentLoaded', function() {
         var searchInput = document.getElementById('playlistSearch');
@@ -140,5 +148,9 @@
         }
 
         fetchSearch('');
+
+        if (window.LibraryAutoRefresh) {
+            window.LibraryAutoRefresh.start(function() { return doSearch(searchInput.value, { quiet: true }); }, 5000);
+        }
     });
 })();

@@ -95,13 +95,16 @@
         }
     }
 
-    function fetchSearch(q) {
+    function doSearch(q, opts) {
+        opts = opts || {};
         var status = document.querySelector('.search-status');
-        if (status) status.textContent = 'Loading...';
         var tbody = document.querySelector('.entity-table tbody');
-        if (tbody) {
-            tbody.innerHTML = '';
-            tbody.appendChild(makeStatusRow(4, 'Loading...'));
+        if (!opts.quiet) {
+            if (status) status.textContent = 'Loading...';
+            if (tbody) {
+                tbody.innerHTML = '';
+                tbody.appendChild(makeStatusRow(4, 'Loading...'));
+            }
         }
 
         var params = new URLSearchParams();
@@ -112,14 +115,19 @@
         if (minSec !== null) params.set('durationMin', minSec);
         if (maxSec !== null) params.set('durationMax', maxSec);
 
-        fetch('/lib/tracks/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+        return fetch('/lib/tracks/search?' + params.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                var scroll = document.querySelector('.table-wrap');
+                var top = scroll ? scroll.scrollTop : 0;
                 renderRows(data);
+                if (scroll) scroll.scrollTop = top;
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';
             })
             .catch(function(err) { console.error('Song search failed', err); });
     }
+
+    function fetchSearch(q) { return doSearch(q, {}); }
 
     document.addEventListener('DOMContentLoaded', function() {
         var searchInput = document.getElementById('songSearch');
@@ -166,5 +174,9 @@
         }
 
         fetchSearch('');
+
+        if (window.LibraryAutoRefresh) {
+            window.LibraryAutoRefresh.start(function() { return doSearch(searchInput.value, { quiet: true }); }, 5000);
+        }
     });
 })();
