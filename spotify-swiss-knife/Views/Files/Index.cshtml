@@ -3,6 +3,10 @@
     Layout = "_Layout";
 }
 
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
+}
+
 <div class="library-page">
     <h1>Files</h1>
 
@@ -17,6 +21,14 @@
             </div>
         </div>
     </div>
+
+    <section class="files-upload" aria-labelledby="files-upload-heading">
+        <h2 id="files-upload-heading" class="files-upload-heading">Upload files</h2>
+        <p class="files-upload-help">Drop files here or click to select. Up to 512&nbsp;MB per file.</p>
+        <div id="files-dropzone" class="dropzone files-dropzone"
+             role="button"
+             aria-label="Upload files. Drop files here or click to select."></div>
+    </section>
 
     <div class="files-section">
         <div id="files-list-container">
@@ -172,6 +184,11 @@
             searchTimer = setTimeout(applyFilter, 250);
         });
 
+        // Exposed so the async upload widget (files-upload.js) can refresh the list.
+        window.loadFiles = loadFiles;
+
         loadFiles();
     </script>
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script src="~/js/files-upload.js" asp-append-version="true"></script>
 }
