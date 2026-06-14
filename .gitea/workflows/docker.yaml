@@ -5,7 +5,5 @@ on: create
 jobs:
   build-and-push-image:
     uses: homelab/workflows/.gitea/workflows/docker.yaml@main
-    with:
-      image-owner: pg
-      image-name: spotify-swiss-knife
-    secrets: inherit
+    secrets:
+      REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
