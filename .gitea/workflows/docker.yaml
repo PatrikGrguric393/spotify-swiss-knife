@@ -6,4 +6,4 @@ jobs:
   build-and-push-image:
     uses: homelab/workflows/.gitea/workflows/docker.yaml@main
     secrets:
-      REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
