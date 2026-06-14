@@ -5,5 +5,4 @@ on: create
 jobs:
   build-and-push-image:
     uses: homelab/workflows/.gitea/workflows/docker.yaml@7ec31032cf0ba6582542f9de5edfdbc8ad9b80ee
-    secrets:
-      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+    secrets: inherit
