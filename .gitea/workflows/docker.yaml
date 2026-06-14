@@ -4,5 +4,5 @@ on: create
 
 jobs:
   build-and-push-image:
-    uses: homelab/workflows/.gitea/workflows/docker.yaml@27396d3e6db37cd2c07d16253fe3bab015311b2e
+    uses: homelab/workflows/.gitea/workflows/docker.yaml@e15a30881ca6229e412da7176e9b06888d39d78c
     secrets: inherit
