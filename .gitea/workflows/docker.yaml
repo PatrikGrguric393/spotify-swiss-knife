@@ -4,12 +4,8 @@ on: create
 
 jobs:
   build-and-push-image:
-    runs-on: builder-debian-12
-    container:
-      image: ghcr.io/catthehacker/ubuntu:act-latest
-    steps:
-      - uses: homelab/workflows/.gitea/workflows/docker.yaml@main
-        with:
-          image-owner: pg
-          image-name: spotify-swiss-knife
-        secrets: inherit
+    uses: homelab/workflows/.gitea/workflows/docker.yaml@main
+    with:
+      image-owner: pg
+      image-name: spotify-swiss-knife
+    secrets: inherit
