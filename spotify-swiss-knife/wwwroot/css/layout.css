@@ -644,6 +644,11 @@
     box-shadow: none;
 }
 
+/* Let a form-wrapped action button participate directly in the actions flex row */
+.auth-confirm-form {
+    display: contents;
+}
+
 /* Stack the buttons on narrow screens */
 @media (max-width: 480px) {
     .auth-confirm-card {

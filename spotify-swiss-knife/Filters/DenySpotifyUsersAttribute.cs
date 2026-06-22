@@ -12,7 +12,12 @@ public sealed class DenySpotifyUsersAttribute : Attribute, IAsyncActionFilter
         var auth = await context.HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
         if (auth.Succeeded)
         {
-            context.Result = new RedirectToActionResult("Index", "Home", null);
+            context.Result = AccessRestrictedResult.For(context,
+                "Spotify session active",
+                "This is part of the local library, which is only available to local accounts. " +
+                "You're currently connected with Spotify, which unlocks the Spotify tools instead — " +
+                "shuffling playlists, scheduled shuffles, and bulk album saving. Disconnect Spotify and " +
+                "sign in with a local account to manage the library.");
             return;
         }
 

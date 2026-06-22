@@ -67,14 +67,11 @@
             if (!value) {
                 return '—';
             }
-            // Spotify release dates can be year-only or yyyy-MM-dd; the helper localizes
-            // full dates and returns the raw string for partials, which must be escaped
-            // since this value is injected into an HTML string template.
             var formatted = window.DateFmt.formatDateOnly(value);
             return formatted === value ? escapeHtml(value) : formatted;
         }
 
-        function coverCell(imageUrl, label) {
+        function coverCell(imageUrl) {
             if (imageUrl) {
                 return '<img class="bulk-save-cover" src="' + escapeHtml(imageUrl) +
                     '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'bulk-save-cover--placeholder\');this.parentNode.textContent=\'\\u266B\';">';
@@ -89,14 +86,11 @@
             return '<tr class="' + (checked ? 'is-selected' : '') + '" data-id="' + id +
                 '" data-release="' + escapeHtml(rawRelease) +
                 '" data-image="' + escapeHtml(album.imageUrl || '') + '">' +
-                '<td class="bulk-save-pick-cell" data-label="Pick">' +
-                    '<input type="checkbox" class="bulk-save-check" ' + (checked ? 'checked' : '') +
-                    ' aria-label="Select album ' + escapeHtml(album.name) + '"></td>' +
                 '<td data-label="Cover">' + coverCell(album.imageUrl) + '</td>' +
                 '<td data-label="Album"><span class="bulk-save-name">' + escapeHtml(album.name) + '</span></td>' +
                 '<td data-label="Artists"><span class="bulk-save-sub">' + escapeHtml(album.artists) + '</span></td>' +
-                '<td data-label="Type"><span class="bulk-save-muted">' + escapeHtml(album.albumType) + '</span></td>' +
-                '<td data-label="Released"><span class="bulk-save-muted">' + formatDate(rawRelease) + '</span></td>' +
+                '<td data-label="Type" class="bulk-save-col-type"><span class="bulk-save-muted">' + escapeHtml(album.albumType) + '</span></td>' +
+                '<td data-label="Released" class="bulk-save-col-released"><span class="bulk-save-muted">' + formatDate(rawRelease) + '</span></td>' +
                 '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(album.totalTracks) + '</span></td>' +
                 '</tr>';
         }
@@ -137,14 +131,11 @@
                 ? '<span class="bulk-save-desc">' + escapeHtml(playlist.description) + '</span>'
                 : '<span class="bulk-save-muted">—</span>';
             return '<tr class="' + (checked ? 'is-selected' : '') + '" data-id="' + id + '">' +
-                '<td class="bulk-save-pick-cell" data-label="Pick">' +
-                    '<input type="checkbox" class="bulk-save-check" ' + (checked ? 'checked' : '') +
-                    ' aria-label="Select playlist ' + escapeHtml(playlist.name) + '"></td>' +
                 '<td data-label="Cover">' + coverCell(playlist.imageUrl) + '</td>' +
                 '<td data-label="Name"><span class="bulk-save-name">' + escapeHtml(playlist.name) + '</span></td>' +
                 '<td data-label="Owner"><span class="bulk-save-sub">' + escapeHtml(playlist.owner || 'Unknown') + '</span></td>' +
                 '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(playlist.tracks) + '</span></td>' +
-                '<td data-label="Description">' + desc + '</td>' +
+                '<td data-label="Description" class="bulk-save-col-desc">' + desc + '</td>' +
                 '</tr>';
         }
 
@@ -164,10 +155,8 @@
             playlistEmpty.hidden = false;
             if (query) {
                 playlistEmpty.textContent = 'No playlists match your search.';
-            } else if (countOf(selectedPlaylists) === 0) {
-                playlistEmpty.textContent = 'No playlists selected yet.';
             } else {
-                playlistEmpty.textContent = 'No playlists selected yet.';
+                playlistEmpty.textContent = 'No playlists found.';
             }
         }
 
@@ -180,7 +169,7 @@
                     p.owner || '',
                     p.description || '',
                     String(p.tracks)
-                ].join('  ').toLowerCase();
+                ].join('  ').toLowerCase();
                 return haystack.indexOf(q) !== -1;
             });
         }
@@ -188,9 +177,8 @@
         function renderPlaylistView() {
             var query = playlistSearch.value.trim();
             if (query === '') {
-                var selected = Object.keys(selectedPlaylists).map(function (k) { return selectedPlaylists[k]; });
-                renderPlaylists(selected);
-                updatePlaylistEmptyState(selected.length, '');
+                renderPlaylists(allPlaylists);
+                updatePlaylistEmptyState(allPlaylists.length, '');
                 playlistSearchStatus.textContent = '';
             } else {
                 var matches = filterPlaylists(query);
@@ -230,7 +218,7 @@
                 .then(function (res) { return res.json(); })
                 .then(function (results) {
                     if (seq !== albumSearchSeq) {
-                        return; // a newer search superseded this one
+                        return;
                     }
                     var list = Array.isArray(results) ? results : [];
                     renderAlbums(list);
@@ -260,8 +248,7 @@
             }
 
             if (query.length < MIN_QUERY) {
-                // Empty / too-short: show selected-only without a request.
-                albumSearchSeq++; // cancel any pending render
+                albumSearchSeq++;
                 albumTableWrap.classList.remove('is-loading');
                 albumSearchStatus.textContent = '';
                 renderSelectedAlbums();
@@ -273,35 +260,7 @@
             }, SEARCH_DEBOUNCE);
         }
 
-        // ---------- Toggle handlers (event delegation) ----------
-        albumTableBody.addEventListener('change', function (e) {
-            var checkbox = e.target.closest('.bulk-save-check');
-            if (!checkbox) {
-                return;
-            }
-            var row = checkbox.closest('tr[data-id]');
-            if (!row) {
-                return;
-            }
-            var id = row.dataset.id;
-            if (checkbox.checked) {
-                // Re-derive the album object from the row so selection survives searches.
-                var album = albumFromRow(row, id);
-                selectedAlbums[id] = album;
-                row.classList.add('is-selected');
-            } else {
-                delete selectedAlbums[id];
-                row.classList.remove('is-selected');
-                // If the search bar is empty we are viewing selected-only: drop the row.
-                if (albumSearch.value.trim().length < MIN_QUERY) {
-                    renderSelectedAlbums();
-                }
-            }
-            updateCounts();
-        });
-
-        // Reconstruct the album object from a rendered row (used when checking in search results).
-        // Raw release date + image are stashed on the row so re-rendering stays lossless.
+        // ---------- Click-to-toggle selection (event delegation) ----------
         function albumFromRow(row, id) {
             return {
                 id: id,
@@ -319,54 +278,51 @@
             return el ? el.textContent.trim() : '';
         }
 
-        // Clicking anywhere on a row (not the checkbox itself) toggles it.
-        function rowClickToggle(body) {
-            body.addEventListener('click', function (e) {
-                if (e.target.closest('.bulk-save-check') || e.target.tagName === 'A') {
-                    return;
-                }
-                var row = e.target.closest('tr[data-id]');
-                if (!row) {
-                    return;
-                }
-                var checkbox = row.querySelector('.bulk-save-check');
-                if (!checkbox) {
-                    return;
-                }
-                checkbox.checked = !checkbox.checked;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-        }
-        rowClickToggle(albumTableBody);
-        rowClickToggle(playlistTableBody);
-
-        playlistTableBody.addEventListener('change', function (e) {
-            var checkbox = e.target.closest('.bulk-save-check');
-            if (!checkbox) {
+        albumTableBody.addEventListener('click', function (e) {
+            if (e.target.tagName === 'A') {
                 return;
             }
-            var row = checkbox.closest('tr[data-id]');
+            var row = e.target.closest('tr[data-id]');
             if (!row) {
                 return;
             }
             var id = row.dataset.id;
-            var playlist = allPlaylists.find(function (p) { return p.id === id; });
-            if (checkbox.checked) {
-                if (playlist) {
-                    selectedPlaylists[id] = playlist;
-                }
-                row.classList.add('is-selected');
-            } else {
-                delete selectedPlaylists[id];
+            if (selectedAlbums[id]) {
+                delete selectedAlbums[id];
                 row.classList.remove('is-selected');
-                if (playlistSearch.value.trim() === '') {
-                    renderPlaylistView();
+                if (albumSearch.value.trim().length < MIN_QUERY) {
+                    renderSelectedAlbums();
                 }
+            } else {
+                selectedAlbums[id] = albumFromRow(row, id);
+                row.classList.add('is-selected');
             }
             updateCounts();
         });
 
-        // ---------- Submit (mirrors Shuffle/Index) ----------
+        playlistTableBody.addEventListener('click', function (e) {
+            if (e.target.tagName === 'A') {
+                return;
+            }
+            var row = e.target.closest('tr[data-id]');
+            if (!row) {
+                return;
+            }
+            var id = row.dataset.id;
+            if (selectedPlaylists[id]) {
+                delete selectedPlaylists[id];
+                row.classList.remove('is-selected');
+            } else {
+                var playlist = allPlaylists.find(function (p) { return p.id === id; });
+                if (playlist) {
+                    selectedPlaylists[id] = playlist;
+                }
+                row.classList.add('is-selected');
+            }
+            updateCounts();
+        });
+
+        // ---------- Submit ----------
         function setLoading(loading) {
             inFlight = loading;
             submit.disabled = loading;
@@ -433,7 +389,7 @@
                 });
         });
 
-        // ---------- Playlist search input ----------
+        // ---------- Search input bindings ----------
         playlistSearch.addEventListener('input', renderPlaylistView);
         albumSearch.addEventListener('input', onAlbumSearchInput);
 

@@ -244,12 +244,12 @@ public class SpotifyAuthService
     }
 
     // Appends track URIs to a playlist in batches of 100 (the API per-request maximum),
-    // using the documented add endpoint POST /playlists/{id}/tracks. Requires a
+    // using the documented add endpoint POST /playlists/{id}/items. Requires a
     // playlist-modify-* scope. Returns false if any batch is rejected.
     public async Task<bool> AddTracksToPlaylistAsync(
         string accessToken, string playlistId, IReadOnlyList<string> uris)
     {
-        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/tracks";
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
 
         for (var offset = 0; offset < uris.Count; offset += AddBatchLimit)
         {

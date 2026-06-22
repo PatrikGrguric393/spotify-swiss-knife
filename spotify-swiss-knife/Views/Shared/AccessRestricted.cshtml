@@ -1,0 +1,36 @@
+@using Microsoft.AspNetCore.Authentication
+@model spotify_swiss_knife.Models.AccessRestrictedViewModel
+@{
+    ViewData["Title"] = Model.Heading;
+    var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
+    var localSignedIn = User.Identity?.IsAuthenticated == true;
+}
+
+<div class="auth-confirm-shell">
+    <div class="auth-confirm-card" role="alert">
+        <h1 class="auth-confirm-heading">@Model.Heading</h1>
+        <p class="auth-confirm-subtitle">Error 403 &mdash; insufficient permissions.</p>
+        <p class="auth-confirm-question">@Model.Message</p>
+
+        <div class="auth-confirm-actions">
+            <a asp-controller="Home" asp-action="Index" class="auth-confirm-btn auth-confirm-btn--primary">
+                Back to home
+            </a>
+
+            @if (spotifyConnected)
+            {
+                <form asp-controller="SpotifyAuth" asp-action="Logout" method="post" class="auth-confirm-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="auth-confirm-btn auth-confirm-btn--secondary">Disconnect Spotify</button>
+                </form>
+            }
+            else if (localSignedIn)
+            {
+                <form asp-controller="Account" asp-action="Logout" method="post" class="auth-confirm-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="auth-confirm-btn auth-confirm-btn--secondary">Log out</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

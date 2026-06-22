@@ -312,6 +312,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.addEventListener('keydown', function (event) {
+        if (!(event.key === 'f' && (event.ctrlKey || event.metaKey))) {
+            return;
+        }
+
+        var active = document.activeElement;
+        var isFormField = active && active !== input && (
+            active.tagName === 'INPUT' ||
+            active.tagName === 'TEXTAREA' ||
+            active.tagName === 'SELECT' ||
+            active.isContentEditable
+        );
+
+        if (isFormField) {
+            return;
+        }
+
+        event.preventDefault();
+        input.focus();
+        input.select();
+
+        if (panel.hidden) {
+            setStatus('Type 2+ characters to search.');
+            renderMessage('Search library from the header.');
+            setPanelVisible(true);
+        }
+    });
+
     if ('ResizeObserver' in window && placeholder) {
         resizeObserver = new ResizeObserver(updatePlaceholderOverflow);
         resizeObserver.observe(placeholder);
