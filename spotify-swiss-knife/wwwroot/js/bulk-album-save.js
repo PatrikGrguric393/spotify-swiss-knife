@@ -128,7 +128,6 @@
             return '<tr class="' + (checked ? 'is-selected' : '') + '" data-id="' + id + '">' +
                 '<td data-label="Cover">' + coverCell(playlist.imageUrl) + '</td>' +
                 '<td data-label="Name"><span class="bulk-save-name">' + escapeHtml(playlist.name) + '</span></td>' +
-                '<td data-label="Owner"><span class="bulk-save-sub">' + escapeHtml(playlist.owner || 'Unknown') + '</span></td>' +
                 '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(playlist.tracks) + '</span></td>' +
                 '</tr>';
         }
@@ -154,13 +153,12 @@
             }
         }
 
-        // Multi-field filter: name, owner, description, track count.
+        // Multi-field filter: name, description, track count.
         function filterPlaylists(query) {
             var q = query.trim().toLowerCase();
             return allPlaylists.filter(function (p) {
                 var haystack = [
                     p.name || '',
-                    p.owner || '',
                     p.description || '',
                     String(p.tracks)
                 ].join('  ').toLowerCase();

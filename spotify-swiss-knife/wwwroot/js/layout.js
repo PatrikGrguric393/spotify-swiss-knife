@@ -178,8 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const dpr = window.devicePixelRatio || 1;
-        const width = Math.max(1, Math.floor(matrixCanvas.offsetWidth || window.innerWidth));
-        const height = Math.max(1, Math.floor(matrixCanvas.offsetHeight || window.innerHeight));
+        const width = Math.max(1, Math.floor(window.innerWidth));
+        const height = Math.max(1, Math.floor(window.innerHeight));
 
         const isMobile = width <= 768;
         glyphSize = isMobile ? 20 : 17;
@@ -215,8 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lastFrameTime = timestamp;
-        const width = matrixCanvas.offsetWidth || window.innerWidth;
-        const height = matrixCanvas.offsetHeight || window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
 
         matrixContext.fillStyle = 'rgba(0, 0, 0, 0.09)';
         matrixContext.fillRect(0, 0, width, height);

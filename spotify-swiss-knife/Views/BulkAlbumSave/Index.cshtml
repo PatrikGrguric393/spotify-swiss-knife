@@ -89,7 +89,6 @@
                                 <tr>
                                     <th scope="col">Cover</th>
                                     <th scope="col">Name</th>
-                                    <th scope="col">Owner</th>
                                     <th scope="col">Tracks</th>
                                 </tr>
                             </thead>
@@ -126,7 +125,6 @@
                 id = p.Id,
                 name = p.Name ?? "",
                 description = p.Description ?? "",
-                owner = p.Owner?.DisplayName ?? "",
                 tracks = p.Tracks?.Total ?? 0,
                 imageUrl = p.Images.FirstOrDefault()?.Url,
                 spotifyUrl = p.ExternalUrls?.Spotify ?? ""

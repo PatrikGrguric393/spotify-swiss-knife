@@ -35,7 +35,12 @@ public class BulkAlbumSaveController : Controller
             });
         }
 
-        return View(new BulkAlbumSavePage { Playlists = playlists });
+        var profile = await _spotifyAuth.GetUserProfileAsync(accessToken);
+        var editablePlaylists = profile is not null
+            ? playlists.Where(p => p.Owner.Id == profile.Id).ToList()
+            : playlists;
+
+        return View(new BulkAlbumSavePage { Playlists = editablePlaylists });
     }
 
     [HttpGet("search-albums")]
