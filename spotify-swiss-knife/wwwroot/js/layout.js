@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         matrixContext.fillStyle = 'rgba(0, 0, 0, 0.09)';
         matrixContext.fillRect(0, 0, width, height);
-        matrixContext.fillStyle = '#19b319';
+        matrixContext.fillStyle = '#1fd11f';
 
         for (let i = 0; i < columnCount; i += 1) {
             const glyph = glyphs.charAt(Math.floor(Math.random() * glyphs.length));

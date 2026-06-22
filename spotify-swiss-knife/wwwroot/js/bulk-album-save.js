@@ -89,9 +89,7 @@
                 '<td data-label="Cover">' + coverCell(album.imageUrl) + '</td>' +
                 '<td data-label="Album"><span class="bulk-save-name">' + escapeHtml(album.name) + '</span></td>' +
                 '<td data-label="Artists"><span class="bulk-save-sub">' + escapeHtml(album.artists) + '</span></td>' +
-                '<td data-label="Type" class="bulk-save-col-type"><span class="bulk-save-muted">' + escapeHtml(album.albumType) + '</span></td>' +
                 '<td data-label="Released" class="bulk-save-col-released"><span class="bulk-save-muted">' + formatDate(rawRelease) + '</span></td>' +
-                '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(album.totalTracks) + '</span></td>' +
                 '</tr>';
         }
 
@@ -127,15 +125,11 @@
         // ---------- Playlist rendering ----------
         function playlistRowHtml(playlist, checked) {
             var id = escapeHtml(playlist.id);
-            var desc = playlist.description
-                ? '<span class="bulk-save-desc">' + escapeHtml(playlist.description) + '</span>'
-                : '<span class="bulk-save-muted">—</span>';
             return '<tr class="' + (checked ? 'is-selected' : '') + '" data-id="' + id + '">' +
                 '<td data-label="Cover">' + coverCell(playlist.imageUrl) + '</td>' +
                 '<td data-label="Name"><span class="bulk-save-name">' + escapeHtml(playlist.name) + '</span></td>' +
                 '<td data-label="Owner"><span class="bulk-save-sub">' + escapeHtml(playlist.owner || 'Unknown') + '</span></td>' +
                 '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(playlist.tracks) + '</span></td>' +
-                '<td data-label="Description" class="bulk-save-col-desc">' + desc + '</td>' +
                 '</tr>';
         }
 
@@ -266,9 +260,7 @@
                 id: id,
                 name: textOf(row, '[data-label="Album"]'),
                 artists: textOf(row, '[data-label="Artists"]'),
-                albumType: textOf(row, '[data-label="Type"]'),
                 releaseDate: row.dataset.release || '',
-                totalTracks: textOf(row, '[data-label="Tracks"]'),
                 imageUrl: row.dataset.image || null
             };
         }

@@ -66,7 +66,7 @@
         inset: 0;
         pointer-events: none;
         z-index: 0;
-        opacity: 0.22;
+        opacity: 0.30;
     }
 
     .app-header {
@@ -260,7 +260,7 @@
         }
 
         #matrixCanvas {
-            opacity: 0.14;
+            opacity: 0.20;
         }
 
         .app-title {
@@ -296,8 +296,8 @@
             overflow-x: hidden;
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            scrollbar-width: thin;
+            scrollbar-color: #0f0 #050505;
             list-style: none;
             margin: 0;
             padding: 0;
@@ -309,9 +309,16 @@
         }
 
         .nav-list::-webkit-scrollbar {
-            width: 0;
-            height: 0;
-            display: none;
+            width: 6px;
+        }
+
+        .nav-list::-webkit-scrollbar-track {
+            background: #050505;
+        }
+
+        .nav-list::-webkit-scrollbar-thumb {
+            background: #0f0;
+            border-radius: 999px;
         }
 
         .nav-list.active {
@@ -399,6 +406,21 @@
             pointer-events: auto;
             margin-bottom: 0;
             border: 1px solid #0f0;
+            scrollbar-width: thin;
+            scrollbar-color: #0f0 #050505;
+        }
+
+        .nav-dropdown.open .dropdown-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-dropdown.open .dropdown-menu::-webkit-scrollbar-track {
+            background: #050505;
+        }
+
+        .nav-dropdown.open .dropdown-menu::-webkit-scrollbar-thumb {
+            background: #0f0;
+            border-radius: 999px;
         }
 
         .nav-submenu-link {

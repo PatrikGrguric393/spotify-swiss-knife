@@ -189,10 +189,15 @@ ul, ol {
     animation: global-search-marquee 12s linear infinite;
 }
 
-/* Pause on hover/focus so the full string can be read. */
-.global-search-field:hover .global-search-placeholder.is-overflowing .global-search-placeholder-track,
-.global-search-field:focus-within .global-search-placeholder.is-overflowing .global-search-placeholder-track {
+/* Pause on hover so the full string can be read before typing. */
+.global-search-field:hover .global-search-placeholder.is-overflowing .global-search-placeholder-track {
     animation-play-state: paused;
+}
+
+/* Hide the placeholder entirely when the field is focused so typed text has a clean background. */
+.global-search-field:focus-within .global-search-placeholder,
+.global-search-shell.is-open .global-search-placeholder {
+    opacity: 0;
 }
 
 /*
