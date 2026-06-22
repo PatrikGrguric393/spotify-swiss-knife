@@ -81,7 +81,7 @@
                     <td data-label="Name">@playlist.Name</td>
                     <td data-label="Owner">@(playlist.Owner.DisplayName ?? "Unknown")</td>
                     <td data-label="Tracks">@playlist.Tracks.Total</td>
-                    <td data-label="Last Shuffled">@(playlist.LastShuffled?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
+                    <td data-label="Last Shuffled" @(playlist.LastShuffled.HasValue ? Html.Raw($"data-utc=\"{playlist.LastShuffled.Value.ToUniversalTime().ToString("O")}\"") : Html.Raw(""))>@(playlist.LastShuffled.HasValue ? "" : "Never")</td>
                     <td data-label="Actions" class="cell-actions">
                         <a class="btn" href="@Url.Action("Edit", "Playlists", new { id = playlist.Id })">Edit</a>
                         <a class="btn btn-danger" href="@Url.Action("Delete", "Playlists", new { id = playlist.Id })">Delete</a>
@@ -119,6 +119,11 @@
 @section Scripts {
     <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>
     <script src="~/js/library-playlists.js" asp-append-version="true"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        window.DateFmt.localizePending();
+    });
+    </script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var backdrop = document.getElementById('playlistContentsBackdrop');

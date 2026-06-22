@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.FormModels;
 using spotify_swiss_knife.Services;
@@ -10,15 +11,21 @@ using spotify_swiss_knife.Services;
 namespace spotify_swiss_knife.Controllers;
 
 [Route("schedules")]
+[RequireSpotifyAuth]
 public class SchedulesController : Controller
 {
     private readonly SpotifyDbContext _db;
     private readonly SpotifyAuthService _spotifyAuth;
+    private readonly ILogger<SchedulesController> _logger;
 
-    public SchedulesController(SpotifyDbContext db, SpotifyAuthService spotifyAuth)
+    public SchedulesController(
+        SpotifyDbContext db,
+        SpotifyAuthService spotifyAuth,
+        ILogger<SchedulesController> logger)
     {
         _db = db;
         _spotifyAuth = spotifyAuth;
+        _logger = logger;
     }
 
     [HttpGet("")]
@@ -73,7 +80,7 @@ public class SchedulesController : Controller
             return View(form);
         }
 
-        _db.ScheduledShuffles.Add(new ScheduledShuffle
+        var schedule = new ScheduledShuffle
         {
             UserId = userId,
             PlaylistId = form.PlaylistId,
@@ -83,8 +90,13 @@ public class SchedulesController : Controller
             IsEnabled = true,
             NextRunAt = nextRun,
             CreatedAt = DateTimeOffset.UtcNow,
-        });
+        };
+        _db.ScheduledShuffles.Add(schedule);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Schedule {Id} created by {UserId} for playlist {PlaylistId} ({Name}); cron \"{Cron}\", next run {NextRun}.",
+            schedule.Id, userId, schedule.PlaylistId, schedule.PlaylistName, cron, nextRun);
 
         return RedirectToAction(nameof(Index));
     }
@@ -107,6 +119,10 @@ public class SchedulesController : Controller
             schedule.NextRunAt = ShuffleSchedulerService.ComputeNextRun(schedule.CronExpression, DateTimeOffset.UtcNow);
 
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Schedule {Id} toggled to {State} by {UserId}.",
+            schedule.Id, schedule.IsEnabled ? "enabled" : "disabled", userId);
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -125,6 +141,10 @@ public class SchedulesController : Controller
 
         _db.ScheduledShuffles.Remove(schedule);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Schedule {Id} deleted by {UserId} (playlist {PlaylistId}).",
+            schedule.Id, userId, schedule.PlaylistId);
+
         return RedirectToAction(nameof(Index));
     }
 

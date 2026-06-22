@@ -1,7 +1,4 @@
 (function () {
-    var locale = navigator.language || 'en';
-    var dateFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
-
     function makeStatusRow(colspan, text) {
         var tr = document.createElement('tr');
         var td = document.createElement('td');
@@ -38,7 +35,7 @@
 
             var tdShuffled = document.createElement('td');
             tdShuffled.setAttribute('data-label', 'Last Shuffled');
-            tdShuffled.textContent = r.lastShuffled ? dateFmt.format(new Date(r.lastShuffled)) : 'Never';
+            tdShuffled.textContent = r.lastShuffled ? window.DateFmt.formatTimestamp(r.lastShuffled) : 'Never';
 
             var tdActions = document.createElement('td');
             tdActions.setAttribute('data-label', 'Actions');

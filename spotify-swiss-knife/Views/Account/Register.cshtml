@@ -4,7 +4,7 @@
     ViewData["Title"] = "Register";
     var returnUrl = ViewData["ReturnUrl"] as string ?? string.Empty;
     var dobValue = Model.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty;
-    var dobLabel = Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("dd MMM yyyy") : "Pick a date";
+    var dobLabel = "Pick a date";
 
     void FieldErrors(string field)
     {

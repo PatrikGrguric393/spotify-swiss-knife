@@ -51,7 +51,7 @@
 
         function formatDate(iso) {
             if (!iso) return '—';
-            return new Date(iso).toLocaleString(navigator.language);
+            return window.DateFmt.formatTimestamp(iso);
         }
 
         async function deleteFile(id, confirmMsg) {

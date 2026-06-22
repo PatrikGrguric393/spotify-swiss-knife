@@ -1,17 +1,4 @@
 (function () {
-    var locale = navigator.language || 'en';
-    var triggerFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
-
-    function formatReleaseDate(val) {
-        if (!val) return '';
-        var parts = val.split('-');
-        if (parts.length === 3) {
-            var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            return triggerFmt.format(d);
-        }
-        return val;
-    }
-
     function makeStatusRow(colspan, text) {
         var tr = document.createElement('tr');
         var td = document.createElement('td');
@@ -65,7 +52,11 @@
 
             var tdDate = document.createElement('td');
             tdDate.setAttribute('data-label', 'Release Date');
-            tdDate.textContent = formatReleaseDate(r.releaseDate);
+            var dateEl = document.createElement('time');
+            dateEl.className = 'shuffle-time';
+            dateEl.setAttribute('data-date', r.releaseDate || '');
+            dateEl.textContent = window.DateFmt.formatDateOnly(r.releaseDate);
+            tdDate.appendChild(dateEl);
 
             var tdActions = document.createElement('td');
             tdActions.setAttribute('data-label', 'Actions');
@@ -137,9 +128,8 @@
     function fetchSearch(q) { return doSearch(q, {}); }
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.entity-table td[data-date]').forEach(function(td) {
-            td.textContent = formatReleaseDate(td.dataset.date);
-        });
+        var table = document.querySelector('.entity-table');
+        if (table) window.DateFmt.localizePending(table);
 
         var searchInput = document.getElementById('albumSearch');
         if (!searchInput) return;

@@ -1,0 +1,148 @@
+@model spotify_swiss_knife.Models.BulkAlbumSavePage
+
+@{
+    ViewData["Title"] = "Bulk Album Save";
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/css/bulk-album-save.css" asp-append-version="true">
+}
+
+<section class="library-page bulk-save-page">
+    <h1>Bulk Album Save</h1>
+    <p>Search the Spotify catalog for albums, pick the playlists you want to add them to, and save every album to every selected playlist in one go.</p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <section class="shuffle-notice shuffle-notice-error" role="alert" aria-labelledby="bulkSaveErrorTitle">
+            <h2 id="bulkSaveErrorTitle" class="shuffle-notice-title">Bulk album save unavailable</h2>
+            <p class="shuffle-notice-text">@Model.ErrorMessage</p>
+        </section>
+    }
+    else
+    {
+        <form id="bulkSaveForm"
+              class="bulk-save-form"
+              action="@Url.Action("Confirm", "BulkAlbumSave")"
+              method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="bulk-save-columns">
+                @* ---- Album picker (left) ---- *@
+                <section class="bulk-save-panel" aria-labelledby="bulkAlbumsTitle">
+                    <div class="bulk-save-panel-head">
+                        <h2 id="bulkAlbumsTitle" class="shuffle-panel-title">Albums</h2>
+                        <span class="bulk-save-count" id="albumCount" aria-live="polite">0 albums selected</span>
+                    </div>
+
+                    <div class="search-box bulk-save-search">
+                        <label for="albumSearch" class="visually-hidden">Search albums on Spotify</label>
+                        <input id="albumSearch"
+                               type="search"
+                               class="search-input"
+                               placeholder="Search albums on Spotify..."
+                               autocomplete="off"
+                               aria-label="Search albums on Spotify"
+                               aria-controls="albumTableBody" />
+                        <span class="search-status bulk-save-search-status" id="albumSearchStatus" aria-live="polite"></span>
+                    </div>
+
+                    <div class="table-wrap bulk-save-table-wrap">
+                        <table class="entity-table bulk-save-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="bulk-save-pick-col">Pick</th>
+                                    <th scope="col">Cover</th>
+                                    <th scope="col">Album</th>
+                                    <th scope="col">Artists</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Released</th>
+                                    <th scope="col">Tracks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="albumTableBody">
+                            </tbody>
+                        </table>
+                        <p class="bulk-save-empty" id="albumEmpty">Search for albums above to get started.</p>
+                    </div>
+                </section>
+
+                @* ---- Playlist picker (right) ---- *@
+                <section class="bulk-save-panel" aria-labelledby="bulkPlaylistsTitle">
+                    <div class="bulk-save-panel-head">
+                        <h2 id="bulkPlaylistsTitle" class="shuffle-panel-title">Playlists</h2>
+                        <span class="bulk-save-count" id="playlistCount" aria-live="polite">0 playlists selected</span>
+                    </div>
+
+                    <div class="search-box bulk-save-search">
+                        <label for="playlistSearch" class="visually-hidden">Search your playlists</label>
+                        <input id="playlistSearch"
+                               type="search"
+                               class="search-input"
+                               placeholder="Search your playlists..."
+                               autocomplete="off"
+                               aria-label="Search your playlists"
+                               aria-controls="playlistTableBody" />
+                        <span class="search-status bulk-save-search-status" id="playlistSearchStatus" aria-live="polite"></span>
+                    </div>
+
+                    <div class="table-wrap bulk-save-table-wrap">
+                        <table class="entity-table bulk-save-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="bulk-save-pick-col">Pick</th>
+                                    <th scope="col">Cover</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Owner</th>
+                                    <th scope="col">Tracks</th>
+                                    <th scope="col">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playlistTableBody">
+                            </tbody>
+                        </table>
+                        <p class="bulk-save-empty" id="playlistEmpty">No playlists selected yet.</p>
+                    </div>
+                </section>
+            </div>
+
+            <div class="bulk-save-actions">
+                <button type="submit" class="shuffle-submit bulk-save-submit" id="bulkSaveSubmit" disabled>
+                    <span class="shuffle-spinner" aria-hidden="true"></span>
+                    <span class="shuffle-submit-label">Confirm bulk add</span>
+                </button>
+                <p class="shuffle-validation bulk-save-hint" id="bulkSaveHint">Select at least one album and one playlist.</p>
+                <p class="shuffle-status bulk-save-status" id="bulkSaveStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+            </div>
+
+            @* Selected ids are injected here as hidden inputs at submit time. *@
+            <div id="bulkSaveHiddenInputs" hidden></div>
+        </form>
+    }
+</section>
+
+@if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    @* Preloaded playlist data for the client-side picker. *@
+    <script id="bulkSavePlaylistData" type="application/json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Playlists.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name ?? "",
+                description = p.Description ?? "",
+                owner = p.Owner?.DisplayName ?? "",
+                tracks = p.Tracks?.Total ?? 0,
+                imageUrl = p.Images.FirstOrDefault()?.Url,
+                spotifyUrl = p.ExternalUrls?.Spotify ?? ""
+            }),
+            new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+    </script>
+}
+
+@section Scripts {
+    @if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <script src="~/js/bulk-album-save.js" asp-append-version="true"></script>
+    }
+}

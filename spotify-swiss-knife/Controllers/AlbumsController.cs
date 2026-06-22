@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 using System.Globalization;
@@ -12,6 +13,7 @@ namespace spotify_swiss_knife.Controllers;
 
 [Route("lib")]
 [Authorize(Roles = "Admin,Editor")]
+[DenySpotifyUsers]
 public class AlbumsController : Controller
 {
     private static readonly HashSet<string> AllowedAlbumTypes = ["album", "single", "compilation"];

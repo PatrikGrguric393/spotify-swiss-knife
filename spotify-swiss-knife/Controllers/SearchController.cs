@@ -34,6 +34,7 @@ public class SearchController : Controller
             return Json(Array.Empty<GlobalSearchResult>());
 
         var results = new List<GlobalSearchResult>();
+        results.AddRange(SearchPageResults(query));
         results.AddRange(SearchEntities(
             _artistRepository.GetAll(), query,
             a => [a.Name, a.ExternalUrls?.Spotify],
@@ -138,5 +139,37 @@ public class SearchController : Controller
     {
         var totalSeconds = Math.Max(0, durationMs / 1000);
         return $"{totalSeconds / 60}:{totalSeconds % 60:00}";
+    }
+
+    private IEnumerable<GlobalSearchResult> SearchPageResults(string query)
+    {
+        var pages = new (string Title, string Subtitle, string[] Keywords, string? Url)[]
+        {
+            ("Songs",               "Library",  ["songs", "tracks", "library"],                     Url.Action("Index", "Tracks")),
+            ("Albums",              "Library",  ["albums", "library"],                              Url.Action("Index", "Albums")),
+            ("Artists",             "Library",  ["artists", "library"],                             Url.Action("Index", "Artists")),
+            ("Playlists",           "Library",  ["playlists", "library"],                           Url.Action("Index", "Playlists")),
+            ("Files",               "Library",  ["files", "local files", "library"],               Url.Action("Index", "Files")),
+            ("Shuffle Playlist",    "Services", ["shuffle", "playlist", "random"],                  Url.Action("Index", "Shuffle")),
+            ("Scheduled Shuffles",  "Services", ["schedules", "scheduled", "shuffle", "automation"], Url.Action("Index", "Schedules")),
+            ("Bulk Album Save",     "Services", ["bulk", "album", "save", "add albums"],            Url.Action("Index", "BulkAlbumSave")),
+            ("Home",                "Home",     ["home", "dashboard"],                              Url.Action("Index", "Home")),
+            ("About",               "About",    ["about"],                                          Url.Action("Index", "About")),
+            ("Login",               "Account",  ["login", "sign in"],                              Url.Action("Index", "Login")),
+        };
+
+        return pages
+            .Select(p => new { Page = p, Score = MatchScore(p.Keywords.Concat([p.Title]).Select(k => (string?)k), query) })
+            .Where(r => r.Score < int.MaxValue)
+            .OrderBy(r => r.Score)
+            .ThenBy(r => r.Page.Title)
+            .Take(MaxResultsPerEntity)
+            .Select(r => new GlobalSearchResult
+            {
+                EntityType = "Page",
+                Title = r.Page.Title,
+                Subtitle = r.Page.Subtitle,
+                Url = r.Page.Url ?? "/"
+            });
     }
 }

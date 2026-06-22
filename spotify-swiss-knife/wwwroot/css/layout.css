@@ -92,6 +92,7 @@
         font-size: 1.3rem;
         color: #0f0;
         display: none;
+        margin: 0;
     }
 
     .app-title-link {

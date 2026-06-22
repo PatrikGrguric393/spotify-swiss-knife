@@ -14,11 +14,16 @@ public class AccountController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+    public AccountController(
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     // A local account and Spotify are mutually exclusive: a local sign-in/register is
@@ -70,6 +75,8 @@ public class AccountController : Controller
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
+            _logger.LogWarning("Registration failed for {Email}: {Errors}.",
+                model.Email, string.Join("; ", result.Errors.Select(e => e.Code)));
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
@@ -77,6 +84,7 @@ public class AccountController : Controller
 
         await _userManager.AddToRoleAsync(user, "User");
         await _signInManager.SignInAsync(user, isPersistent: false);
+        _logger.LogInformation("New user registered and signed in: {Email} ({UserId}).", user.Email, user.Id);
         return LocalRedirect(returnUrl ?? "/");
     }
 
@@ -109,10 +117,12 @@ public class AccountController : Controller
 
         if (!result.Succeeded)
         {
+            _logger.LogWarning("Failed local login attempt for {Email}.", model.Email);
             ModelState.AddModelError(string.Empty, "Invalid email or password.");
             return View(model);
         }
 
+        _logger.LogInformation("User logged in: {Email}.", model.Email);
         return LocalRedirect(returnUrl ?? "/");
     }
 
@@ -120,7 +130,9 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var email = _userManager.GetUserName(User);
         await _signInManager.SignOutAsync();
+        _logger.LogInformation("User logged out: {Email}.", email ?? "unknown");
         return RedirectToAction("Index", "Home");
     }
 
@@ -218,6 +230,8 @@ public class AccountController : Controller
             await AssignSingleRoleAsync(user, model.Role);
         }
 
+        _logger.LogInformation("Admin {Admin} updated user {UserId} ({Email}), role set to {Role}.",
+            _userManager.GetUserName(User), user.Id, user.Email, model.Role);
         return RedirectToAction(nameof(Users));
     }
 
@@ -243,6 +257,8 @@ public class AccountController : Controller
         }
 
         await _userManager.DeleteAsync(user);
+        _logger.LogInformation("Admin {Admin} deleted user {UserId} ({Email}).",
+            _userManager.GetUserName(User), user.Id, user.Email);
         return RedirectToAction(nameof(Users));
     }
 

@@ -41,8 +41,33 @@
             </div>
 
             <div class="shuffle-form-row">
-                <label>Days of week</label>
-                <div class="schedule-days">
+                <span class="shuffle-form-label" id="frequencyLabel">Frequency</span>
+                <div class="freq-seg" role="radiogroup" aria-labelledby="frequencyLabel" id="freqGroup">
+                    @{
+                        var freqs = new[] {
+                            new { Val = "Daily",        Label = "Daily" },
+                            new { Val = "Weekly",       Label = "Weekly" },
+                            new { Val = "Monthly",      Label = "Monthly" },
+                            new { Val = "CustomWeekly", Label = "Custom weekly" }
+                        };
+                        var currentFreq = (Model.Frequency ?? ShuffleFrequency.Weekly).ToString();
+                    }
+                    @foreach (var f in freqs)
+                    {
+                        <label class="freq-seg-opt">
+                            <input type="radio" name="Frequency" value="@f.Val"
+                                   @(currentFreq == f.Val ? "checked" : null) />
+                            <span class="freq-seg-text">@f.Label</span>
+                        </label>
+                    }
+                </div>
+                <span class="shuffle-validation" asp-validation-for="Frequency"></span>
+            </div>
+
+            <fieldset class="shuffle-form-row day-fieldset" id="dayOfWeekField">
+                <legend class="shuffle-form-label" id="dowLabel">Days of week</legend>
+                <p class="day-hint" id="dowHint" aria-live="polite"></p>
+                <div class="schedule-days" id="scheduleDays" role="group" aria-labelledby="dowLabel">
                     @{
                         var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
                         for (int d = 0; d <= 6; d++)
@@ -56,7 +81,29 @@
                     }
                 </div>
                 <span class="shuffle-validation" asp-validation-for="DaysOfWeek"></span>
-            </div>
+            </fieldset>
+
+            <fieldset class="shuffle-form-row day-fieldset" id="dayOfMonthField" hidden>
+                <legend class="shuffle-form-label" id="domLabel">Day of month</legend>
+                <p class="day-hint">Runs on this calendar day each month.</p>
+
+                <div class="timewheel daywheel" id="dayWheel" data-day="@(Model.DayOfMonth?.ToString() ?? "1")">
+                    <div class="timewheel-panel daywheel-panel" role="group" aria-labelledby="domLabel">
+                        <div class="timewheel-columns">
+                            <div class="timewheel-col" data-unit="day" data-min="1" data-max="31"
+                                 role="listbox" tabindex="0" aria-label="Day of month (1 to 31)"
+                                 aria-activedescendant="dw-day-1">
+                                <div class="timewheel-track" data-track></div>
+                            </div>
+                            <div class="timewheel-band" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="DayOfMonth" id="DayOfMonth"
+                       value="@(Model.DayOfMonth?.ToString() ?? "1")" />
+                <span class="shuffle-validation" asp-validation-for="DayOfMonth"></span>
+            </fieldset>
 
             <div class="shuffle-form-row">
                 @{
@@ -65,19 +112,42 @@
                     var minuteValue = timeParts.Length > 1 ? timeParts[1] : "00";
                 }
                 <span class="shuffle-form-label" id="timeUtcLabel">Time (your local time)</span>
-                <div class="schedule-time-picker" role="group" aria-labelledby="timeUtcLabel">
-                    <input type="number" id="TimeUtcHour" class="shuffle-input schedule-time-part"
-                           min="0" max="23" step="1" inputmode="numeric" autocomplete="off"
-                           value="@hourValue" aria-label="Hour (00 to 23)" />
-                    <span class="schedule-time-sep" aria-hidden="true">:</span>
-                    <input type="number" id="TimeUtcMinute" class="shuffle-input schedule-time-part"
-                           min="0" max="59" step="1" inputmode="numeric" autocomplete="off"
-                           value="@minuteValue" aria-label="Minute (00 to 59)" />
+
+                <div class="timewheel" id="timeWheel"
+                     data-hour="@hourValue" data-minute="@minuteValue">
+                    <button type="button" class="timewheel-trigger" id="timeWheelTrigger"
+                            aria-haspopup="dialog" aria-expanded="false"
+                            aria-labelledby="timeUtcLabel timeWheelValue">
+                        <span class="timewheel-trigger-value" id="timeWheelValue">@hourValue:@minuteValue</span>
+                        <span class="timewheel-trigger-caret" aria-hidden="true">▾</span>
+                    </button>
+
+                    <div class="timewheel-panel" id="timeWheelPanel" role="dialog"
+                         aria-label="Choose time" hidden>
+                        <div class="timewheel-columns">
+                            <div class="timewheel-col" data-unit="hour" data-max="23"
+                                 role="listbox" tabindex="0" aria-label="Hour (00 to 23)"
+                                 aria-activedescendant="tw-hour-@hourValue">
+                                <div class="timewheel-track" data-track></div>
+                            </div>
+                            <span class="timewheel-sep" aria-hidden="true">:</span>
+                            <div class="timewheel-col" data-unit="minute" data-max="59"
+                                 role="listbox" tabindex="0" aria-label="Minute (00 to 59)"
+                                 aria-activedescendant="tw-minute-@minuteValue">
+                                <div class="timewheel-track" data-track></div>
+                            </div>
+                            <div class="timewheel-band" aria-hidden="true"></div>
+                        </div>
+                        <div class="timewheel-actions">
+                            <button type="button" class="timewheel-done" id="timeWheelDone">Done</button>
+                        </div>
+                    </div>
+
+                    <span class="schedule-time-zone" id="scheduleTimeZone" hidden></span>
+                    <span class="schedule-time-utc-hint" id="scheduleTimeUtcHint" aria-live="polite" hidden></span>
+                    <input asp-for="TimeUtc" type="hidden" />
+                    <input type="hidden" name="TimezoneOffsetMinutes" id="TimezoneOffsetMinutes" />
                 </div>
-                <span class="schedule-time-zone" id="scheduleTimeZone" hidden></span>
-                <span class="schedule-time-utc-hint" id="scheduleTimeUtcHint" aria-live="polite" hidden></span>
-                <input asp-for="TimeUtc" type="hidden" />
-                <input type="hidden" name="TimezoneOffsetMinutes" id="TimezoneOffsetMinutes" />
                 <span class="shuffle-validation" asp-validation-for="TimeUtc"></span>
             </div>
 
@@ -117,66 +187,376 @@
     }());
 
     (function () {
-        var hourEl = document.getElementById('TimeUtcHour');
-        var minuteEl = document.getElementById('TimeUtcMinute');
+        var root = document.getElementById('timeWheel');
         var hidden = document.getElementById('TimeUtc');
-        var offsetEl = document.getElementById('TimezoneOffsetMinutes');
-        var zoneEl = document.getElementById('scheduleTimeZone');
-        var utcHintEl = document.getElementById('scheduleTimeUtcHint');
-        if (!hourEl || !minuteEl || !hidden) { return; }
+        if (!root || !hidden) { return; }
 
-        function pad(value, max) {
-            var n = parseInt(value, 10);
-            if (isNaN(n)) { n = 0; }
-            if (n < 0) { n = 0; }
+        var trigger   = document.getElementById('timeWheelTrigger');
+        var valueEl   = document.getElementById('timeWheelValue');
+        var panel     = document.getElementById('timeWheelPanel');
+        var doneBtn   = document.getElementById('timeWheelDone');
+        var offsetEl  = document.getElementById('TimezoneOffsetMinutes');
+        var zoneEl    = document.getElementById('scheduleTimeZone');
+        var utcHintEl = document.getElementById('scheduleTimeUtcHint');
+        var cols      = Array.prototype.slice.call(root.querySelectorAll('.timewheel-col'));
+
+        var state = {
+            hour:   clampInt(root.getAttribute('data-hour'), 23),
+            minute: clampInt(root.getAttribute('data-minute'), 59)
+        };
+
+        function clampInt(v, max) {
+            var n = parseInt(v, 10);
+            if (isNaN(n) || n < 0) { n = 0; }
             if (n > max) { n = max; }
-            return ('0' + n).slice(-2);
+            return n;
         }
+        function pad2(n) { return ('0' + n).slice(-2); }
 
         // Same value the server reads: minutes to add to local time to reach UTC.
-        function offsetMinutes() {
-            return new Date().getTimezoneOffset();
-        }
-
-        function setOffset() {
-            if (offsetEl) { offsetEl.value = String(offsetMinutes()); }
-        }
+        function offsetMinutes() { return new Date().getTimezoneOffset(); }
+        function setOffset() { if (offsetEl) { offsetEl.value = String(offsetMinutes()); } }
 
         function setZone() {
             if (!zoneEl) { return; }
             var zone = '';
-            try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { zone = ''; }
-            if (zone) {
-                zoneEl.textContent = 'Detected timezone: ' + zone;
-                zoneEl.hidden = false;
-            }
+            try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+            if (zone) { zoneEl.textContent = 'Detected timezone: ' + zone; zoneEl.hidden = false; }
         }
-
         function updateUtcHint() {
             if (!utcHintEl) { return; }
-            var totalLocal = parseInt(pad(hourEl.value, 23), 10) * 60 + parseInt(pad(minuteEl.value, 59), 10);
+            var totalLocal = state.hour * 60 + state.minute;
             var totalUtc = ((totalLocal + offsetMinutes()) % 1440 + 1440) % 1440;
-            utcHintEl.textContent = '= ' + pad(Math.floor(totalUtc / 60), 23) + ':' + pad(totalUtc % 60, 59) + ' UTC';
+            utcHintEl.textContent = '= ' + pad2(Math.floor(totalUtc / 60)) + ':' + pad2(totalUtc % 60) + ' UTC';
             utcHintEl.hidden = false;
         }
-
         function sync() {
-            hidden.value = pad(hourEl.value, 23) + ':' + pad(minuteEl.value, 59);
+            hidden.value = pad2(state.hour) + ':' + pad2(state.minute);
+            valueEl.textContent = pad2(state.hour) + ':' + pad2(state.minute);
             setOffset();
             updateUtcHint();
         }
 
-        function clamp(el, max) {
-            el.value = pad(el.value, max);
+        function rowHeight(col) {
+            var opt = col.querySelector('.timewheel-opt');
+            return opt ? opt.getBoundingClientRect().height : 44;
         }
 
-        hourEl.addEventListener('input', sync);
-        minuteEl.addEventListener('input', sync);
-        hourEl.addEventListener('blur', function () { clamp(hourEl, 23); sync(); });
-        minuteEl.addEventListener('blur', function () { clamp(minuteEl, 59); sync(); });
-        hourEl.form.addEventListener('submit', function () { clamp(hourEl, 23); clamp(minuteEl, 59); sync(); });
+        function buildColumn(col) {
+            var unit = col.getAttribute('data-unit');
+            var max  = parseInt(col.getAttribute('data-max'), 10);
+            var track = col.querySelector('[data-track]');
+            for (var i = 0; i <= max; i++) {
+                var opt = document.createElement('div');
+                opt.className = 'timewheel-opt';
+                opt.setAttribute('role', 'option');
+                opt.id = 'tw-' + unit + '-' + pad2(i);
+                opt.setAttribute('aria-selected', 'false');
+                opt.setAttribute('data-index', String(i));
+                opt.textContent = pad2(i);
+                track.appendChild(opt);
+            }
+            col._unit = unit;
+            col._max = max;
+            col._raf = null;
+            col._snapTimer = null;
 
+            track.addEventListener('click', function (e) {
+                var opt = e.target.closest('.timewheel-opt');
+                if (opt) { scrollToIndex(col, parseInt(opt.getAttribute('data-index'), 10), true); }
+            });
+
+            col.addEventListener('scroll', function () {
+                if (col._raf) { cancelAnimationFrame(col._raf); }
+                col._raf = requestAnimationFrame(function () { markCentered(col); });
+                if (col._snapTimer) { clearTimeout(col._snapTimer); }
+                col._snapTimer = setTimeout(function () { commitCentered(col); }, 90);
+            }, { passive: true });
+
+            col.addEventListener('keydown', function (e) { onColKey(col, e); });
+        }
+
+        function indexFromScroll(col) {
+            var rh = rowHeight(col);
+            return Math.max(0, Math.min(col._max, Math.round(col.scrollTop / rh)));
+        }
+
+        function markCentered(col) {
+            var idx = indexFromScroll(col);
+            var opts = col.querySelectorAll('.timewheel-opt');
+            for (var i = 0; i < opts.length; i++) {
+                opts[i].setAttribute('aria-selected', i === idx ? 'true' : 'false');
+            }
+            col.setAttribute('aria-activedescendant', 'tw-' + col._unit + '-' + pad2(idx));
+        }
+
+        function commitCentered(col) {
+            var idx = indexFromScroll(col);
+            if (col._unit === 'hour') { state.hour = idx; } else { state.minute = idx; }
+            markCentered(col);
+            sync();
+        }
+
+        function scrollToIndex(col, idx, smooth) {
+            var rh = rowHeight(col);
+            col.scrollTo({ top: idx * rh, behavior: smooth ? 'smooth' : 'auto' });
+            if (col._unit === 'hour') { state.hour = idx; } else { state.minute = idx; }
+            markCentered(col);
+            sync();
+        }
+
+        function onColKey(col, e) {
+            var cur = (col._unit === 'hour') ? state.hour : state.minute;
+            var handled = true;
+            switch (e.key) {
+                case 'ArrowDown': cur = Math.min(col._max, cur + 1); break;
+                case 'ArrowUp':   cur = Math.max(0, cur - 1); break;
+                case 'PageDown':  cur = Math.min(col._max, cur + 5); break;
+                case 'PageUp':    cur = Math.max(0, cur - 5); break;
+                case 'Home':      cur = 0; break;
+                case 'End':       cur = col._max; break;
+                case 'Enter':
+                case 'Escape':    close(true); return;
+                default:
+                    if (/^[0-9]$/.test(e.key)) { cur = typeBuffer(col, e.key); break; }
+                    handled = false;
+            }
+            if (handled) { e.preventDefault(); scrollToIndex(col, cur, true); }
+        }
+
+        function typeBuffer(col, digit) {
+            var now = Date.now();
+            if (!col._typeAt || now - col._typeAt > 800) { col._typeStr = ''; }
+            col._typeAt = now;
+            col._typeStr = (col._typeStr + digit).slice(-2);
+            var n = parseInt(col._typeStr, 10);
+            if (n > col._max) { n = parseInt(digit, 10); col._typeStr = digit; }
+            return n;
+        }
+
+        function open() {
+            panel.hidden = false;
+            trigger.setAttribute('aria-expanded', 'true');
+            cols.forEach(function (col) {
+                var idx = (col._unit === 'hour') ? state.hour : state.minute;
+                scrollToIndex(col, idx, false);
+            });
+            document.addEventListener('pointerdown', onOutside, true);
+            document.addEventListener('keydown', onDocKey, true);
+            if (cols[0]) { cols[0].focus(); }
+        }
+
+        function close(focusTrigger) {
+            if (panel.hidden) { return; }
+            panel.hidden = true;
+            trigger.setAttribute('aria-expanded', 'false');
+            document.removeEventListener('pointerdown', onOutside, true);
+            document.removeEventListener('keydown', onDocKey, true);
+            if (focusTrigger) { trigger.focus(); }
+        }
+
+        function onOutside(e) { if (!root.contains(e.target)) { close(false); } }
+        function onDocKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(true); } }
+
+        trigger.addEventListener('click', function () {
+            if (panel.hidden) { open(); } else { close(true); }
+        });
+        doneBtn.addEventListener('click', function () { close(true); });
+
+        var form = trigger.closest('form');
+        if (form) { form.addEventListener('submit', sync); }
+
+        cols.forEach(buildColumn);
         setZone();
+        sync();
+    }());
+
+    (function () {
+        var group    = document.getElementById('freqGroup');
+        var dowField = document.getElementById('dayOfWeekField');
+        var domField = document.getElementById('dayOfMonthField');
+        var days     = document.getElementById('scheduleDays');
+        var dowHint  = document.getElementById('dowHint');
+        if (!group || !dowField || !domField || !days) { return; }
+
+        var radios = Array.prototype.slice.call(
+            group.querySelectorAll('input[type="radio"][name="Frequency"]'));
+        var boxes = Array.prototype.slice.call(
+            days.querySelectorAll('input[type="checkbox"][name="DaysOfWeek"]'));
+
+        function currentFreq() {
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].checked) { return radios[i].value; }
+            }
+            return 'Weekly';
+        }
+
+        function mirrorAria() {
+            boxes.forEach(function (b) {
+                b.setAttribute('aria-checked', b.checked ? 'true' : 'false');
+            });
+        }
+
+        function enforceSingle(changed) {
+            if (changed && changed.checked) {
+                boxes.forEach(function (b) { if (b !== changed) { b.checked = false; } });
+            }
+            mirrorAria();
+        }
+
+        function setMode(freq) {
+            var showDom = (freq === 'Monthly');
+            var single  = (freq === 'Weekly');
+
+            dowField.hidden = showDom;
+            if (freq === 'Daily') {
+                dowField.disabled = true;
+                dowField.classList.add('is-disabled');
+            } else {
+                dowField.disabled = false;
+                dowField.classList.remove('is-disabled');
+            }
+
+            days.classList.toggle('is-single', single);
+            days.setAttribute('aria-label', single
+                ? 'Day of week (select one)'
+                : 'Days of week (select any)');
+            boxes.forEach(function (b) {
+                b.setAttribute('role', single ? 'radio' : 'checkbox');
+            });
+
+            if (dowHint) {
+                dowHint.textContent =
+                    freq === 'Daily'        ? 'Shuffles every day. No day selection needed.' :
+                    freq === 'Weekly'       ? 'Pick one day each week.' :
+                    freq === 'CustomWeekly' ? 'Pick any number of days.' : '';
+            }
+
+            if (single) {
+                var firstChecked = boxes.filter(function (b) { return b.checked; })[0];
+                boxes.forEach(function (b) { if (b !== firstChecked) { b.checked = false; } });
+            }
+            mirrorAria();
+
+            domField.hidden = !showDom;
+        }
+
+        radios.forEach(function (r) {
+            r.addEventListener('change', function () { setMode(currentFreq()); });
+        });
+
+        days.addEventListener('change', function (e) {
+            var box = e.target.closest('input[type="checkbox"][name="DaysOfWeek"]');
+            if (!box) { return; }
+            if (currentFreq() === 'Weekly') { enforceSingle(box); }
+            else { mirrorAria(); }
+        });
+
+        setMode(currentFreq());
+    }());
+
+    (function () {
+        var root = document.getElementById('dayWheel');
+        var hidden = document.getElementById('DayOfMonth');
+        if (!root || !hidden) { return; }
+
+        var col = root.querySelector('.timewheel-col');
+        var track = col.querySelector('[data-track]');
+        var min = parseInt(col.getAttribute('data-min'), 10) || 1;
+        var max = parseInt(col.getAttribute('data-max'), 10) || 31;
+
+        function clamp(n) {
+            if (isNaN(n) || n < min) { return min; }
+            if (n > max) { return max; }
+            return n;
+        }
+        var state = { day: clamp(parseInt(root.getAttribute('data-day'), 10)) };
+
+        function rowHeight() {
+            var opt = col.querySelector('.timewheel-opt');
+            return opt ? opt.getBoundingClientRect().height : 44;
+        }
+        function idToVal(i) { return min + i; }
+        function valToIndex(v) { return v - min; }
+
+        for (var v = min; v <= max; v++) {
+            var opt = document.createElement('div');
+            opt.className = 'timewheel-opt';
+            opt.setAttribute('role', 'option');
+            opt.id = 'dw-day-' + v;
+            opt.setAttribute('aria-selected', 'false');
+            opt.setAttribute('data-index', String(valToIndex(v)));
+            opt.textContent = String(v);
+            track.appendChild(opt);
+        }
+
+        function indexFromScroll() {
+            var rh = rowHeight();
+            var maxIdx = max - min;
+            return Math.max(0, Math.min(maxIdx, Math.round(col.scrollTop / rh)));
+        }
+        function mark(idx) {
+            var opts = col.querySelectorAll('.timewheel-opt');
+            for (var i = 0; i < opts.length; i++) {
+                opts[i].setAttribute('aria-selected', i === idx ? 'true' : 'false');
+            }
+            col.setAttribute('aria-activedescendant', 'dw-day-' + idToVal(idx));
+        }
+        function sync() { hidden.value = String(state.day); }
+
+        function scrollToIndex(idx, smooth) {
+            var rh = rowHeight();
+            col.scrollTo({ top: idx * rh, behavior: smooth ? 'smooth' : 'auto' });
+            state.day = idToVal(idx);
+            mark(idx);
+            sync();
+        }
+
+        var raf = null, snapTimer = null;
+        col.addEventListener('scroll', function () {
+            if (raf) { cancelAnimationFrame(raf); }
+            raf = requestAnimationFrame(function () { mark(indexFromScroll()); });
+            if (snapTimer) { clearTimeout(snapTimer); }
+            snapTimer = setTimeout(function () {
+                var idx = indexFromScroll();
+                state.day = idToVal(idx);
+                mark(idx);
+                sync();
+            }, 90);
+        }, { passive: true });
+
+        track.addEventListener('click', function (e) {
+            var opt = e.target.closest('.timewheel-opt');
+            if (opt) { scrollToIndex(parseInt(opt.getAttribute('data-index'), 10), true); }
+        });
+
+        col.addEventListener('keydown', function (e) {
+            var cur = valToIndex(state.day);
+            var maxIdx = max - min;
+            var handled = true;
+            switch (e.key) {
+                case 'ArrowDown': cur = Math.min(maxIdx, cur + 1); break;
+                case 'ArrowUp':   cur = Math.max(0, cur - 1); break;
+                case 'PageDown':  cur = Math.min(maxIdx, cur + 5); break;
+                case 'PageUp':    cur = Math.max(0, cur - 5); break;
+                case 'Home':      cur = 0; break;
+                case 'End':       cur = maxIdx; break;
+                default: handled = false;
+            }
+            if (handled) { e.preventDefault(); scrollToIndex(cur, true); }
+        });
+
+        var domField = document.getElementById('dayOfMonthField');
+        if (domField && 'MutationObserver' in window) {
+            new MutationObserver(function () {
+                if (!domField.hidden) { scrollToIndex(valToIndex(state.day), false); }
+            }).observe(domField, { attributes: true, attributeFilter: ['hidden'] });
+        }
+
+        var form = root.closest('form');
+        if (form) { form.addEventListener('submit', sync); }
+
+        scrollToIndex(valToIndex(state.day), false);
         sync();
     }());
     </script>

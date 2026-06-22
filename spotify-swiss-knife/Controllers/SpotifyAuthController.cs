@@ -10,12 +10,14 @@ namespace spotify_swiss_knife.Controllers;
 public class SpotifyAuthController : Controller
 {
     private readonly SpotifyAuthService _spotifyAuth;
+    private readonly ILogger<SpotifyAuthController> _logger;
 
     private const string StateCookieKey = "spotify_oauth_state";
 
-    public SpotifyAuthController(SpotifyAuthService spotifyAuth)
+    public SpotifyAuthController(SpotifyAuthService spotifyAuth, ILogger<SpotifyAuthController> logger)
     {
         _spotifyAuth = spotifyAuth;
+        _logger = logger;
     }
 
     [HttpGet("login")]
@@ -48,21 +50,33 @@ public class SpotifyAuthController : Controller
     public async Task<IActionResult> Callback(string? code, string? state, string? error)
     {
         if (error != null || code == null)
+        {
+            _logger.LogWarning("Spotify OAuth callback returned an error or no code: {Error}.", error ?? "missing code");
             return RedirectToAction("Index", "Home");
+        }
 
         var expectedState = Request.Cookies[StateCookieKey];
         Response.Cookies.Delete(StateCookieKey);
 
         if (state == null || state != expectedState)
+        {
+            _logger.LogWarning("Spotify OAuth callback rejected: state mismatch.");
             return BadRequest("Invalid OAuth state. Please try logging in again.");
+        }
 
         var tokens = await _spotifyAuth.ExchangeCodeAsync(code);
         if (tokens?.AccessToken == null || tokens.Error != null)
+        {
+            _logger.LogWarning("Spotify OAuth token exchange failed: {Error}.", tokens?.Error ?? "no access token");
             return RedirectToAction("Index", "Home");
+        }
 
         var profile = await _spotifyAuth.GetUserProfileAsync(tokens.AccessToken);
         if (profile == null)
+        {
+            _logger.LogWarning("Spotify OAuth succeeded but profile fetch failed.");
             return RedirectToAction("Index", "Home");
+        }
 
         TempData["auth_access_token"] = tokens.AccessToken;
         TempData["auth_refresh_token"] = tokens.RefreshToken ?? string.Empty;
@@ -129,6 +143,8 @@ public class SpotifyAuthController : Controller
 
         await HttpContext.SignInAsync(SpotifyAuthDefaults.Scheme, principal, authProps);
         await _spotifyAuth.PersistTokensAsync(userId, accessToken, refreshToken ?? string.Empty, expiresIn);
+        _logger.LogInformation("Spotify account connected: {DisplayName} ({UserId}), persistent: {Persist}.",
+            displayName ?? userId, userId, persist);
         return RedirectToAction("Index", "Home");
     }
 
@@ -136,7 +152,10 @@ public class SpotifyAuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var auth = await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
+        var userId = auth.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
         await HttpContext.SignOutAsync(SpotifyAuthDefaults.Scheme);
+        _logger.LogInformation("Spotify account disconnected: {UserId}.", userId ?? "unknown");
         return RedirectToAction("Index", "Home");
     }
 }

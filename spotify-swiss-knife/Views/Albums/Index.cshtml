@@ -105,7 +105,7 @@
                         </div>
                     </td>
                     <td data-label="Artists">@artists</td>
-                    <td data-label="Release Date" data-date="@album.ReleaseDate">@album.ReleaseDate</td>
+                    <td data-label="Release Date"><time class="shuffle-time shuffle-time--pending" data-date="@album.ReleaseDate">@album.ReleaseDate</time></td>
                     <td data-label="Actions" class="cell-actions">
                         <a class="btn" href="@Url.Action("Edit", "Albums", new { id = album.Id })">Edit</a>
                         <a class="btn btn-danger" href="@Url.Action("Delete", "Albums", new { id = album.Id })">Delete</a>

@@ -98,14 +98,7 @@
 @section Scripts {
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Replace raw ISO strings with locale-formatted dates, then reveal
-        document.querySelectorAll('.shuffle-time[data-utc]').forEach(function (el) {
-            var parsed = new Date(el.dataset.utc);
-            if (!Number.isNaN(parsed.getTime())) {
-                el.textContent = parsed.toLocaleString();
-            }
-            el.classList.remove('shuffle-time--pending');
-        });
+        window.DateFmt.localizePending();
 
         // Confirm before destructive delete actions
         document.querySelectorAll('button[data-confirm]').forEach(function (btn) {

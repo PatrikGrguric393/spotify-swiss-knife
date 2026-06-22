@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.FormModels;
 using spotify_swiss_knife.Services;
@@ -7,15 +8,21 @@ using spotify_swiss_knife.Services;
 namespace spotify_swiss_knife.Controllers;
 
 [Route("shuffle")]
+[RequireSpotifyAuth]
 public class ShuffleController : Controller
 {
     private readonly PlaylistRepository _playlistRepository;
     private readonly SpotifyAuthService _spotifyAuth;
+    private readonly ILogger<ShuffleController> _logger;
 
-    public ShuffleController(PlaylistRepository playlistRepository, SpotifyAuthService spotifyAuth)
+    public ShuffleController(
+        PlaylistRepository playlistRepository,
+        SpotifyAuthService spotifyAuth,
+        ILogger<ShuffleController> logger)
     {
         _playlistRepository = playlistRepository;
         _spotifyAuth = spotifyAuth;
+        _logger = logger;
     }
 
     [HttpGet("")]
@@ -56,7 +63,15 @@ public class ShuffleController : Controller
             source.AccessToken!, selectedPlaylist.Id, input.RandomnessLevel);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Spotify shuffle failed for playlist {PlaylistId} ({Name}): {Error}",
+                selectedPlaylist.Id, selectedPlaylist.Name, result.Error);
             return Json(new ShuffleJsonResult(false, result.Error ?? "Shuffle failed.", null));
+        }
+
+        _logger.LogInformation(
+            "Spotify shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}, randomness: {Randomness}.",
+            selectedPlaylist.Id, selectedPlaylist.Name, result.TrackCount, result.MovedCount, input.RandomnessLevel);
 
         var statusMessage = $"Shuffle completed for '{selectedPlaylist.Name}'. " +
             $"Tracks: {result.TrackCount}, moved: {result.MovedCount}, randomness: {input.RandomnessLevel}.";
@@ -114,6 +129,10 @@ public class ShuffleController : Controller
 
         playlist.Tracks.Items = shuffledItems;
         playlist.LastShuffled = DateTime.UtcNow;
+
+        _logger.LogInformation(
+            "Local shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}, randomness: {Randomness}.",
+            playlist.Id, playlist.Name, shuffledItems.Count, movedCount, randomnessLevel);
 
         return $"Shuffle completed for '{playlist.Name}'. " +
                $"Tracks: {shuffledItems.Count}, moved: {movedCount}, randomness: {randomnessLevel}.";

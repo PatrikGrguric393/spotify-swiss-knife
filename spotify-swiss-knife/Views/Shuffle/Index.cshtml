@@ -70,12 +70,7 @@
 @section Scripts {
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.shuffle-time[data-utc]').forEach(function (el) {
-            var parsed = new Date(el.dataset.utc);
-            if (!Number.isNaN(parsed.getTime())) {
-                el.textContent = parsed.toLocaleString();
-            }
-        });
+        window.DateFmt.localizePending();
 
         document.querySelectorAll('.shuffle-form').forEach(function (form) {
             var submit = form.querySelector('.shuffle-submit');
@@ -124,12 +119,9 @@
                                 status.textContent = result.message;
                             }
                             if (result.shuffledAtUtc && timeEl && lastRun) {
-                                var parsed = new Date(result.shuffledAtUtc);
                                 timeEl.setAttribute('datetime', result.shuffledAtUtc);
                                 timeEl.setAttribute('data-utc', result.shuffledAtUtc);
-                                timeEl.textContent = Number.isNaN(parsed.getTime())
-                                    ? result.shuffledAtUtc
-                                    : parsed.toLocaleString();
+                                timeEl.textContent = window.DateFmt.formatTimestamp(result.shuffledAtUtc);
                                 lastRun.removeAttribute('hidden');
                             }
                         } else {

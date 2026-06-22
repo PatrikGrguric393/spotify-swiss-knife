@@ -103,6 +103,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return 'Tracks';
             case 'Playlist':
                 return 'Playlists';
+            case 'Page':
+                return 'Pages';
             default:
                 return entityType;
         }
@@ -112,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearResults();
 
         if (!items || items.length === 0) {
-            renderMessage('No matches found across artists, albums, tracks, or playlists.');
+            renderMessage('No matches found across artists, albums, tracks, playlists, or pages.');
             return;
         }
 
@@ -126,12 +128,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         grouped.forEach(function (groupItems, entityType) {
+            var isPage = entityType === 'Page';
             var section = document.createElement('section');
-            section.className = 'global-search-group';
+            section.className = isPage
+                ? 'global-search-group global-search-group--pages'
+                : 'global-search-group';
 
             var heading = document.createElement('h3');
             heading.className = 'global-search-group-title';
-            heading.textContent = entityLabel(entityType);
+            heading.textContent = (isPage ? '» ' : '') + entityLabel(entityType);
             section.appendChild(heading);
 
             var list = document.createElement('div');

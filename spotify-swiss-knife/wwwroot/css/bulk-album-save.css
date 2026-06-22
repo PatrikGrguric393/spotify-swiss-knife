@@ -1,0 +1,266 @@
+/* Bulk Album Save page-specific styles.
+   Colors / fonts / .btn / .shuffle-* / .entity-table conventions come from
+   site.css + validation.css; this file only adds the layout for the
+   two-column picker and the per-row selection visuals. */
+
+.bulk-save-page {
+    max-width: 1400px;
+}
+
+/* ---- Two-column picker layout ---- */
+.bulk-save-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (min-width: 1000px) {
+    .bulk-save-columns {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+}
+
+.bulk-save-panel {
+    border: 1px solid #0f0;
+    background-color: #030303;
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.bulk-save-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+}
+
+.bulk-save-panel-head .shuffle-panel-title {
+    margin: 0;
+}
+
+.bulk-save-count {
+    color: #b6ffb6;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bulk-save-search {
+    margin: 0;
+}
+
+.bulk-save-search-status {
+    min-height: 1rem;
+}
+
+/* ---- Scrolling table container ---- */
+.bulk-save-table-wrap {
+    margin-top: 0;
+    position: relative;
+    max-height: 26rem;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.bulk-save-table-wrap::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+.bulk-save-table-wrap::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+.bulk-save-table-wrap::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 999px;
+}
+
+.bulk-save-table-wrap {
+    scrollbar-color: #0f0 #050505;
+    scrollbar-width: thin;
+}
+
+.bulk-save-table {
+    min-width: 0;
+}
+
+.bulk-save-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.bulk-save-table th,
+.bulk-save-table td {
+    padding: 0.6rem 0.65rem;
+    vertical-align: middle;
+}
+
+.bulk-save-pick-col {
+    width: 3rem;
+}
+
+/* ---- Selection visuals ---- */
+.bulk-save-table tbody tr {
+    cursor: pointer;
+}
+
+.bulk-save-table tbody tr.is-selected {
+    background-color: #0c2e0c;
+    outline: 1px solid rgba(15, 255, 15, 0.4);
+    outline-offset: -1px;
+}
+
+.bulk-save-table tbody tr.is-selected:hover {
+    background-color: #103a10;
+}
+
+.bulk-save-check {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: #0f0;
+    cursor: pointer;
+}
+
+/* ---- Cover thumbnails ---- */
+.bulk-save-cover {
+    width: 3rem;
+    height: 3rem;
+    object-fit: cover;
+    border: 1px solid #093109;
+    display: block;
+    background-color: #050505;
+}
+
+.bulk-save-cover--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4d8f4d;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.bulk-save-name {
+    color: #9cff9c;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.bulk-save-sub {
+    color: #b6ffb6;
+}
+
+.bulk-save-muted {
+    color: #6fbf6f;
+}
+
+/* Truncated description: clamp to two lines on wide screens. */
+.bulk-save-desc {
+    color: #6fbf6f;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 22rem;
+}
+
+/* ---- Empty / loading states ---- */
+.bulk-save-empty {
+    margin: 0;
+    padding: 1.5rem 0.75rem;
+    text-align: center;
+    color: #6fbf6f;
+    font-size: 0.95rem;
+}
+
+.bulk-save-empty[hidden] {
+    display: none;
+}
+
+.bulk-save-table-wrap.is-loading .bulk-save-empty {
+    color: #b6ffb6;
+}
+
+/* ---- Centered confirm action ---- */
+.bulk-save-actions {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.bulk-save-submit {
+    font-size: 1rem;
+    padding: 0.6rem 1.4rem;
+}
+
+.bulk-save-hint {
+    min-height: 1.1rem;
+}
+
+.bulk-save-hint[hidden] {
+    display: none;
+}
+
+.bulk-save-status {
+    min-height: 1.4rem;
+}
+
+.bulk-save-status.is-error {
+    color: #ffc2c2;
+}
+
+/* ---- Narrow-screen responsive table (mirrors site.css data-label cards) ---- */
+@media (max-width: 768px) {
+    .bulk-save-table-wrap {
+        max-height: none;
+        border-left: 1px solid #0f0;
+        border-right: 1px solid #0f0;
+        background-color: #040404;
+        overflow-x: clip;
+        padding: 0.5rem;
+    }
+
+    .bulk-save-table tbody tr {
+        position: relative;
+        padding-left: 0.7rem;
+        padding-right: 2.6rem;
+    }
+
+    /* Float the checkbox to the top-right of each card on narrow screens. */
+    .bulk-save-table td.bulk-save-pick-cell {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        padding: 0;
+        border-bottom: 0;
+        display: block;
+        width: auto;
+    }
+
+    .bulk-save-table td.bulk-save-pick-cell::before {
+        content: none;
+    }
+
+    .bulk-save-cover {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .bulk-save-desc {
+        max-width: none;
+        -webkit-line-clamp: 3;
+    }
+
+    .bulk-save-page h1 {
+        font-size: 1.55rem;
+    }
+}

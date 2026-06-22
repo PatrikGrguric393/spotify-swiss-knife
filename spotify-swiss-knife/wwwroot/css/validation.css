@@ -343,7 +343,8 @@
 /* ---- Album cover dropzone (single-file, non-uploading) ---- */
 .album-cover-dz-layout {
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
+	flex-wrap: nowrap;
 	align-items: flex-start;
 	gap: 12px;
 	margin-bottom: 10px;
@@ -356,11 +357,12 @@
 
 /* Override Dropzone's full-width defaults for the single-image cover tile */
 .album-cover-dropzone {
-	border: 2px dashed #0f0;
+	border: 1px solid #0f0;
+	border-radius: 0;
 	background: #000;
 	color: #0f0;
 	min-height: 140px;
-	width: 220px;
+	width: 140px;
 	max-width: 100%;
 	padding: 1rem;
 	cursor: pointer;
@@ -368,25 +370,26 @@
 	align-items: center;
 	justify-content: center;
 	text-align: center;
-	transition: border-color 0.2s ease, border-width 0.2s ease;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .album-cover-dropzone:hover,
 .album-cover-dropzone.dz-drag-hover {
 	border-color: #0ff;
-	border-width: 3px;
+	box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
 .album-cover-dropzone:focus-visible {
-	outline: none;
-	border-color: #00ff00;
-	box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+	outline: 2px solid #83ffcf;
+	outline-offset: 1px;
+	box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
 }
 
 .album-cover-dropzone .dz-message {
 	margin: 0;
 	color: #0f0;
-	font-size: 0.92rem;
+	font-size: 0.875rem;
+	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', 'Courier New', monospace;
 	line-height: 1.4;
 }
 

@@ -4,7 +4,7 @@
     ViewData["Title"] = "Edit user";
     var roles = ViewBag.Roles as string[] ?? Array.Empty<string>();
     var dobValue = Model.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty;
-    var dobLabel = Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("dd MMM yyyy") : "Pick a date";
+    var dobLabel = "Pick a date";
 
     void FieldErrors(string field)
     {

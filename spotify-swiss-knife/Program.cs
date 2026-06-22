@@ -1,18 +1,40 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife;
 using spotify_swiss_knife.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// Single-line, UTC-timestamped console output so `docker logs` stays readable.
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.SingleLine = true;
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+    options.UseUtcTimestamp = true;
+});
+
+// One combined log line per request/response. Bodies and headers are intentionally
+// omitted to avoid leaking credentials, tokens, or personal data.
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = HttpLoggingFields.RequestMethod
+        | HttpLoggingFields.RequestPath
+        | HttpLoggingFields.RequestQuery
+        | HttpLoggingFields.ResponseStatusCode
+        | HttpLoggingFields.Duration;
+    options.CombineLogs = true;
+});
+
+// Add services to the container. AuditActionFilter logs every mutating controller action.
+builder.Services.AddControllersWithViews(options => options.Filters.Add<AuditActionFilter>());
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 512 * 1024 * 1024; // 512 MB
@@ -133,6 +155,8 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseHttpLogging();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

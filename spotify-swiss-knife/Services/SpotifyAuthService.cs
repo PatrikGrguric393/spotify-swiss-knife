@@ -22,6 +22,8 @@ public class SpotifyAuthService
     private const string ProfileUrl = "https://api.spotify.com/v1/me";
     private const string PlaylistsUrl = "https://api.spotify.com/v1/me/playlists?limit=50";
     private const string PlaylistBaseUrl = "https://api.spotify.com/v1/playlists";
+    private const string SearchUrl = "https://api.spotify.com/v1/search";
+    private const string AlbumBaseUrl = "https://api.spotify.com/v1/albums";
     private const string Scopes = "user-read-private user-read-email playlist-read-private " +
         "playlist-read-collaborative playlist-modify-public playlist-modify-private";
 
@@ -185,6 +187,144 @@ public class SpotifyAuthService
 
         return playlists;
     }
+
+    // Searches the public Spotify catalog for albums matching the query. Needs only a
+    // valid token (no extra scope). Returns simplified albums, or null if the request
+    // fails (expired token, rate limit, etc.). `limit` is capped at the API maximum of 10.
+    public async Task<List<Album>?> SearchAlbumsAsync(string accessToken, string query, int limit = 10)
+    {
+        var trimmed = (query ?? string.Empty).Trim();
+        if (trimmed.Length == 0)
+            return [];
+
+        var url = $"{SearchUrl}?q={Uri.EscapeDataString(trimmed)}&type=album" +
+            $"&limit={Math.Clamp(limit, 1, 10)}";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<AlbumSearchResponse>(json);
+        // The schema allows null entries in search results when an item is unavailable.
+        return result?.Albums?.Items.Where(album => album is not null).ToList() ?? [];
+    }
+
+    // Returns the track URIs for an album in track order, following paging until the album
+    // is exhausted. Returns null if any page fails. Local files can't appear on catalog
+    // albums, so every track exposes a stable URI suitable for adding to a playlist.
+    public async Task<List<string>?> GetAlbumTrackUrisAsync(string accessToken, string albumId)
+    {
+        var uris = new List<string>();
+        var url = $"{AlbumBaseUrl}/{Uri.EscapeDataString(albumId)}/tracks?limit=50";
+
+        for (var page = 0; page < 40 && url is not null; page++)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            var pageResult = JsonSerializer.Deserialize<AlbumTrackUriPage>(json);
+            if (pageResult is null)
+                return null;
+
+            uris.AddRange(pageResult.Items
+                .Select(item => item.Uri)
+                .Where(uri => !string.IsNullOrEmpty(uri))!);
+            url = pageResult.Next;
+        }
+
+        return uris;
+    }
+
+    // Appends track URIs to a playlist in batches of 100 (the API per-request maximum),
+    // using the documented add endpoint POST /playlists/{id}/tracks. Requires a
+    // playlist-modify-* scope. Returns false if any batch is rejected.
+    public async Task<bool> AddTracksToPlaylistAsync(
+        string accessToken, string playlistId, IReadOnlyList<string> uris)
+    {
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/tracks";
+
+        for (var offset = 0; offset < uris.Count; offset += AddBatchLimit)
+        {
+            var batch = uris.Skip(offset).Take(AddBatchLimit).ToList();
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(new AddTracksRequest { Uris = batch }),
+                Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return false;
+        }
+
+        return true;
+    }
+
+    // Collects every track from the selected albums and appends them to each selected
+    // playlist. An album that can't be read or a playlist that can't be written is recorded
+    // as a warning and skipped rather than aborting the whole operation, so a single bad id
+    // doesn't lose the rest of the work.
+    public async Task<BulkAlbumSaveResult> BulkSaveAlbumsToPlaylistsAsync(
+        string accessToken, IReadOnlyList<string> albumIds, IReadOnlyList<string> playlistIds)
+    {
+        if (albumIds.Count == 0)
+            return BulkAlbumSaveResult.Fail("Select at least one album.");
+        if (playlistIds.Count == 0)
+            return BulkAlbumSaveResult.Fail("Select at least one playlist.");
+
+        var warnings = new List<string>();
+        var uris = new List<string>();
+        var albumsAdded = 0;
+
+        foreach (var albumId in albumIds.Distinct())
+        {
+            var albumUris = await GetAlbumTrackUrisAsync(accessToken, albumId);
+            if (albumUris is null)
+            {
+                warnings.Add($"Couldn't read tracks for album {albumId}; it was skipped.");
+                continue;
+            }
+
+            uris.AddRange(albumUris);
+            albumsAdded++;
+        }
+
+        if (uris.Count == 0)
+            return BulkAlbumSaveResult.Fail("None of the selected albums had any tracks to add.");
+
+        var playlistsUpdated = 0;
+        foreach (var playlistId in playlistIds.Distinct())
+        {
+            var ok = await AddTracksToPlaylistAsync(accessToken, playlistId, uris);
+            if (!ok)
+            {
+                warnings.Add($"Couldn't add tracks to playlist {playlistId}; it was skipped.");
+                continue;
+            }
+
+            playlistsUpdated++;
+        }
+
+        if (playlistsUpdated == 0)
+        {
+            return BulkAlbumSaveResult.Fail(
+                "We couldn't update any of the selected playlists. Your session may have expired or " +
+                "lacks permission to modify them — please disconnect and reconnect Spotify.");
+        }
+
+        return new BulkAlbumSaveResult(true, null, albumsAdded, uris.Count, playlistsUpdated, warnings);
+    }
+
+    // Max items the playlist add endpoint accepts in one request.
+    private const int AddBatchLimit = 100;
 
     // Max items a single replace (PUT with a uris body) can set in one request.
     private const int ReplaceBatchLimit = 100;
@@ -369,6 +509,36 @@ public class SpotifyAuthService
 
         [JsonPropertyName("next")]
         public string? Next { get; set; }
+    }
+
+    private sealed class AlbumSearchResponse
+    {
+        [JsonPropertyName("albums")]
+        public SimplifiedAlbumsPage? Albums { get; set; }
+    }
+
+    private sealed class SimplifiedAlbumsPage
+    {
+        [JsonPropertyName("items")]
+        public List<Album> Items { get; set; } = [];
+
+        [JsonPropertyName("next")]
+        public string? Next { get; set; }
+    }
+
+    private sealed class AlbumTrackUriPage
+    {
+        [JsonPropertyName("items")]
+        public List<UriRef> Items { get; set; } = [];
+
+        [JsonPropertyName("next")]
+        public string? Next { get; set; }
+    }
+
+    private sealed class AddTracksRequest
+    {
+        [JsonPropertyName("uris")]
+        public List<string> Uris { get; set; } = [];
     }
 
     private sealed class PlaylistShuffleState

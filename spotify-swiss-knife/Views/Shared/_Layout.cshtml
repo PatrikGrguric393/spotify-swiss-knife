@@ -15,7 +15,8 @@
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
         var isShufflePlaylist = currentController == "Shuffle" && currentAction == "Index";
         var isSchedules = currentController == "Schedules";
-        var isServices = isShufflePlaylist || isSchedules;
+        var isBulkAlbumSave = currentController == "BulkAlbumSave";
+        var isServices = isShufflePlaylist || isSchedules || isBulkAlbumSave;
         var isLibrary = currentController is "Tracks" or "Albums" or "Artists" or "Playlists" or "Files";
         var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
         var appUserRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Editor") ? "Editor" : string.Empty;
@@ -42,6 +43,7 @@
                         <ul class="dropdown-menu" id="servicesMenu" aria-label="Services menu">
                             <li><a asp-controller="Shuffle" asp-action="Index" class="nav-submenu-link @(isShufflePlaylist ? "active" : string.Empty)">Shuffle playlist</a></li>
                             <li><a asp-controller="Schedules" asp-action="Index" class="nav-submenu-link @(isSchedules ? "active" : string.Empty)">Scheduled shuffles</a></li>
+                            <li><a asp-controller="BulkAlbumSave" asp-action="Index" class="nav-submenu-link @(isBulkAlbumSave ? "active" : string.Empty)">Bulk album save</a></li>
                         </ul>
                     </li>
                     <li class="nav-dropdown @(isLibrary ? "active" : string.Empty)" id="libraryDropdown">
@@ -114,6 +116,7 @@
         </footer>
     </div>
 
+    <script src="~/js/date-format.js" asp-append-version="true"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
     <script src="~/js/global-search.js" asp-append-version="true"></script>
     <script src="~/js/marquee-placeholder.js" asp-append-version="true"></script>

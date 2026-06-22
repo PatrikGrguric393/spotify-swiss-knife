@@ -63,22 +63,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function formatDateValue(value) {
-        var date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
-            return value;
-        }
-
-        var hasTime = /[tT ]\d{2}:\d{2}/.test(String(value));
-        if (hasTime) {
-            return new Intl.DateTimeFormat(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-            }).format(date);
-        }
-
-        return new Intl.DateTimeFormat(undefined, {
-            dateStyle: 'medium'
-        }).format(date);
+        var str = String(value);
+        var hasTime = /[tT ]\d{2}:\d{2}/.test(str);
+        return hasTime ? window.DateFmt.formatTimestamp(str) : window.DateFmt.formatDateMedium(str);
     }
 
     function formatValue(value) {
