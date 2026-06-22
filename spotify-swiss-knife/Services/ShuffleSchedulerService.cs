@@ -75,7 +75,7 @@ public class ShuffleSchedulerService : BackgroundService
             else
             {
                 _logger.LogWarning(
-                    "Scheduled shuffle {Id} failed for playlist {PlaylistId}: {Error}",
+                    "Scheduled shuffle {Id} failed for playlist {PlaylistId}: {Error}.",
                     schedule.Id, schedule.PlaylistId, result.Error);
             }
         }

@@ -64,7 +64,7 @@ public class ShuffleController : Controller
 
         if (!result.Succeeded)
         {
-            _logger.LogWarning("Spotify shuffle failed for playlist {PlaylistId} ({Name}): {Error}",
+            _logger.LogWarning("Spotify shuffle failed for playlist {PlaylistId} ({Name}): {Error}.",
                 selectedPlaylist.Id, selectedPlaylist.Name, result.Error);
             return Json(new ShuffleJsonResult(false, result.Error ?? "Shuffle failed.", null));
         }

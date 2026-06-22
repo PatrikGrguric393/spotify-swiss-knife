@@ -54,6 +54,49 @@
     margin: 0;
 }
 
+/* ---- Custom search clear button (end-adornment) ---- */
+.search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.search-input-wrap .search-input {
+    flex: 1 1 auto;
+    padding-right: 2.4rem;
+}
+
+.search-input-wrap .search-input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: #0f0;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.search-clear-btn[hidden] {
+    display: none;
+}
+
+.search-clear-btn:hover,
+.search-clear-btn:focus-visible {
+    color: #9cff9c;
+    outline: none;
+}
+
 .bulk-save-search-status {
     min-height: 1rem;
 }

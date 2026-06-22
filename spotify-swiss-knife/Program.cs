@@ -13,13 +13,28 @@ using spotify_swiss_knife.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Single-line, UTC-timestamped console output so `docker logs` stays readable.
-builder.Logging.AddSimpleConsole(options =>
+// In development, single-line UTC console output keeps `docker logs`/terminal readable.
+// Elsewhere, structured JSON so the named fields and the per-request scope set by
+// AuditActionFilter ({RequestId}, {User}) survive into a log collector and stay queryable.
+// Scopes are included in both so controller logs can be correlated to their request.
+if (builder.Environment.IsDevelopment())
 {
-    options.SingleLine = true;
-    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-    options.UseUtcTimestamp = true;
-});
+    builder.Logging.AddSimpleConsole(options =>
+    {
+        options.SingleLine = true;
+        options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+        options.UseUtcTimestamp = true;
+        options.IncludeScopes = true;
+    });
+}
+else
+{
+    builder.Logging.AddJsonConsole(options =>
+    {
+        options.UseUtcTimestamp = true;
+        options.IncludeScopes = true;
+    });
+}
 
 // One combined log line per request/response. Bodies and headers are intentionally
 // omitted to avoid leaking credentials, tokens, or personal data.

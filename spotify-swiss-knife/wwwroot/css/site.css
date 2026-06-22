@@ -264,7 +264,12 @@ ul, ol {
     color: #0f0;
     font-family: inherit;
     cursor: pointer;
-    padding: 0 0.75rem;
+    padding: 0;
+    width: 2.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .global-search-clear:hover,
@@ -1195,12 +1200,25 @@ body.entity-detail-open .app-scroll-area {
     background: #000;
     color: #0f0;
     border: 1px solid #0f0;
-    padding: 0.55rem 0.65rem;
+    padding: 0;
+    width: 2.2rem;
+    height: 2.2rem;
     cursor: pointer;
     font-family: inherit;
     font-size: 0.95rem;
     white-space: nowrap;
     align-self: flex-end;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dpc-clear:hover,
+.dpc-clear:focus-visible {
+    background: #0f0;
+    color: #000;
+    outline: none;
 }
 
 @media (max-width: 640px) {

@@ -16,6 +16,7 @@ public class SpotifyAuthService
     private readonly string _redirectUri;
     private readonly HttpClient _httpClient;
     private readonly SpotifyDbContext _db;
+    private readonly ILogger<SpotifyAuthService> _logger;
 
     private const string AuthorizeUrl = "https://accounts.spotify.com/authorize";
     private const string TokenUrl = "https://accounts.spotify.com/api/token";
@@ -27,13 +28,18 @@ public class SpotifyAuthService
     private const string Scopes = "user-read-private user-read-email playlist-read-private " +
         "playlist-read-collaborative playlist-modify-public playlist-modify-private";
 
-    public SpotifyAuthService(IConfiguration config, IHttpClientFactory httpClientFactory, SpotifyDbContext db)
+    public SpotifyAuthService(
+        IConfiguration config,
+        IHttpClientFactory httpClientFactory,
+        SpotifyDbContext db,
+        ILogger<SpotifyAuthService> logger)
     {
         _clientId = Required(config, "Spotify:ClientId");
         _clientSecret = Required(config, "Spotify:ClientSecret");
         _redirectUri = Required(config, "Spotify:RedirectUri");
         _httpClient = httpClientFactory.CreateClient("spotify");
         _db = db;
+        _logger = logger;
 
         static string Required(IConfiguration config, string key)
         {
@@ -41,6 +47,33 @@ public class SpotifyAuthService
             if (string.IsNullOrWhiteSpace(value))
                 throw new InvalidOperationException($"{key} is not configured.");
             return value;
+        }
+    }
+
+    // Logs a failed Spotify API response at Warning with the status code and a truncated body.
+    // The access token travels in the request Authorization header, never the response body, so
+    // an error body (Spotify returns a small {"error":{status,message}} document) is safe to log
+    // and is the single most useful detail for telling a 401 from a 403, 429, or 5xx.
+    private async Task LogApiFailureAsync(HttpResponseMessage response, string operation)
+    {
+        var body = await SafeReadBodyAsync(response.Content);
+        _logger.LogWarning(
+            "Spotify API call failed: {Operation} returned {StatusCode} {Reason}. Body: {Body}",
+            operation, (int)response.StatusCode, response.ReasonPhrase, body);
+    }
+
+    private static async Task<string> SafeReadBodyAsync(HttpContent content)
+    {
+        try
+        {
+            var body = await content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(body))
+                return "(empty)";
+            return body.Length <= 500 ? body : body[..500] + "…";
+        }
+        catch
+        {
+            return "(unreadable)";
         }
     }
 
@@ -73,14 +106,20 @@ public class SpotifyAuthService
             .FirstOrDefaultAsync(t => t.SpotifyUserId == spotifyUserId);
 
         if (record is null || string.IsNullOrEmpty(record.RefreshToken))
+        {
+            _logger.LogDebug("No stored Spotify refresh token for user {SpotifyUserId}.", spotifyUserId);
             return null;
+        }
 
         if (record.ExpiresAt > DateTimeOffset.UtcNow)
             return record.AccessToken;
 
         var refreshed = await RefreshTokenAsync(record.RefreshToken);
         if (refreshed?.AccessToken is null || refreshed.Error is not null)
+        {
+            _logger.LogWarning("Spotify token refresh failed for user {SpotifyUserId}.", spotifyUserId);
             return null;
+        }
 
         await PersistTokensAsync(spotifyUserId, refreshed.AccessToken,
             refreshed.RefreshToken ?? record.RefreshToken, refreshed.ExpiresIn);
@@ -124,7 +163,17 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
+        var tokens = JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
+
+        // A success body carries access/refresh tokens, so only the error fields are logged.
+        if (tokens?.AccessToken is null || tokens.Error is not null)
+        {
+            _logger.LogWarning(
+                "Spotify authorization-code exchange failed: {StatusCode} {Reason}, error {Error} ({ErrorDescription}).",
+                (int)response.StatusCode, response.ReasonPhrase, tokens?.Error ?? "none", tokens?.ErrorDescription ?? "none");
+        }
+
+        return tokens;
     }
 
     public async Task<SpotifyTokenResponse?> RefreshTokenAsync(string refreshToken)
@@ -140,7 +189,17 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
+        var tokens = JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
+
+        // A success body carries a fresh access token, so only the error fields are logged.
+        if (tokens?.AccessToken is null || tokens.Error is not null)
+        {
+            _logger.LogWarning(
+                "Spotify token refresh exchange failed: {StatusCode} {Reason}, error {Error} ({ErrorDescription}).",
+                (int)response.StatusCode, response.ReasonPhrase, tokens?.Error ?? "none", tokens?.ErrorDescription ?? "none");
+        }
+
+        return tokens;
     }
 
     public async Task<SpotifyUserProfile?> GetUserProfileAsync(string accessToken)
@@ -150,7 +209,10 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response, "GET /me (user profile)");
             return null;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<SpotifyUserProfile>(json);
@@ -173,12 +235,18 @@ public class SpotifyAuthService
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
+            {
+                await LogApiFailureAsync(response, $"GET /me/playlists (page {page})");
                 return null;
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var pageResult = JsonSerializer.Deserialize<PlaylistsPage>(json);
             if (pageResult is null)
+            {
+                _logger.LogWarning("Spotify playlists response on page {Page} could not be parsed.", page);
                 return null;
+            }
 
             // The schema allows null entries when a playlist is no longer available.
             playlists.AddRange(pageResult.Items.Where(playlist => playlist is not null));
@@ -204,7 +272,10 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response, "GET /search?type=album");
             return null;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<AlbumSearchResponse>(json);
@@ -227,12 +298,19 @@ public class SpotifyAuthService
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
+            {
+                await LogApiFailureAsync(response, $"GET /albums/{albumId}/tracks (page {page})");
                 return null;
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var pageResult = JsonSerializer.Deserialize<AlbumTrackUriPage>(json);
             if (pageResult is null)
+            {
+                _logger.LogWarning(
+                    "Spotify album-tracks response for {AlbumId} on page {Page} could not be parsed.", albumId, page);
                 return null;
+            }
 
             uris.AddRange(pageResult.Items
                 .Select(item => item.Uri)
@@ -262,7 +340,11 @@ public class SpotifyAuthService
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
+            {
+                await LogApiFailureAsync(response,
+                    $"POST /playlists/{playlistId}/items (batch at offset {offset})");
                 return false;
+            }
         }
 
         return true;
@@ -439,7 +521,10 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response, $"GET /playlists/{playlistId}/items (shuffle read)");
             return null;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<ShuffleItemsPage>(json);
@@ -455,7 +540,13 @@ public class SpotifyAuthService
             Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request);
-        return response.IsSuccessStatusCode;
+        if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response, $"PUT /playlists/{playlistId}/items (shuffle replace)");
+            return false;
+        }
+
+        return true;
     }
 
     private async Task<(string SnapshotId, int Total)?> GetPlaylistShuffleStateAsync(
@@ -467,12 +558,19 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response, $"GET /playlists/{playlistId} (shuffle state)");
             return null;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         var state = JsonSerializer.Deserialize<PlaylistShuffleState>(json);
         if (state is null || string.IsNullOrEmpty(state.SnapshotId))
+        {
+            _logger.LogWarning(
+                "Spotify playlist {PlaylistId} returned no snapshot id; cannot reorder for shuffle.", playlistId);
             return null;
+        }
 
         return (state.SnapshotId, state.Tracks?.Total ?? 0);
     }
@@ -495,7 +593,11 @@ public class SpotifyAuthService
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
+        {
+            await LogApiFailureAsync(response,
+                $"PUT /playlists/{playlistId}/items (reorder {rangeStart}->{insertBefore})");
             return null;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<PlaylistSnapshot>(json);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Models.FormModels;
 
@@ -76,7 +77,7 @@ public class AccountController : Controller
         if (!result.Succeeded)
         {
             _logger.LogWarning("Registration failed for {Email}: {Errors}.",
-                model.Email, string.Join("; ", result.Errors.Select(e => e.Code)));
+                LogScrub.Email(model.Email), string.Join("; ", result.Errors.Select(e => e.Code)));
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
@@ -84,7 +85,7 @@ public class AccountController : Controller
 
         await _userManager.AddToRoleAsync(user, "User");
         await _signInManager.SignInAsync(user, isPersistent: false);
-        _logger.LogInformation("New user registered and signed in: {Email} ({UserId}).", user.Email, user.Id);
+        _logger.LogInformation("New user registered and signed in: {UserId}.", user.Id);
         return LocalRedirect(returnUrl ?? "/");
     }
 
@@ -117,12 +118,12 @@ public class AccountController : Controller
 
         if (!result.Succeeded)
         {
-            _logger.LogWarning("Failed local login attempt for {Email}.", model.Email);
+            _logger.LogWarning("Failed local login attempt for {Email}.", LogScrub.Email(model.Email));
             ModelState.AddModelError(string.Empty, "Invalid email or password.");
             return View(model);
         }
 
-        _logger.LogInformation("User logged in: {Email}.", model.Email);
+        _logger.LogInformation("User logged in: {Email}.", LogScrub.Email(model.Email));
         return LocalRedirect(returnUrl ?? "/");
     }
 
@@ -132,7 +133,7 @@ public class AccountController : Controller
     {
         var email = _userManager.GetUserName(User);
         await _signInManager.SignOutAsync();
-        _logger.LogInformation("User logged out: {Email}.", email ?? "unknown");
+        _logger.LogInformation("User logged out: {Email}.", LogScrub.Email(email));
         return RedirectToAction("Index", "Home");
     }
 
@@ -231,7 +232,7 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation("Admin {Admin} updated user {UserId} ({Email}), role set to {Role}.",
-            _userManager.GetUserName(User), user.Id, user.Email, model.Role);
+            LogScrub.Email(_userManager.GetUserName(User)), user.Id, LogScrub.Email(user.Email), model.Role);
         return RedirectToAction(nameof(Users));
     }
 
@@ -258,7 +259,7 @@ public class AccountController : Controller
 
         await _userManager.DeleteAsync(user);
         _logger.LogInformation("Admin {Admin} deleted user {UserId} ({Email}).",
-            _userManager.GetUserName(User), user.Id, user.Email);
+            LogScrub.Email(_userManager.GetUserName(User)), user.Id, LogScrub.Email(user.Email));
         return RedirectToAction(nameof(Users));
     }
 

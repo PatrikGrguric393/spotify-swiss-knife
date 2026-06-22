@@ -15,9 +15,12 @@
         var albumEmpty = document.getElementById('albumEmpty');
         var albumCount = document.getElementById('albumCount');
 
+        var albumSearchClear = document.getElementById('albumSearchClear');
+
         var playlistSearch = document.getElementById('playlistSearch');
         var playlistSearchStatus = document.getElementById('playlistSearchStatus');
         var playlistTableBody = document.getElementById('playlistTableBody');
+        var playlistSearchClear = document.getElementById('playlistSearchClear');
         var playlistEmpty = document.getElementById('playlistEmpty');
         var playlistCount = document.getElementById('playlistCount');
 
@@ -168,6 +171,8 @@
 
         function renderPlaylistView() {
             var query = playlistSearch.value.trim();
+            playlistSearchClear.hidden = playlistSearch.value === '';
+
             if (query === '') {
                 renderPlaylists(allPlaylists);
                 updatePlaylistEmptyState(allPlaylists.length, '');
@@ -235,6 +240,8 @@
 
         function onAlbumSearchInput() {
             var query = albumSearch.value.trim();
+            albumSearchClear.hidden = albumSearch.value === '';
+
             if (albumSearchTimer) {
                 clearTimeout(albumSearchTimer);
             }
@@ -377,6 +384,21 @@
                     hiddenInputs.innerHTML = '';
                     updateCounts();
                 });
+        });
+
+        // ---------- Clear button handlers ----------
+        albumSearchClear.addEventListener('click', function () {
+            albumSearch.value = '';
+            albumSearchClear.hidden = true;
+            albumSearch.focus();
+            onAlbumSearchInput();
+        });
+
+        playlistSearchClear.addEventListener('click', function () {
+            playlistSearch.value = '';
+            playlistSearchClear.hidden = true;
+            playlistSearch.focus();
+            renderPlaylistView();
         });
 
         // ---------- Search input bindings ----------
