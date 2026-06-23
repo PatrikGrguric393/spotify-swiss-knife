@@ -8,18 +8,21 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// JSON CRUD API for the local library's albums (JWT-authenticated; see ApiControllerBase).
+// GETs are anonymous; writes require Admin/Editor and deletes require Admin. The server-rendered
+// counterpart is AlbumsController.
 [ApiController]
 [Route("api/albums")]
 [Produces("application/json")]
 public class AlbumsApiController : ApiControllerBase
 {
     private readonly AlbumRepository _albumRepository;
-    private readonly SpotifyDbContext _context;
+    private readonly SpotifyDbContext _db;
 
-    public AlbumsApiController(AlbumRepository albumRepository, SpotifyDbContext context)
+    public AlbumsApiController(AlbumRepository albumRepository, SpotifyDbContext db)
     {
         _albumRepository = albumRepository;
-        _context = context;
+        _db = db;
     }
 
     [AllowAnonymous]
@@ -27,17 +30,7 @@ public class AlbumsApiController : ApiControllerBase
     [ProducesResponseType(typeof(IEnumerable<AlbumListDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<AlbumListDto>> GetAll([FromQuery] string? q)
     {
-        var albums = _albumRepository.GetAll();
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var term = q.Trim();
-            albums = albums
-                .Where(a => a.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
-                            || a.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
+        var albums = ApplySearchFilter(_albumRepository.GetAll(), q, a => a.Id, a => a.Name);
         return Ok(albums.OrderBy(a => a.Name).Select(AlbumListDto.FromEntity));
     }
 
@@ -86,7 +79,7 @@ public class AlbumsApiController : ApiControllerBase
 
         if (dto.ArtistIds.Count > 0)
         {
-            var artists = _context.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
             foreach (var artist in artists) album.Artists.Add(artist);
         }
 
@@ -94,10 +87,10 @@ public class AlbumsApiController : ApiControllerBase
 
         if (dto.TrackIds.Count > 0)
         {
-            var tracks = _context.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
+            var tracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
             foreach (var track in tracks) track.AlbumId = album.Id;
             album.TotalTracks = tracks.Count;
-            _context.SaveChanges();
+            _db.SaveChanges();
         }
 
         var created = _albumRepository.GetById(album.Id) ?? album;
@@ -138,16 +131,16 @@ public class AlbumsApiController : ApiControllerBase
         album.Artists.Clear();
         if (dto.ArtistIds.Count > 0)
         {
-            var artists = _context.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
             foreach (var artist in artists) album.Artists.Add(artist);
         }
 
-        var previousTracks = _context.Tracks.Where(t => t.AlbumId == id).ToList();
+        var previousTracks = _db.Tracks.Where(t => t.AlbumId == id).ToList();
         foreach (var track in previousTracks) track.AlbumId = null;
 
         if (dto.TrackIds.Count > 0)
         {
-            var newTracks = _context.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
+            var newTracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
             foreach (var track in newTracks) track.AlbumId = id;
             album.TotalTracks = newTracks.Count;
         }
@@ -156,7 +149,7 @@ public class AlbumsApiController : ApiControllerBase
             album.TotalTracks = 0;
         }
 
-        _context.SaveChanges();
+        _db.SaveChanges();
 
         var updated = _albumRepository.GetById(id) ?? album;
         return Ok(AlbumDetailDto.FromEntity(updated));

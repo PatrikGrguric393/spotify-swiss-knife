@@ -1,5 +1,10 @@
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// Outcome of reordering a Spotify playlist. Use the factories: <see cref="Ok"/> for full
+/// success, <see cref="Fail"/> for an upfront failure, and <see cref="Partial"/> when the
+/// reorder failed midway (the playlist is intact but only partly shuffled).
+/// </summary>
 public sealed record SpotifyShuffleResult(bool Succeeded, int TrackCount, int MovedCount, string? Error)
 {
     public static SpotifyShuffleResult Ok(int trackCount, int movedCount) =>

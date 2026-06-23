@@ -9,6 +9,11 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
+// Owns everything that talks to Spotify on a user's behalf: the OAuth handshake
+// (authorization URL, code exchange, token refresh), persistence of the resulting token
+// set, and the catalog/playlist calls the app builds on (profile, playlists, album
+// search, bulk-save, and playlist shuffling). Tokens are stored per Spotify user so the
+// background scheduler can act without an interactive session.
 public class SpotifyAuthService
 {
     private readonly string _clientId;
@@ -27,6 +32,12 @@ public class SpotifyAuthService
     private const string AlbumBaseUrl = "https://api.spotify.com/v1/albums";
     private const string Scopes = "user-read-private user-read-email playlist-read-private " +
         "playlist-read-collaborative playlist-modify-public playlist-modify-private";
+
+    // Max items the playlist add endpoint accepts in one POST.
+    private const int AddBatchLimit = 100;
+
+    // Max items a single replace (PUT with a uris body) can set in one request.
+    private const int ReplaceBatchLimit = 100;
 
     public SpotifyAuthService(
         IConfiguration config,
@@ -75,6 +86,47 @@ public class SpotifyAuthService
         {
             return "(unreadable)";
         }
+    }
+
+    // Builds a request to the Web API carrying the user's access token as a Bearer header.
+    // Every authenticated call goes through here so the auth scheme lives in one place.
+    private static HttpRequestMessage BearerRequest(HttpMethod method, string url, string accessToken)
+    {
+        var request = new HttpRequestMessage(method, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return request;
+    }
+
+    // Serializes a payload as a JSON request body. Used for the playlist add/replace/reorder
+    // calls, which all send application/json.
+    private static StringContent JsonBody<T>(T payload) =>
+        new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+    // Posts to the token endpoint with the client credentials in a Basic header — shared by the
+    // authorization-code exchange and the refresh flow, which differ only in their form fields.
+    // `operation` names the flow in the warning logged when Spotify returns no usable token.
+    private async Task<SpotifyTokenResponse?> RequestTokenAsync(
+        Dictionary<string, string> form, string operation)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, TokenUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}")));
+        request.Content = new FormUrlEncodedContent(form);
+
+        var response = await _httpClient.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+        var tokens = JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
+
+        // A success body carries the tokens, so only the error fields are worth logging.
+        if (tokens?.AccessToken is null || tokens.Error is not null)
+        {
+            _logger.LogWarning(
+                "Spotify {Operation} failed: {StatusCode} {Reason}, error {Error} ({ErrorDescription}).",
+                operation, (int)response.StatusCode, response.ReasonPhrase,
+                tokens?.Error ?? "none", tokens?.ErrorDescription ?? "none");
+        }
+
+        return tokens;
     }
 
     // Writes or updates the stored token set for a Spotify user. Called after every
@@ -149,63 +201,26 @@ public class SpotifyAuthService
         return $"{AuthorizeUrl}?{queryString}";
     }
 
-    public async Task<SpotifyTokenResponse?> ExchangeCodeAsync(string code)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post, TokenUrl);
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}")));
-        request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    // Exchanges an authorization code (from the OAuth redirect) for an initial token set.
+    public Task<SpotifyTokenResponse?> ExchangeCodeAsync(string code) =>
+        RequestTokenAsync(new Dictionary<string, string>
         {
             ["grant_type"] = "authorization_code",
             ["code"] = code,
             ["redirect_uri"] = _redirectUri,
-        });
+        }, "authorization-code exchange");
 
-        var response = await _httpClient.SendAsync(request);
-        var json = await response.Content.ReadAsStringAsync();
-        var tokens = JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
-
-        // A success body carries access/refresh tokens, so only the error fields are logged.
-        if (tokens?.AccessToken is null || tokens.Error is not null)
-        {
-            _logger.LogWarning(
-                "Spotify authorization-code exchange failed: {StatusCode} {Reason}, error {Error} ({ErrorDescription}).",
-                (int)response.StatusCode, response.ReasonPhrase, tokens?.Error ?? "none", tokens?.ErrorDescription ?? "none");
-        }
-
-        return tokens;
-    }
-
-    public async Task<SpotifyTokenResponse?> RefreshTokenAsync(string refreshToken)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post, TokenUrl);
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}")));
-        request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    // Trades a stored refresh token for a fresh access token (and occasionally a new refresh token).
+    public Task<SpotifyTokenResponse?> RefreshTokenAsync(string refreshToken) =>
+        RequestTokenAsync(new Dictionary<string, string>
         {
             ["grant_type"] = "refresh_token",
             ["refresh_token"] = refreshToken,
-        });
-
-        var response = await _httpClient.SendAsync(request);
-        var json = await response.Content.ReadAsStringAsync();
-        var tokens = JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
-
-        // A success body carries a fresh access token, so only the error fields are logged.
-        if (tokens?.AccessToken is null || tokens.Error is not null)
-        {
-            _logger.LogWarning(
-                "Spotify token refresh exchange failed: {StatusCode} {Reason}, error {Error} ({ErrorDescription}).",
-                (int)response.StatusCode, response.ReasonPhrase, tokens?.Error ?? "none", tokens?.ErrorDescription ?? "none");
-        }
-
-        return tokens;
-    }
+        }, "token refresh");
 
     public async Task<SpotifyUserProfile?> GetUserProfileAsync(string accessToken)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, ProfileUrl);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var request = BearerRequest(HttpMethod.Get, ProfileUrl, accessToken);
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -230,8 +245,7 @@ public class SpotifyAuthService
         // Follow paging links, capped so a malformed response can't loop forever.
         for (var page = 0; page < 40 && url is not null; page++)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var request = BearerRequest(HttpMethod.Get, url, accessToken);
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
@@ -267,8 +281,7 @@ public class SpotifyAuthService
 
         var url = $"{SearchUrl}?q={Uri.EscapeDataString(trimmed)}&type=album" +
             $"&limit={Math.Clamp(limit, 1, 10)}";
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var request = BearerRequest(HttpMethod.Get, url, accessToken);
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -293,8 +306,7 @@ public class SpotifyAuthService
 
         for (var page = 0; page < 40 && url is not null; page++)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var request = BearerRequest(HttpMethod.Get, url, accessToken);
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
@@ -332,11 +344,8 @@ public class SpotifyAuthService
         for (var offset = 0; offset < uris.Count; offset += AddBatchLimit)
         {
             var batch = uris.Skip(offset).Take(AddBatchLimit).ToList();
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            request.Content = new StringContent(
-                JsonSerializer.Serialize(new AddTracksRequest { Uris = batch }),
-                Encoding.UTF8, "application/json");
+            var request = BearerRequest(HttpMethod.Post, url, accessToken);
+            request.Content = JsonBody(new AddTracksRequest { Uris = batch });
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
@@ -405,12 +414,6 @@ public class SpotifyAuthService
         return new BulkAlbumSaveResult(true, null, albumsAdded, uris.Count, playlistsUpdated, warnings);
     }
 
-    // Max items the playlist add endpoint accepts in one request.
-    private const int AddBatchLimit = 100;
-
-    // Max items a single replace (PUT with a uris body) can set in one request.
-    private const int ReplaceBatchLimit = 100;
-
     // Shuffles a Spotify playlist in place. Requires playlist-modify-* scopes.
     //
     // Fast path: a playlist that fits one replace batch and has no local files is
@@ -422,7 +425,7 @@ public class SpotifyAuthService
     // re-add by URI), use a non-destructive index reorder that preserves local files
     // and metadata at the cost of one request per moved item.
     public async Task<SpotifyShuffleResult> ShufflePlaylistAsync(
-        string accessToken, string playlistId, ShuffleRandomnessLevel randomnessLevel)
+        string accessToken, string playlistId)
     {
         var page = await GetFirstItemsPageAsync(accessToken, playlistId);
         if (page is null)
@@ -445,16 +448,16 @@ public class SpotifyAuthService
 
         if (replaceable)
         {
-            return await ReplaceShuffleAsync(accessToken, playlistId, uris!, randomnessLevel);
+            return await ReplaceShuffleAsync(accessToken, playlistId, uris!);
         }
 
-        return await ReorderShuffleAsync(accessToken, playlistId, page.Total, randomnessLevel);
+        return await ReorderShuffleAsync(accessToken, playlistId, page.Total);
     }
 
     private async Task<SpotifyShuffleResult> ReplaceShuffleAsync(
-        string accessToken, string playlistId, List<string> uris, ShuffleRandomnessLevel randomnessLevel)
+        string accessToken, string playlistId, List<string> uris)
     {
-        var shuffled = PlaylistShuffler.Shuffle(uris, randomnessLevel);
+        var shuffled = PlaylistShuffler.Shuffle(uris);
         var moved = shuffled.Where((uri, index) => uri != uris[index]).Count();
 
         var ok = await ReplacePlaylistItemsAsync(accessToken, playlistId, shuffled);
@@ -468,18 +471,17 @@ public class SpotifyAuthService
     // Non-destructive reorder: realize the target order with single-item moves, chaining
     // the snapshot ID returned by each move so concurrent edits are detected.
     private async Task<SpotifyShuffleResult> ReorderShuffleAsync(
-        string accessToken, string playlistId, int total, ShuffleRandomnessLevel randomnessLevel)
+        string accessToken, string playlistId, int total)
     {
-        var state = await GetPlaylistShuffleStateAsync(accessToken, playlistId);
-        if (state is null)
+        var snapshotId = await GetPlaylistSnapshotIdAsync(accessToken, playlistId);
+        if (snapshotId is null)
         {
             return SpotifyShuffleResult.Fail(
                 "We couldn't read that Spotify playlist. Your session may have expired or lacks the " +
                 "permission to modify it — please disconnect and reconnect Spotify.");
         }
 
-        var snapshotId = state.Value.SnapshotId;
-        var target = PlaylistShuffler.Shuffle(Enumerable.Range(0, total).ToList(), randomnessLevel);
+        var target = PlaylistShuffler.Shuffle(Enumerable.Range(0, total).ToList());
         var current = Enumerable.Range(0, total).ToList();
         var moved = 0;
 
@@ -516,8 +518,7 @@ public class SpotifyAuthService
     {
         var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items" +
             $"?limit={ReplaceBatchLimit}&fields=total,next,items(is_local,item(uri),track(uri))";
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var request = BearerRequest(HttpMethod.Get, url, accessToken);
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -533,11 +534,8 @@ public class SpotifyAuthService
     private async Task<bool> ReplacePlaylistItemsAsync(string accessToken, string playlistId, List<string> uris)
     {
         var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
-        var request = new HttpRequestMessage(HttpMethod.Put, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Content = new StringContent(
-            JsonSerializer.Serialize(new PlaylistReplaceRequest { Uris = uris }),
-            Encoding.UTF8, "application/json");
+        var request = BearerRequest(HttpMethod.Put, url, accessToken);
+        request.Content = JsonBody(new PlaylistReplaceRequest { Uris = uris });
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -549,12 +547,12 @@ public class SpotifyAuthService
         return true;
     }
 
-    private async Task<(string SnapshotId, int Total)?> GetPlaylistShuffleStateAsync(
-        string accessToken, string playlistId)
+    // Reads the playlist's current snapshot id, the concurrency token each reorder must chain
+    // off so Spotify can reject the change if the playlist was edited in the meantime.
+    private async Task<string?> GetPlaylistSnapshotIdAsync(string accessToken, string playlistId)
     {
-        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}?fields=snapshot_id,tracks(total)";
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}?fields=snapshot_id";
+        var request = BearerRequest(HttpMethod.Get, url, accessToken);
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -564,32 +562,29 @@ public class SpotifyAuthService
         }
 
         var json = await response.Content.ReadAsStringAsync();
-        var state = JsonSerializer.Deserialize<PlaylistShuffleState>(json);
-        if (state is null || string.IsNullOrEmpty(state.SnapshotId))
+        var snapshot = JsonSerializer.Deserialize<PlaylistSnapshot>(json);
+        if (snapshot is null || string.IsNullOrEmpty(snapshot.SnapshotId))
         {
             _logger.LogWarning(
                 "Spotify playlist {PlaylistId} returned no snapshot id; cannot reorder for shuffle.", playlistId);
             return null;
         }
 
-        return (state.SnapshotId, state.Tracks?.Total ?? 0);
+        return snapshot.SnapshotId;
     }
 
     private async Task<string?> ReorderPlaylistItemAsync(
         string accessToken, string playlistId, int rangeStart, int insertBefore, string snapshotId)
     {
         var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
-        var request = new HttpRequestMessage(HttpMethod.Put, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Content = new StringContent(
-            JsonSerializer.Serialize(new PlaylistReorderRequest
-            {
-                RangeStart = rangeStart,
-                InsertBefore = insertBefore,
-                RangeLength = 1,
-                SnapshotId = snapshotId,
-            }),
-            Encoding.UTF8, "application/json");
+        var request = BearerRequest(HttpMethod.Put, url, accessToken);
+        request.Content = JsonBody(new PlaylistReorderRequest
+        {
+            RangeStart = rangeStart,
+            InsertBefore = insertBefore,
+            RangeLength = 1,
+            SnapshotId = snapshotId,
+        });
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -641,21 +636,6 @@ public class SpotifyAuthService
     {
         [JsonPropertyName("uris")]
         public List<string> Uris { get; set; } = [];
-    }
-
-    private sealed class PlaylistShuffleState
-    {
-        [JsonPropertyName("snapshot_id")]
-        public string SnapshotId { get; set; } = string.Empty;
-
-        [JsonPropertyName("tracks")]
-        public TracksRef? Tracks { get; set; }
-
-        public sealed class TracksRef
-        {
-            [JsonPropertyName("total")]
-            public int Total { get; set; }
-        }
     }
 
     private sealed class ShuffleItemsPage

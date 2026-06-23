@@ -8,6 +8,10 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// User file storage under /files: list, upload, download, and delete. Every signed-in user sees
+// their own uploads; Admins and Editors can access any user's files (see CanAccessAnyFile).
+// Album cover images are a special case — they live in AlbumCoverStorage and are linked back via
+// UserFile.LinkedAlbumId, so this controller routes those reads/deletes through that store.
 [Route("files")]
 [Authorize]
 public class FilesController : Controller

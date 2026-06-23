@@ -63,7 +63,6 @@
 
 .search-input-wrap .search-input {
     flex: 1 1 auto;
-    padding-right: 2.4rem;
 }
 
 .search-input-wrap .search-input::-webkit-search-cancel-button {
@@ -75,7 +74,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 2.4rem;
+    width: 1.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -108,6 +107,8 @@
     max-height: calc(3 * 4.2rem + 2.4rem + 0.3rem);
     overflow-y: auto;
     overflow-x: auto;
+    scrollbar-color: #0f0 #050505;
+    scrollbar-width: thin;
 }
 
 .bulk-save-table-wrap::-webkit-scrollbar {
@@ -122,11 +123,6 @@
 .bulk-save-table-wrap::-webkit-scrollbar-thumb {
     background: #0f0;
     border-radius: 999px;
-}
-
-.bulk-save-table-wrap {
-    scrollbar-color: #0f0 #050505;
-    scrollbar-width: thin;
 }
 
 .bulk-save-table {

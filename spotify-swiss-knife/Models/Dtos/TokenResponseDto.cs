@@ -2,6 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// The app's own OAuth-style token response: a bearer access token plus the refresh token
+/// used to obtain a new one. Distinct from <see cref="spotify_swiss_knife.Models.SpotifyTokenResponse"/>,
+/// which models Spotify's token endpoint.
+/// </summary>
 public class TokenResponseDto
 {
     [JsonPropertyName("token_type")]

@@ -2,6 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace spotify_swiss_knife.Models.FormModels;
 
+/// <summary>
+/// Shared profile fields for the user register/edit forms (<see cref="UserRegisterForm"/>,
+/// <see cref="UserEditForm"/>). OIB and JMBAG are validated as Croatian national identifiers
+/// (11 and 10 digits respectively).
+/// </summary>
 public abstract class UserForm
 {
     [Required]

@@ -258,24 +258,29 @@ ul, ol {
 }
 
 .global-search-clear {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1.8rem;
     border: 0;
-    border-left: 1px solid rgba(15, 255, 15, 0.35);
-    background: #021102;
+    background: transparent;
     color: #0f0;
     font-family: inherit;
     cursor: pointer;
     padding: 0;
-    width: 2.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+}
+
+.global-search-input::-webkit-search-cancel-button {
+    display: none;
 }
 
 .global-search-clear:hover,
 .global-search-clear:focus-visible {
-    background: #0f0;
-    color: #000;
+    color: #9cff9c;
     outline: none;
 }
 
@@ -574,16 +579,14 @@ a.shuffle-submit:focus-visible {
     color: #ffc2c2;
 }
 
-.shuffle-submit:disabled,
-.shuffle-submit[disabled] {
+.shuffle-submit:disabled {
     border-color: #005500;
     color: #005500;
     background-color: #000;
     cursor: not-allowed;
 }
 
-.shuffle-submit:disabled:hover,
-.shuffle-submit[disabled]:hover {
+.shuffle-submit:disabled:hover {
     background-color: #000;
     color: #005500;
 }
@@ -1162,16 +1165,15 @@ body.entity-detail-open .app-scroll-area {
 }
 
 .dpc-trigger:hover,
-.dpc-clear:hover,
-.dpc-trigger:focus-visible,
-.dpc-clear:focus-visible {
+.dpc-clear:hover {
     background: #0f0;
     color: #000;
-    outline: none;
 }
 
 .dpc-trigger:focus-visible,
 .dpc-clear:focus-visible {
+    background: #0f0;
+    color: #000;
     outline: 2px solid #83ffcf;
     outline-offset: 1px;
 }
@@ -1212,13 +1214,6 @@ body.entity-detail-open .app-scroll-area {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-}
-
-.dpc-clear:hover,
-.dpc-clear:focus-visible {
-    background: #0f0;
-    color: #000;
-    outline: none;
 }
 
 @media (max-width: 640px) {

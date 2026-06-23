@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Lightweight artist projection for list views, with album/track counts instead of the full
+/// collections. Built via <see cref="FromEntity"/>.
+/// </summary>
 public class ArtistListDto
 {
     public string Id { get; set; } = string.Empty;

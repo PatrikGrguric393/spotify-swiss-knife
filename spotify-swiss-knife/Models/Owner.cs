@@ -2,6 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// The Spotify user that owns a <see cref="Playlist"/>, as embedded in the playlist payload.
+/// Persisted as an owned value on the playlist rather than as its own table.
+/// </summary>
 public class Owner
 {
     [JsonPropertyName("id")]

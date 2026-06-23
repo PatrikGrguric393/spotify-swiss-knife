@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// A persisted, rotatable refresh token for the app's own JWT auth. Only the SHA-256 hash is
+/// stored; tokens are revoked on rotation or logout. Use <see cref="IsActive"/> to test validity.
+/// </summary>
 public class RefreshToken
 {
     public int Id { get; set; }

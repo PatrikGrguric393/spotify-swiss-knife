@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace spotify_swiss_knife.Models.FormModels;
 
+/// <summary>
+/// Registration form: the shared <see cref="UserForm"/> profile fields plus password and its
+/// confirmation (which must match).
+/// </summary>
 public class UserRegisterForm : UserForm
 {
     [Required]

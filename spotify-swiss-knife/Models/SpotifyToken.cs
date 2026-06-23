@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// Persisted Spotify OAuth credentials for one Spotify account. The access token is refreshed
+/// using the refresh token once <see cref="ExpiresAt"/> passes (see SpotifyAuthService).
+/// </summary>
 public class SpotifyToken
 {
     public int Id { get; set; }

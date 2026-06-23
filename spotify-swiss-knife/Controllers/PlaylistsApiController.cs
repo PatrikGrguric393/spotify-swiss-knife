@@ -7,18 +7,21 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// JSON CRUD API for the local library's playlists (JWT-authenticated; see ApiControllerBase).
+// GETs are anonymous; writes require Admin/Editor and deletes require Admin. The server-rendered
+// counterpart is PlaylistsController.
 [ApiController]
 [Route("api/playlists")]
 [Produces("application/json")]
 public class PlaylistsApiController : ApiControllerBase
 {
     private readonly PlaylistRepository _playlistRepository;
-    private readonly SpotifyDbContext _context;
+    private readonly SpotifyDbContext _db;
 
-    public PlaylistsApiController(PlaylistRepository playlistRepository, SpotifyDbContext context)
+    public PlaylistsApiController(PlaylistRepository playlistRepository, SpotifyDbContext db)
     {
         _playlistRepository = playlistRepository;
-        _context = context;
+        _db = db;
     }
 
     [AllowAnonymous]
@@ -26,17 +29,7 @@ public class PlaylistsApiController : ApiControllerBase
     [ProducesResponseType(typeof(IEnumerable<PlaylistListDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<PlaylistListDto>> GetAll([FromQuery] string? q)
     {
-        var playlists = _playlistRepository.GetAll();
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var term = q.Trim();
-            playlists = playlists
-                .Where(p => p.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
-                            || p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
+        var playlists = ApplySearchFilter(_playlistRepository.GetAll(), q, p => p.Id, p => p.Name);
         return Ok(playlists.OrderBy(p => p.Name).Select(PlaylistListDto.FromEntity));
     }
 
@@ -67,7 +60,7 @@ public class PlaylistsApiController : ApiControllerBase
             return ValidationProblem(ModelState);
         }
 
-        if (_context.Playlists.Any(p => p.Name.Trim().ToLower() == dto.Name.Trim().ToLower()))
+        if (_playlistRepository.ExistsByName(dto.Name))
             return UnprocessableEntity(new { message = $"A playlist named '{dto.Name.Trim()}' already exists." });
 
         var playlist = new Playlist
@@ -82,7 +75,7 @@ public class PlaylistsApiController : ApiControllerBase
 
         if (dto.TrackIds.Count > 0)
         {
-            var trackMap = _context.Tracks
+            var trackMap = _db.Tracks
                 .Where(t => dto.TrackIds.Contains(t.Id))
                 .ToDictionary(t => t.Id);
 
@@ -125,7 +118,7 @@ public class PlaylistsApiController : ApiControllerBase
             return ValidationProblem(ModelState);
         }
 
-        if (_context.Playlists.Any(p => p.Id != id && p.Name.Trim().ToLower() == dto.Name.Trim().ToLower()))
+        if (_playlistRepository.ExistsByName(dto.Name, id))
             return UnprocessableEntity(new { message = $"A playlist named '{dto.Name.Trim()}' already exists." });
 
         playlist.Name = dto.Name.Trim();
@@ -135,7 +128,7 @@ public class PlaylistsApiController : ApiControllerBase
         playlist.Owner ??= new Owner();
         playlist.Owner.DisplayName = dto.OwnerDisplayName?.Trim();
 
-        var trackMap = _context.Tracks
+        var trackMap = _db.Tracks
             .Where(t => dto.TrackIds.Contains(t.Id))
             .ToDictionary(t => t.Id);
 

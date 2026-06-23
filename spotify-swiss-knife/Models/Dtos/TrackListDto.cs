@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Lightweight track projection for list views and for nesting inside album/artist detail
+/// DTOs. Built via <see cref="FromEntity"/>.
+/// </summary>
 public class TrackListDto
 {
     public string Id { get; set; } = string.Empty;

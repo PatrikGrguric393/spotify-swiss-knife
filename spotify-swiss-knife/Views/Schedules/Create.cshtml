@@ -30,17 +30,6 @@
             </div>
 
             <div class="shuffle-form-row">
-                <label asp-for="RandomnessLevel">Randomness level</label>
-                <select asp-for="RandomnessLevel" class="shuffle-input">
-                    @foreach (var level in Enum.GetValues<ShuffleRandomnessLevel>())
-                    {
-                        <option value="@((int)level)">@level</option>
-                    }
-                </select>
-                <span class="shuffle-validation" asp-validation-for="RandomnessLevel"></span>
-            </div>
-
-            <div class="shuffle-form-row">
                 <span class="shuffle-form-label" id="frequencyLabel">Frequency</span>
                 <div class="freq-seg" role="radiogroup" aria-labelledby="frequencyLabel" id="freqGroup">
                     @{

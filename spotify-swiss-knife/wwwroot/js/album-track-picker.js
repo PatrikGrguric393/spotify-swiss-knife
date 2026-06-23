@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchInput = picker.querySelector('[data-album-track-search]');
         const rows = Array.from(picker.querySelectorAll('[data-album-track-row]'));
         const checkboxes = () => Array.from(picker.querySelectorAll('[data-album-track-checkbox]'));
-        const status = picker.querySelector('[id="albumTrackPickerStatus"]') || null;
+        const status = picker.querySelector('#albumTrackPickerStatus') || null;
         const hadPickerHelp = !!picker.querySelector('[data-album-track-help]');
         let pickerHelp = picker.querySelector('[data-album-track-help]') || null;
         let pickerRule = picker.querySelector('[data-album-track-constraint]') || null;

@@ -11,6 +11,11 @@ using System.Globalization;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Server-rendered CRUD for the local library's albums, under /lib/albums. Listing and the cover
+// image endpoint are public; create/edit require an Admin or Editor local account and deletes are
+// Admin-only. Beyond the album record this also manages the album's track membership and its
+// uploaded cover image (stored via AlbumCoverStorage and tracked as a UserFile). DenySpotifyUsers
+// keeps Spotify-connected visitors out. The JSON counterpart is AlbumsApiController.
 [Route("lib")]
 [Authorize(Roles = "Admin,Editor")]
 [DenySpotifyUsers]

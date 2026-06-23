@@ -2,6 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace spotify_swiss_knife.Models.FormModels;
 
+/// <summary>
+/// Form for creating a <see cref="ScheduledShuffle"/>. Collects the playlist, a frequency and
+/// the relevant day fields, and a local time; <see cref="ToCronExpression"/> converts those to
+/// the UTC cron string that gets stored. <see cref="Validate"/> enforces the per-frequency day
+/// rules.
+/// </summary>
 public class CreateScheduleForm : IValidatableObject
 {
     [Required]
@@ -9,8 +15,6 @@ public class CreateScheduleForm : IValidatableObject
 
     [Required]
     public string PlaylistName { get; set; } = string.Empty;
-
-    public ShuffleRandomnessLevel RandomnessLevel { get; set; }
 
     // How often the shuffle runs. Determines which day field is honored:
     // Daily ignores both; Weekly/CustomWeekly use DaysOfWeek; Monthly uses DayOfMonth.

@@ -1,9 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
+using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Backs the global search box in the top navigation. A single GET /search?q= query is matched
+// against the app's static pages and every local-library entity (artists, albums, tracks,
+// playlists); results are ranked by match quality (exact > prefix > substring) and returned as
+// JSON for the client to render. Read-only; no authorization required.
 [Route("search")]
 public class SearchController : Controller
 {
@@ -80,9 +85,11 @@ public class SearchController : Controller
             .ToList();
     }
 
+    // Links to a library section's Index action with the chosen entity pre-selected. The library
+    // pages read the ?selected= query parameter to scroll to and highlight that row.
     private string BuildSelectionUrl(string section, string id)
     {
-        return Url.Action(section, section, new { selected = id }) ?? "/lib";
+        return Url.Action("Index", section, new { selected = id }) ?? "/lib";
     }
 
     private static int MatchScore(IEnumerable<string?> values, string query)
@@ -120,7 +127,7 @@ public class SearchController : Controller
         var details = new List<string>();
         var artists = string.Join(", ", track.Artists.Select(a => a.Name).Where(n => !string.IsNullOrWhiteSpace(n)).Take(2));
         if (!string.IsNullOrWhiteSpace(artists)) details.Add(artists);
-        details.Add(FormatDuration(track.DurationMs));
+        details.Add(DurationFormat.MinutesSeconds(track.DurationMs));
         if (track.IsLocal) details.Add("Local");
         if (!string.IsNullOrWhiteSpace(track.Album?.Name)) details.Add(track.Album.Name);
         return string.Join(" • ", details);
@@ -133,12 +140,6 @@ public class SearchController : Controller
         details.Add($"{playlist.Tracks.Total} tracks");
         if (!string.IsNullOrWhiteSpace(playlist.Description)) details.Add(playlist.Description.Trim());
         return string.Join(" • ", details);
-    }
-
-    private static string FormatDuration(int durationMs)
-    {
-        var totalSeconds = Math.Max(0, durationMs / 1000);
-        return $"{totalSeconds / 60}:{totalSeconds % 60:00}";
     }
 
     private IEnumerable<GlobalSearchResult> SearchPageResults(string query)

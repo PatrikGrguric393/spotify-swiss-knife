@@ -7,21 +7,23 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Shuffles the track order of one or more playlists. It serves two distinct sources from the
+// same UI: a Spotify-connected user shuffles their own Spotify playlists (changes are pushed to
+// Spotify), while a local-account user shuffles the local library's playlists in the database.
+// RequireSpotifyAuth gates the page, and ResolvePlaylistsAsync decides which source applies.
 [Route("shuffle")]
 [RequireSpotifyAuth]
-public class ShuffleController : Controller
+public class ShuffleController : SpotifyControllerBase
 {
     private readonly PlaylistRepository _playlistRepository;
-    private readonly SpotifyAuthService _spotifyAuth;
     private readonly ILogger<ShuffleController> _logger;
 
     public ShuffleController(
         PlaylistRepository playlistRepository,
         SpotifyAuthService spotifyAuth,
-        ILogger<ShuffleController> logger)
+        ILogger<ShuffleController> logger) : base(spotifyAuth)
     {
         _playlistRepository = playlistRepository;
-        _spotifyAuth = spotifyAuth;
         _logger = logger;
     }
 
@@ -42,67 +44,114 @@ public class ShuffleController : Controller
         if (source.Error is not null)
             return Json(new ShuffleJsonResult(false, source.Error, null));
 
-        var selectedPlaylist = source.Playlists.FirstOrDefault(playlist => playlist.Id == input.PlaylistId);
-        if (selectedPlaylist is null)
-            return Json(new ShuffleJsonResult(false, "Please select a valid playlist.", null));
+        if (input.PlaylistIds.Count == 0)
+            return Json(new ShuffleJsonResult(false, "Please select at least one playlist.", null));
+
+        var selected = source.Playlists
+            .Where(p => input.PlaylistIds.Contains(p.Id))
+            .ToList();
+
+        if (selected.Count == 0)
+            return Json(new ShuffleJsonResult(false, "No valid playlists selected.", null));
 
         if (source.IsSpotify)
-            return await ShuffleSpotifyPlaylistJsonAsync(source, selectedPlaylist, input);
+            return await ShuffleSpotifyPlaylistsJsonAsync(source, selected);
 
-        if (!ModelState.IsValid)
-            return Json(new ShuffleJsonResult(false, "Invalid form data.", null));
-
-        var statusMessage = ExecuteShuffle(selectedPlaylist, input.RandomnessLevel);
-        return Json(new ShuffleJsonResult(true, statusMessage, selectedPlaylist.LastShuffled?.ToString("o")));
+        var (message, shuffledAt) = ExecuteShuffleMultiple(selected);
+        return Json(new ShuffleJsonResult(true, message, shuffledAt.ToString("o")));
     }
 
-    private async Task<IActionResult> ShuffleSpotifyPlaylistJsonAsync(
-        PlaylistSource source, Playlist selectedPlaylist, PlaylistShuffleForm input)
+    private async Task<IActionResult> ShuffleSpotifyPlaylistsJsonAsync(
+        PlaylistSource source, List<Playlist> playlists)
     {
-        var result = await _spotifyAuth.ShufflePlaylistAsync(
-            source.AccessToken!, selectedPlaylist.Id, input.RandomnessLevel);
+        var errors = new List<string>();
+        int totalTracks = 0, totalMoved = 0;
 
-        if (!result.Succeeded)
+        foreach (var playlist in playlists)
         {
-            _logger.LogWarning("Spotify shuffle failed for playlist {PlaylistId} ({Name}): {Error}.",
-                selectedPlaylist.Id, selectedPlaylist.Name, result.Error);
-            return Json(new ShuffleJsonResult(false, result.Error ?? "Shuffle failed.", null));
+            var result = await SpotifyAuth.ShufflePlaylistAsync(
+                source.AccessToken!, playlist.Id);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Spotify shuffle failed for playlist {PlaylistId} ({Name}): {Error}.",
+                    playlist.Id, playlist.Name, result.Error);
+                errors.Add($"'{playlist.Name}': {result.Error}");
+                continue;
+            }
+
+            totalTracks += result.TrackCount;
+            totalMoved += result.MovedCount;
+            _logger.LogInformation(
+                "Spotify shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}.",
+                playlist.Id, playlist.Name, result.TrackCount, result.MovedCount);
         }
 
-        _logger.LogInformation(
-            "Spotify shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}, randomness: {Randomness}.",
-            selectedPlaylist.Id, selectedPlaylist.Name, result.TrackCount, result.MovedCount, input.RandomnessLevel);
+        if (errors.Count == playlists.Count)
+            return Json(new ShuffleJsonResult(false, errors[0].Split(": ", 2).ElementAtOrDefault(1) ?? errors[0], null));
 
-        var statusMessage = $"Shuffle completed for '{selectedPlaylist.Name}'. " +
-            $"Tracks: {result.TrackCount}, moved: {result.MovedCount}, randomness: {input.RandomnessLevel}.";
-        return Json(new ShuffleJsonResult(true, statusMessage, DateTime.UtcNow.ToString("o")));
+        var message = playlists.Count == 1
+            ? $"Shuffle completed for '{playlists[0].Name}'. Tracks: {totalTracks}, moved: {totalMoved}."
+            : $"Shuffled {playlists.Count - errors.Count} of {playlists.Count} playlists. Tracks: {totalTracks}, moved: {totalMoved}.";
+
+        if (errors.Count > 0)
+            message += $" Failed: {string.Join("; ", errors)}";
+
+        return Json(new ShuffleJsonResult(true, message, DateTime.UtcNow.ToString("o")));
+    }
+
+    private (string Message, DateTime ShuffledAt) ExecuteShuffleMultiple(List<Playlist> playlists)
+    {
+        int totalTracks = 0, totalMoved = 0;
+
+        foreach (var playlist in playlists)
+        {
+            var originalItems = playlist.Tracks.Items.ToList();
+            var shuffledItems = PlaylistShuffler.Shuffle(originalItems);
+
+            var originalPositions = originalItems
+                .Select((item, index) => new { item.Track.Id, index })
+                .ToDictionary(e => e.Id, e => e.index);
+
+            var moved = shuffledItems
+                .Select((item, index) => new { item.Track.Id, index })
+                .Count(e => originalPositions.TryGetValue(e.Id, out var orig) && orig != e.index);
+
+            playlist.Tracks.Items = shuffledItems;
+            playlist.LastShuffled = DateTime.UtcNow;
+            totalTracks += shuffledItems.Count;
+            totalMoved += moved;
+
+            _logger.LogInformation(
+                "Local shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}.",
+                playlist.Id, playlist.Name, shuffledItems.Count, moved);
+        }
+
+        var shuffledAt = DateTime.UtcNow;
+        var message = playlists.Count == 1
+            ? $"Shuffle completed for '{playlists[0].Name}'. Tracks: {totalTracks}, moved: {totalMoved}."
+            : $"Shuffled {playlists.Count} playlists. Tracks: {totalTracks}, moved: {totalMoved}.";
+
+        return (message, shuffledAt);
     }
 
     private sealed record ShuffleJsonResult(bool Success, string Message, string? ShuffledAtUtc);
 
-    // Picks the playlist source from the current login: Spotify if connected, otherwise
-    // the local database for a signed-in app user, otherwise an error for anonymous users.
     private async Task<PlaylistSource> ResolvePlaylistsAsync()
     {
         var spotifyAuth = await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
         if (spotifyAuth.Succeeded)
         {
-            var accessToken = spotifyAuth.Principal?.FindFirst("access_token")?.Value;
+            var accessToken = await GetSpotifyAccessTokenAsync();
             if (string.IsNullOrEmpty(accessToken))
-            {
-                return new PlaylistSource([], true, null,
-                    "Your Spotify connection is missing an access token. Please disconnect and reconnect Spotify.");
-            }
+                return new PlaylistSource([], true, null, MissingAccessTokenMessage);
 
-            var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+            var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
             if (playlists is null)
-            {
-                return new PlaylistSource([], true, null,
-                    "We couldn't load your Spotify playlists. Your session may have expired or lacks the required " +
-                    "permission — please disconnect and reconnect Spotify.");
-            }
+                return new PlaylistSource([], true, null, PlaylistsLoadFailedMessage);
 
-            return new PlaylistSource(playlists, true, accessToken, null);
+            var profile = await SpotifyAuth.GetUserProfileAsync(accessToken);
+            return new PlaylistSource(FilterToOwnedPlaylists(playlists, profile), true, accessToken, null);
         }
 
         if (User.Identity?.IsAuthenticated == true)
@@ -112,30 +161,6 @@ public class ShuffleController : Controller
 
         return new PlaylistSource([], false, null,
             "You're not logged in. Connect Spotify or sign in with a local account to load playlists to shuffle.");
-    }
-
-    private string ExecuteShuffle(Playlist playlist, ShuffleRandomnessLevel randomnessLevel)
-    {
-        var originalItems = playlist.Tracks.Items.ToList();
-        var shuffledItems = PlaylistShuffler.Shuffle(originalItems, randomnessLevel);
-
-        var originalPositions = originalItems
-            .Select((item, index) => new { item.Track.Id, index })
-            .ToDictionary(entry => entry.Id, entry => entry.index);
-
-        var movedCount = shuffledItems
-            .Select((item, index) => new { item.Track.Id, index })
-            .Count(entry => originalPositions.TryGetValue(entry.Id, out var originalIndex) && originalIndex != entry.index);
-
-        playlist.Tracks.Items = shuffledItems;
-        playlist.LastShuffled = DateTime.UtcNow;
-
-        _logger.LogInformation(
-            "Local shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}, randomness: {Randomness}.",
-            playlist.Id, playlist.Name, shuffledItems.Count, movedCount, randomnessLevel);
-
-        return $"Shuffle completed for '{playlist.Name}'. " +
-               $"Tracks: {shuffledItems.Count}, moved: {movedCount}, randomness: {randomnessLevel}.";
     }
 
     private sealed record PlaylistSource(

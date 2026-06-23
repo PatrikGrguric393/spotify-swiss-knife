@@ -49,21 +49,12 @@
         var SEARCH_DEBOUNCE = 300;
         var MIN_QUERY = 2;
 
+        var escapeHtml = window.BulkGrid.escapeHtml;
+        var coverCell = window.BulkGrid.coverCell;
+
         // ---------- Helpers ----------
         function countOf(map) {
             return Object.keys(map).length;
-        }
-
-        function escapeHtml(value) {
-            if (value === null || value === undefined) {
-                return '';
-            }
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
         }
 
         function formatDate(value) {
@@ -72,14 +63,6 @@
             }
             var formatted = window.DateFmt.formatDateOnly(value);
             return formatted === value ? escapeHtml(value) : formatted;
-        }
-
-        function coverCell(imageUrl) {
-            if (imageUrl) {
-                return '<img class="bulk-save-cover" src="' + escapeHtml(imageUrl) +
-                    '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'bulk-save-cover--placeholder\');this.parentNode.textContent=\'\\u266B\';">';
-            }
-            return '<span class="bulk-save-cover bulk-save-cover--placeholder" aria-hidden="true">♫</span>';
         }
 
         // ---------- Album rendering ----------

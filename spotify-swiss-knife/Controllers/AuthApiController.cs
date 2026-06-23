@@ -7,6 +7,11 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Issues and manages JWT bearer tokens for the CRUD API under /api/auth. A local account
+// exchanges its credentials for an access token plus a rotating refresh token (token), trades a
+// refresh token for a new pair (refresh), or invalidates one (revoke). These are the tokens the
+// api/* controllers authenticate with (see ApiControllerBase). This is separate from the
+// interactive cookie sign-in handled by AccountController.
 [ApiController]
 [Route("api/auth")]
 [Produces("application/json")]

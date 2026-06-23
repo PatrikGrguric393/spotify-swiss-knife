@@ -25,7 +25,6 @@
                 <thead>
                     <tr>
                         <th>Playlist</th>
-                        <th>Randomness</th>
                         <th>Schedule</th>
                         <th>Status</th>
                         <th>Next run</th>
@@ -38,7 +37,6 @@
                 {
                     <tr>
                         <td data-label="Playlist">@schedule.PlaylistName</td>
-                        <td data-label="Randomness">@schedule.RandomnessLevel</td>
                         <td data-label="Schedule"><code>@schedule.CronExpression</code></td>
                         <td data-label="Status">
                             @if (schedule.IsEnabled)

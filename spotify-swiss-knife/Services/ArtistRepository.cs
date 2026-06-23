@@ -4,6 +4,9 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
+// Data access for artists: synchronous CRUD over the EF Core context, eager-loading each
+// artist's albums and tracks. Artists are soft-deleted (a DeletedAt timestamp) rather than
+// removed, so reads filter out deleted rows unless `includeDeleted` is set. Scoped per request.
 public class ArtistRepository
 {
     private readonly SpotifyDbContext _context;
@@ -41,7 +44,7 @@ public class ArtistRepository
 
     public void SoftDelete(string id)
     {
-        var artist = _context.Artists.FirstOrDefault(a => a.Id == id);
+        var artist = _context.Artists.FirstOrDefault(existing => existing.Id == id);
         if (artist is null) return;
         artist.DeletedAt = DateTime.UtcNow;
         _context.SaveChanges();
@@ -65,10 +68,10 @@ public class ArtistRepository
         var normalized = name.Trim().ToLowerInvariant();
 
         var query = _context.Artists.AsQueryable()
-            .Where(a => a.DeletedAt == null && a.Name != null);
+            .Where(artist => artist.DeletedAt == null && artist.Name != null);
         if (!string.IsNullOrWhiteSpace(excludeId))
-            query = query.Where(a => a.Id != excludeId);
+            query = query.Where(artist => artist.Id != excludeId);
 
-        return query.Any(a => a.Name.Trim().ToLower() == normalized);
+        return query.Any(artist => artist.Name!.Trim().ToLower() == normalized);
     }
 }

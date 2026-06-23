@@ -253,11 +253,42 @@
         });
     }
 
+    // Shared date-range initialization for library list pages (albums/playlists).
+    // Runs the standard self-init dpc wiring and the clear-button reset, which
+    // were previously duplicated identically apart from element id prefixes.
+    function initDateRange(onSelect, ids) {
+        window.Dpc.selfInit = true;
+        initDpcWrappers(onSelect);
+        document.querySelectorAll('.dpc').forEach(function(el) {
+            buildCalendar(el, onSelect);
+        });
+
+        var clearBtn = document.getElementById(ids.clearBtnId);
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                var fromHidden = document.getElementById(ids.fromHiddenId);
+                var toHidden = document.getElementById(ids.toHiddenId);
+                if (fromHidden) fromHidden.value = '';
+                if (toHidden) toHidden.value = '';
+                var trigFrom = document.getElementById(ids.triggerFromId);
+                var trigTo = document.getElementById(ids.triggerToId);
+                if (trigFrom) trigFrom.textContent = 'From: —';
+                if (trigTo) trigTo.textContent = 'To: —';
+                document.querySelectorAll('.dpc').forEach(function(el) {
+                    if (el._state) renderCalendar(el, el._state, onSelect);
+                });
+                if (ids.timerCtx) clearTimeout(ids.timerCtx.timer);
+                if (typeof onSelect === 'function') onSelect();
+            });
+        }
+    }
+
     window.Dpc = {
         buildCalendar: buildCalendar,
         renderCalendar: renderCalendar,
         updateTriggerLabel: updateTriggerLabel,
         initDpcWrappers: initDpcWrappers,
+        initDateRange: initDateRange,
         triggerFmt: triggerFmt,
         selfInit: false
     };

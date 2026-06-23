@@ -46,7 +46,7 @@
                                    aria-label="Search albums on Spotify"
                                    aria-controls="albumTableBody" />
                             <button type="button" class="search-clear-btn" id="albumSearchClear" hidden aria-label="Clear search">
-                                <svg aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                             </button>
                         </div>
                         <span class="search-status bulk-save-search-status" id="albumSearchStatus" aria-live="polite"></span>
@@ -87,7 +87,7 @@
                                    aria-label="Search your playlists"
                                    aria-controls="playlistTableBody" />
                             <button type="button" class="search-clear-btn" id="playlistSearchClear" hidden aria-label="Clear search">
-                                <svg aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                             </button>
                         </div>
                         <span class="search-status bulk-save-search-status" id="playlistSearchStatus" aria-live="polite"></span>
@@ -146,6 +146,7 @@
 @section Scripts {
     @if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
+        <script src="~/js/bulk-grid-utils.js" asp-append-version="true"></script>
         <script src="~/js/bulk-album-save.js" asp-append-version="true"></script>
     }
 }

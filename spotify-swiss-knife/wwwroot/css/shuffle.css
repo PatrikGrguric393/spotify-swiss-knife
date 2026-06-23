@@ -1,0 +1,149 @@
+/* Shuffle page-specific styles.
+   Reuses .bulk-save-* class names for the playlist panel since the HTML
+   structure is identical to the bulk-album-save playlist panel.
+   Global shuffle primitives (.shuffle-submit, .shuffle-spinner, etc.)
+   live in site.css; this file only adds the single-column layout and the
+   taller table max-height appropriate for a dedicated full-width panel. */
+
+/* ---- Page layout ---- */
+/* NOTE: .shuffle-page and .shuffle-last-run (below) intentionally override the
+   site.css base rules; do not remove them or shuffle-page rendering changes. */
+.shuffle-page {
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* ---- Full-width playlist panel wrapper ---- */
+.shuffle-playlist-panel-wrap {
+    width: 100%;
+}
+
+.shuffle-playlist-panel {
+    border: 1px solid #0f0;
+    background-color: #030303;
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+    min-width: 0;
+    width: 100%;
+}
+
+/* ---- Taller scrollable table (6 rows) ---- */
+.shuffle-table-wrap {
+    margin-top: 0;
+    position: relative;
+    max-height: calc(6 * 4.2rem + 2.4rem);
+    overflow-y: auto;
+    overflow-x: auto;
+    scrollbar-color: #0f0 #050505;
+    scrollbar-width: thin;
+}
+
+.shuffle-table-wrap::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+.shuffle-table-wrap::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+.shuffle-table-wrap::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 999px;
+}
+
+/* Sticky header within scrollable table */
+.shuffle-playlist-panel .bulk-save-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* ---- Submit / status area ---- */
+.shuffle-actions {
+    display: grid;
+    justify-items: start;
+    gap: 0.5rem;
+}
+
+.shuffle-actions .shuffle-submit {
+    font-size: 1rem;
+    padding: 0.6rem 1.4rem;
+}
+
+.shuffle-actions .shuffle-status {
+    min-height: 1.4rem;
+}
+
+.shuffle-actions .shuffle-status.is-error {
+    color: #ffc2c2;
+}
+
+/* ---- Last-run timestamp ---- */
+.shuffle-last-run {
+    color: #6fbf6f;
+    font-size: 0.9rem;
+}
+
+.shuffle-last-run[hidden] {
+    display: none;
+}
+
+/* ---- Narrow-screen responsive overrides ---- */
+@media (max-width: 768px) {
+    .shuffle-table-wrap {
+        max-height: 22rem;
+        border-left: 1px solid #0f0;
+        border-right: 1px solid #0f0;
+        background-color: #040404;
+        overflow-x: clip;
+        padding: 0.5rem;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table tbody tr {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 0 0.6rem;
+        padding: 0.4rem 0.5rem;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table td[data-label="Cover"] {
+        grid-column: 1;
+        grid-row: 1;
+        display: block;
+        width: auto;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table td[data-label="Name"] {
+        grid-column: 2;
+        grid-row: 1;
+        display: block;
+        width: 100%;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table td[data-label="Tracks"] {
+        grid-column: 1 / -1;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table td[data-label="Cover"]::before,
+    .shuffle-playlist-panel .bulk-save-table td[data-label="Name"]::before {
+        display: none;
+    }
+
+    .shuffle-playlist-panel .bulk-save-cover {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .shuffle-playlist-panel .bulk-save-table td {
+        padding: 0.25rem 0;
+    }
+
+    .shuffle-page h1 {
+        font-size: 1.55rem;
+    }
+}

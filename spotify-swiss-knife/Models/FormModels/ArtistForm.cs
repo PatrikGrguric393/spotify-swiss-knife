@@ -2,14 +2,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace spotify_swiss_knife.Models.FormModels;
 
+/// <summary>
+/// Shared, validated fields for the MVC artist create/edit forms, backing
+/// <see cref="ArtistCreateForm"/> and <see cref="ArtistEditForm"/>.
+/// </summary>
 public abstract class ArtistForm
 {
-	[Required(ErrorMessage = "Artist name is required")]
-	[StringLength(300, MinimumLength = 1, ErrorMessage = "Artist name must be between 1 and 300 characters")]
-	[Display(Name = "Artist Name")]
-	public string Name { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Artist name is required")]
+    [StringLength(300, MinimumLength = 1, ErrorMessage = "Artist name must be between 1 and 300 characters")]
+    [Display(Name = "Artist Name")]
+    public string Name { get; set; } = string.Empty;
 
-	[Display(Name = "Spotify URL")]
-	[Url(ErrorMessage = "Please enter a valid URL")]
-	public string? SpotifyUrl { get; set; }
+    [Display(Name = "Spotify URL")]
+    [Url(ErrorMessage = "Please enter a valid URL")]
+    public string? SpotifyUrl { get; set; }
 }

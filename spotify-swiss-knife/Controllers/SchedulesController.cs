@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
@@ -10,21 +8,22 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Manages a Spotify user's recurring "scheduled shuffles": cron-driven jobs that re-shuffle a
+// chosen playlist on a schedule. Persists schedules to the database; the actual execution is
+// driven by the background ShuffleSchedulerService. Requires a live Spotify connection.
 [Route("schedules")]
 [RequireSpotifyAuth]
-public class SchedulesController : Controller
+public class SchedulesController : SpotifyControllerBase
 {
     private readonly SpotifyDbContext _db;
-    private readonly SpotifyAuthService _spotifyAuth;
     private readonly ILogger<SchedulesController> _logger;
 
     public SchedulesController(
         SpotifyDbContext db,
         SpotifyAuthService spotifyAuth,
-        ILogger<SchedulesController> logger)
+        ILogger<SchedulesController> logger) : base(spotifyAuth)
     {
         _db = db;
-        _spotifyAuth = spotifyAuth;
         _logger = logger;
     }
 
@@ -50,7 +49,7 @@ public class SchedulesController : Controller
         if (userId is null || accessToken is null)
             return RedirectToLogin();
 
-        var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+        var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
         ViewBag.Playlists = playlists ?? [];
         return View(new CreateScheduleForm());
     }
@@ -65,7 +64,7 @@ public class SchedulesController : Controller
 
         if (!ModelState.IsValid)
         {
-            var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+            var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
             ViewBag.Playlists = playlists ?? [];
             return View(form);
         }
@@ -75,7 +74,7 @@ public class SchedulesController : Controller
         if (nextRun is null)
         {
             ModelState.AddModelError(string.Empty, "Could not compute the next run time. Please check your schedule settings.");
-            var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+            var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
             ViewBag.Playlists = playlists ?? [];
             return View(form);
         }
@@ -85,7 +84,6 @@ public class SchedulesController : Controller
             UserId = userId,
             PlaylistId = form.PlaylistId,
             PlaylistName = form.PlaylistName,
-            RandomnessLevel = form.RandomnessLevel,
             CronExpression = cron,
             IsEnabled = true,
             NextRunAt = nextRun,
@@ -146,19 +144,6 @@ public class SchedulesController : Controller
             schedule.Id, userId, schedule.PlaylistId);
 
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task<string?> GetSpotifyUserIdAsync() =>
-        (await GetSpotifyCredentialsAsync()).UserId;
-
-    private async Task<(string? UserId, string? AccessToken)> GetSpotifyCredentialsAsync()
-    {
-        var auth = await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
-        if (!auth.Succeeded)
-            return (null, null);
-        var userId = auth.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-        var accessToken = auth.Principal?.FindFirstValue("access_token");
-        return (userId, accessToken);
     }
 
     private IActionResult RedirectToLogin() =>

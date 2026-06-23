@@ -7,18 +7,21 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// JSON CRUD API for the local library's tracks (JWT-authenticated; see ApiControllerBase).
+// GETs are anonymous; writes require Admin/Editor and deletes require Admin. The server-rendered
+// counterpart is TracksController.
 [ApiController]
 [Route("api/tracks")]
 [Produces("application/json")]
 public class TracksApiController : ApiControllerBase
 {
     private readonly TrackRepository _trackRepository;
-    private readonly SpotifyDbContext _context;
+    private readonly SpotifyDbContext _db;
 
-    public TracksApiController(TrackRepository trackRepository, SpotifyDbContext context)
+    public TracksApiController(TrackRepository trackRepository, SpotifyDbContext db)
     {
         _trackRepository = trackRepository;
-        _context = context;
+        _db = db;
     }
 
     [AllowAnonymous]
@@ -26,17 +29,7 @@ public class TracksApiController : ApiControllerBase
     [ProducesResponseType(typeof(IEnumerable<TrackListDto>), StatusCodes.Status200OK)]
     public ActionResult<IEnumerable<TrackListDto>> GetAll([FromQuery] string? q)
     {
-        var tracks = _trackRepository.GetAll();
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var term = q.Trim();
-            tracks = tracks
-                .Where(t => t.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
-                            || t.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
+        var tracks = ApplySearchFilter(_trackRepository.GetAll(), q, t => t.Id, t => t.Name);
         return Ok(tracks.OrderBy(t => t.Name).Select(TrackListDto.FromEntity));
     }
 
@@ -67,7 +60,7 @@ public class TracksApiController : ApiControllerBase
             return ValidationProblem(ModelState);
         }
 
-        if (dto.AlbumId is not null && !_context.Albums.Any(a => a.Id == dto.AlbumId))
+        if (dto.AlbumId is not null && !_db.Albums.Any(a => a.Id == dto.AlbumId))
             return NotFound(new { message = $"Album '{dto.AlbumId}' not found." });
 
         var track = new Track
@@ -84,15 +77,15 @@ public class TracksApiController : ApiControllerBase
 
         if (dto.ArtistIds.Count > 0)
         {
-            var artists = _context.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
             foreach (var artist in artists) track.Artists.Add(artist);
         }
 
         if (dto.AlbumId is not null)
         {
-            var album = _context.Albums.Find(dto.AlbumId);
+            var album = _db.Albums.Find(dto.AlbumId);
             if (album is not null)
-                album.TotalTracks = _context.Tracks.Count(t => t.AlbumId == dto.AlbumId) + 1;
+                album.TotalTracks = _db.Tracks.Count(t => t.AlbumId == dto.AlbumId) + 1;
         }
 
         _trackRepository.Add(track);
@@ -119,7 +112,7 @@ public class TracksApiController : ApiControllerBase
             return ValidationProblem(ModelState);
         }
 
-        if (dto.AlbumId is not null && !_context.Albums.Any(a => a.Id == dto.AlbumId))
+        if (dto.AlbumId is not null && !_db.Albums.Any(a => a.Id == dto.AlbumId))
             return NotFound(new { message = $"Album '{dto.AlbumId}' not found." });
 
         var oldAlbumId = track.AlbumId;
@@ -136,7 +129,7 @@ public class TracksApiController : ApiControllerBase
         track.Artists.Clear();
         if (dto.ArtistIds.Count > 0)
         {
-            var artists = _context.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
             foreach (var artist in artists) track.Artists.Add(artist);
         }
 
@@ -144,19 +137,19 @@ public class TracksApiController : ApiControllerBase
         {
             if (oldAlbumId is not null)
             {
-                var oldAlbum = _context.Albums.Find(oldAlbumId);
+                var oldAlbum = _db.Albums.Find(oldAlbumId);
                 if (oldAlbum is not null)
-                    oldAlbum.TotalTracks = _context.Tracks.Count(t => t.AlbumId == oldAlbumId && t.Id != id);
+                    oldAlbum.TotalTracks = _db.Tracks.Count(t => t.AlbumId == oldAlbumId && t.Id != id);
             }
             if (dto.AlbumId is not null)
             {
-                var newAlbum = _context.Albums.Find(dto.AlbumId);
+                var newAlbum = _db.Albums.Find(dto.AlbumId);
                 if (newAlbum is not null)
-                    newAlbum.TotalTracks = _context.Tracks.Count(t => t.AlbumId == dto.AlbumId) + 1;
+                    newAlbum.TotalTracks = _db.Tracks.Count(t => t.AlbumId == dto.AlbumId) + 1;
             }
         }
 
-        _context.SaveChanges();
+        _db.SaveChanges();
 
         var updated = _trackRepository.GetById(id) ?? track;
         return Ok(TrackDetailDto.FromEntity(updated));

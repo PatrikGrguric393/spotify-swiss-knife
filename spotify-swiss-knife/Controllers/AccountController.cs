@@ -10,6 +10,10 @@ using spotify_swiss_knife.Models.FormModels;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Local (ASP.NET Identity) account management under /account: register, login, logout, and the
+// Admin-only user administration screens (list, edit role, delete). Local accounts are mutually
+// exclusive with a Spotify connection, so the auth actions refuse to proceed while Spotify is
+// connected. Spotify sign-in is handled separately by SpotifyAuthController.
 [Route("account")]
 public class AccountController : Controller
 {

@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Full playlist projection for the detail view; tracks are ordered by their stored
+/// <c>SortOrder</c>. Built via <see cref="FromEntity"/>.
+/// </summary>
 public class PlaylistDetailDto
 {
     public string Id { get; set; } = string.Empty;

@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// View model for the bulk album-save page: the user's playlists to pick from, or an error
+/// to show instead of the picker.
+/// </summary>
 public sealed class BulkAlbumSavePage
 {
     public List<Playlist> Playlists { get; set; } = [];

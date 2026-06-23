@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
@@ -7,40 +6,30 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Lets a Spotify-connected user pick albums and bulk-add every track from them to one or more
+// of their own playlists. All actions require a live Spotify connection (see RequireSpotifyAuth)
+// and operate on the user's live Spotify account, not the local library.
 [Route("bulk-album-save")]
 [RequireSpotifyAuth]
-public class BulkAlbumSaveController : Controller
+public class BulkAlbumSaveController : SpotifyControllerBase
 {
-    private readonly SpotifyAuthService _spotifyAuth;
-
-    public BulkAlbumSaveController(SpotifyAuthService spotifyAuth)
+    public BulkAlbumSaveController(SpotifyAuthService spotifyAuth) : base(spotifyAuth)
     {
-        _spotifyAuth = spotifyAuth;
     }
 
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
-        var accessToken = await GetAccessTokenAsync();
+        var accessToken = await GetSpotifyAccessTokenAsync();
         if (accessToken is null)
-            return View(new BulkAlbumSavePage { ErrorMessage = MissingTokenMessage });
+            return View(new BulkAlbumSavePage { ErrorMessage = MissingAccessTokenMessage });
 
-        var playlists = await _spotifyAuth.GetUserPlaylistsAsync(accessToken);
+        var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
         if (playlists is null)
-        {
-            return View(new BulkAlbumSavePage
-            {
-                ErrorMessage = "We couldn't load your Spotify playlists. Your session may have expired or " +
-                    "lacks the required permission — please disconnect and reconnect Spotify."
-            });
-        }
+            return View(new BulkAlbumSavePage { ErrorMessage = PlaylistsLoadFailedMessage });
 
-        var profile = await _spotifyAuth.GetUserProfileAsync(accessToken);
-        var editablePlaylists = profile is not null
-            ? playlists.Where(p => p.Owner.Id == profile.Id).ToList()
-            : playlists;
-
-        return View(new BulkAlbumSavePage { Playlists = editablePlaylists });
+        var profile = await SpotifyAuth.GetUserProfileAsync(accessToken);
+        return View(new BulkAlbumSavePage { Playlists = FilterToOwnedPlaylists(playlists, profile) });
     }
 
     [HttpGet("search-albums")]
@@ -50,11 +39,11 @@ public class BulkAlbumSaveController : Controller
         if (query.Length < 2)
             return Json(Array.Empty<object>());
 
-        var accessToken = await GetAccessTokenAsync();
+        var accessToken = await GetSpotifyAccessTokenAsync();
         if (accessToken is null)
             return Json(Array.Empty<object>());
 
-        var albums = await _spotifyAuth.SearchAlbumsAsync(accessToken, query);
+        var albums = await SpotifyAuth.SearchAlbumsAsync(accessToken, query);
         if (albums is null)
             return Json(Array.Empty<object>());
 
@@ -77,11 +66,11 @@ public class BulkAlbumSaveController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Confirm([FromForm] BulkAlbumSaveForm input)
     {
-        var accessToken = await GetAccessTokenAsync();
+        var accessToken = await GetSpotifyAccessTokenAsync();
         if (accessToken is null)
-            return Json(new BulkAddJsonResult(false, MissingTokenMessage));
+            return Json(new BulkAddJsonResult(false, MissingAccessTokenMessage));
 
-        var result = await _spotifyAuth.BulkSaveAlbumsToPlaylistsAsync(
+        var result = await SpotifyAuth.BulkSaveAlbumsToPlaylistsAsync(
             accessToken, input.AlbumIds, input.PlaylistIds);
 
         if (!result.Succeeded)
@@ -94,16 +83,6 @@ public class BulkAlbumSaveController : Controller
 
         return Json(new BulkAddJsonResult(true, message));
     }
-
-    private async Task<string?> GetAccessTokenAsync()
-    {
-        var auth = await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme);
-        var token = auth.Principal?.FindFirst("access_token")?.Value;
-        return string.IsNullOrEmpty(token) ? null : token;
-    }
-
-    private const string MissingTokenMessage =
-        "Your Spotify connection is missing an access token. Please disconnect and reconnect Spotify.";
 
     private sealed record BulkAddJsonResult(bool Success, string Message);
 }

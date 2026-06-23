@@ -1,5 +1,10 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Full album projection for the detail view, including its artists and tracks. Note
+/// <c>TotalTracks</c> reflects the loaded track set (<c>TrackList.Count</c>), unlike
+/// <see cref="AlbumListDto"/> which uses the album's stored count.
+/// </summary>
 public class AlbumDetailDto
 {
     public string Id { get; set; } = string.Empty;

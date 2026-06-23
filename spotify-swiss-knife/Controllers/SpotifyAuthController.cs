@@ -1,11 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Drives the Spotify OAuth authorization-code flow under /auth: it sends the user to Spotify
+// (login), handles the redirect back and validates the anti-forgery state (callback), shows a
+// confirmation step (confirm), then signs the user in under the dedicated SpotifyConnect cookie
+// scheme and persists their tokens (ConfirmPost). A signed-in local account blocks connecting
+// Spotify, since the two are mutually exclusive. Logout disconnects Spotify.
 [Route("auth")]
 public class SpotifyAuthController : Controller
 {

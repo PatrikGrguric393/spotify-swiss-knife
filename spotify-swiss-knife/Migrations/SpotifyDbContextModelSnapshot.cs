@@ -681,9 +681,6 @@ namespace spotify_swiss_knife.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("RandomnessLevel")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1350,102 +1347,10 @@ namespace spotify_swiss_knife.Migrations
                                 });
                         });
 
-                    b.OwnsMany("spotify_swiss_knife.Models.Image", "Images", b1 =>
-                        {
-                            b1.Property<string>("TrackId")
-                                .HasColumnType("text");
-
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
-
-                            b1.Property<int?>("Height")
-                                .HasColumnType("integer")
-                                .HasAnnotation("Relational:JsonPropertyName", "height");
-
-                            b1.Property<string>("Url")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasAnnotation("Relational:JsonPropertyName", "url");
-
-                            b1.Property<int?>("Width")
-                                .HasColumnType("integer")
-                                .HasAnnotation("Relational:JsonPropertyName", "width");
-
-                            b1.HasKey("TrackId", "Id");
-
-                            b1.ToTable("TrackImages", (string)null);
-
-                            b1.HasAnnotation("Relational:JsonPropertyName", "images");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TrackId");
-
-                            b1.HasData(
-                                new
-                                {
-                                    TrackId = "track-midnight-circuit",
-                                    Id = 1,
-                                    Height = 640,
-                                    Url = "https://images.example.com/tracks/midnight-circuit-640.jpg",
-                                    Width = 640
-                                },
-                                new
-                                {
-                                    TrackId = "track-midnight-circuit",
-                                    Id = 2,
-                                    Height = 300,
-                                    Url = "https://images.example.com/tracks/midnight-circuit-300.jpg",
-                                    Width = 300
-                                },
-                                new
-                                {
-                                    TrackId = "track-gravity-bloom",
-                                    Id = 1,
-                                    Height = 640,
-                                    Url = "https://images.example.com/tracks/gravity-bloom.jpg",
-                                    Width = 640
-                                },
-                                new
-                                {
-                                    TrackId = "track-river-in-binary",
-                                    Id = 1,
-                                    Url = "https://images.example.com/tracks/river-in-binary.jpg"
-                                },
-                                new
-                                {
-                                    TrackId = "track-static-sunrise",
-                                    Id = 1,
-                                    Height = 512,
-                                    Url = "https://images.example.com/tracks/static-sunrise.jpg",
-                                    Width = 512
-                                },
-                                new
-                                {
-                                    TrackId = "track-solar-echo",
-                                    Id = 1,
-                                    Height = 640,
-                                    Url = "https://images.example.com/tracks/solar-echo.jpg",
-                                    Width = 640
-                                },
-                                new
-                                {
-                                    TrackId = "track-solar-echo",
-                                    Id = 2,
-                                    Height = 300,
-                                    Url = "https://images.example.com/tracks/solar-echo-square.jpg",
-                                    Width = 300
-                                });
-                        });
-
                     b.Navigation("Album");
 
                     b.Navigation("ExternalUrls")
                         .IsRequired();
-
-                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("spotify_swiss_knife.Models.UserFile", b =>

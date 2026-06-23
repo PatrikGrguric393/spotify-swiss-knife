@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Full track projection for the detail view, including its album and artists.
+/// Built via <see cref="FromEntity"/>.
+/// </summary>
 public class TrackDetailDto
 {
     public string Id { get; set; } = string.Empty;

@@ -2,6 +2,10 @@ using spotify_swiss_knife.Models.FormModels;
 
 namespace spotify_swiss_knife.Models;
 
+/// <summary>
+/// View model for the manual shuffle page: the playlists to choose from, the submitted form,
+/// and feedback (status, error, last-shuffled time). Build it with <see cref="Create"/>.
+/// </summary>
 public class ShufflePlaylistPage
 {
     public List<Playlist> Playlists { get; set; } = [];

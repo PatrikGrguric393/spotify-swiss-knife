@@ -21,17 +21,6 @@
         return m + ':' + String(s % 60).padStart(2, '0');
     }
 
-    function makeStatusRow(colspan, text) {
-        var tr = document.createElement('tr');
-        var td = document.createElement('td');
-        td.setAttribute('colspan', colspan);
-        td.style.padding = '0.6rem 0.75rem';
-        td.style.color = '#b6ffb6';
-        td.textContent = text;
-        tr.appendChild(td);
-        return tr;
-    }
-
     function renderRows(rows) {
         var tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
@@ -91,7 +80,7 @@
         });
 
         if (rows.length === 0) {
-            tbody.appendChild(makeStatusRow(4, 'No results'));
+            tbody.appendChild(window.LibraryList.makeStatusRow(4, 'No results'));
         }
     }
 
@@ -103,15 +92,17 @@
             if (status) status.textContent = 'Loading...';
             if (tbody) {
                 tbody.innerHTML = '';
-                tbody.appendChild(makeStatusRow(4, 'Loading...'));
+                tbody.appendChild(window.LibraryList.makeStatusRow(4, 'Loading...'));
             }
         }
 
         var params = new URLSearchParams();
         params.set('q', q || '');
 
-        var minSec = parseDuration(document.getElementById('songDurationMin') ? document.getElementById('songDurationMin').value : '');
-        var maxSec = parseDuration(document.getElementById('songDurationMax') ? document.getElementById('songDurationMax').value : '');
+        var minEl = document.getElementById('songDurationMin');
+        var maxEl = document.getElementById('songDurationMax');
+        var minSec = parseDuration(minEl ? minEl.value : '');
+        var maxSec = parseDuration(maxEl ? maxEl.value : '');
         if (minSec !== null) params.set('durationMin', minSec);
         if (maxSec !== null) params.set('durationMax', maxSec);
 
@@ -127,56 +118,38 @@
             .catch(function(err) { console.error('Song search failed', err); });
     }
 
-    function fetchSearch(q) { return doSearch(q, {}); }
-
     document.addEventListener('DOMContentLoaded', function() {
-        var searchInput = document.getElementById('songSearch');
-        if (!searchInput) return;
+        window.LibraryList.setup({
+            searchInputId: 'songSearch',
+            rowSelector: '.entity-table tbody tr[data-details-id]',
+            doSearch: doSearch,
+            onReady: function (ctx) {
+                var searchInput = ctx.input;
+                var durationMin = document.getElementById('songDurationMin');
+                var durationMax = document.getElementById('songDurationMax');
+                var durationClear = document.getElementById('songDurationClear');
 
-        var timer = 0;
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
-        });
-
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                var first = document.querySelector('.entity-table tbody tr[data-details-id]');
-                if (first && typeof first.focus === 'function') first.focus();
+                if (durationMin) {
+                    durationMin.addEventListener('input', function() {
+                        clearTimeout(ctx.timer);
+                        ctx.timer = setTimeout(function() { ctx.fetchSearch(searchInput.value); }, 250);
+                    });
+                }
+                if (durationMax) {
+                    durationMax.addEventListener('input', function() {
+                        clearTimeout(ctx.timer);
+                        ctx.timer = setTimeout(function() { ctx.fetchSearch(searchInput.value); }, 250);
+                    });
+                }
+                if (durationClear) {
+                    durationClear.addEventListener('click', function() {
+                        if (durationMin) durationMin.value = '';
+                        if (durationMax) durationMax.value = '';
+                        clearTimeout(ctx.timer);
+                        ctx.fetchSearch(searchInput.value);
+                    });
+                }
             }
         });
-
-        var durationMin = document.getElementById('songDurationMin');
-        var durationMax = document.getElementById('songDurationMax');
-        var durationClear = document.getElementById('songDurationClear');
-
-        if (durationMin) {
-            durationMin.addEventListener('input', function() {
-                clearTimeout(timer);
-                timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
-            });
-        }
-        if (durationMax) {
-            durationMax.addEventListener('input', function() {
-                clearTimeout(timer);
-                timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
-            });
-        }
-        if (durationClear) {
-            durationClear.addEventListener('click', function() {
-                if (durationMin) durationMin.value = '';
-                if (durationMax) durationMax.value = '';
-                clearTimeout(timer);
-                fetchSearch(searchInput.value);
-            });
-        }
-
-        fetchSearch('');
-
-        if (window.LibraryAutoRefresh) {
-            window.LibraryAutoRefresh.start(function() { return doSearch(searchInput.value, { quiet: true }); }, 5000);
-        }
     });
 })();

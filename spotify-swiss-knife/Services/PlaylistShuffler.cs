@@ -1,34 +1,20 @@
-using spotify_swiss_knife.Models;
-
 namespace spotify_swiss_knife.Services;
 
+// Produces a uniformly random ordering of a sequence. Kept separate from the Spotify
+// API code so the shuffle algorithm can be reasoned about and unit-tested on its own.
 public static class PlaylistShuffler
 {
-    public static List<T> Shuffle<T>(IReadOnlyList<T> items, ShuffleRandomnessLevel randomnessLevel)
+    // Returns a new list holding the same items in random order; the input is not mutated.
+    public static List<T> Shuffle<T>(IReadOnlyList<T> items)
     {
         var shuffled = items.ToList();
-
-        switch (randomnessLevel)
-        {
-            case ShuffleRandomnessLevel.Low:
-                for (var index = 0; index < shuffled.Count - 1; index += 2)
-                {
-                    (shuffled[index], shuffled[index + 1]) = (shuffled[index + 1], shuffled[index]);
-                }
-                break;
-            case ShuffleRandomnessLevel.High:
-                FisherYates(shuffled);
-                FisherYates(shuffled);
-                FisherYates(shuffled);
-                break;
-            default:
-                FisherYates(shuffled);
-                break;
-        }
-
+        FisherYates(shuffled);
         return shuffled;
     }
 
+    // Fisher-Yates: walk from the end, swapping each element with a uniformly chosen one at
+    // or before its position. A single pass already yields a uniform permutation, so there
+    // is no benefit to running it more than once. Random.Shared is thread-safe.
     private static void FisherYates<T>(List<T> list)
     {
         for (var index = list.Count - 1; index > 0; index--)

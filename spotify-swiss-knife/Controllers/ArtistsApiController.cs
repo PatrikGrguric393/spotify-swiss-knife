@@ -6,6 +6,10 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// JSON CRUD API for the local library's artists (JWT-authenticated; see ApiControllerBase).
+// GETs are anonymous; writes require Admin/Editor and deletes require Admin. Deletes are soft
+// (see ArtistRepository.SoftDelete), hence the includeDeleted query option on reads. The
+// server-rendered counterpart is ArtistsController.
 [ApiController]
 [Route("api/artists")]
 [Produces("application/json")]
@@ -25,16 +29,8 @@ public class ArtistsApiController : ApiControllerBase
         [FromQuery] string? q,
         [FromQuery] bool includeDeleted = false)
     {
-        var artists = _artistRepository.GetAll(includeDeleted);
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var term = q.Trim();
-            artists = artists
-                .Where(artist => artist.Id.Equals(term, StringComparison.OrdinalIgnoreCase)
-                                 || artist.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
+        var artists = ApplySearchFilter(
+            _artistRepository.GetAll(includeDeleted), q, artist => artist.Id, artist => artist.Name);
 
         var result = artists
             .OrderBy(artist => artist.Name)

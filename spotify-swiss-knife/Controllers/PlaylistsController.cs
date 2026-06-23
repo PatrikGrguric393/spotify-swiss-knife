@@ -6,6 +6,11 @@ using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Server-rendered CRUD for the local library's playlists, under /lib/playlists. Listing is
+// public; create/edit require an Admin or Editor local account and deletes are Admin-only. On
+// edit, the existing track order is preserved for retained tracks and newly added tracks are
+// appended (see EditPost). DenySpotifyUsers keeps Spotify-connected visitors out. The JSON
+// counterpart is PlaylistsApiController.
 [Route("lib")]
 [Authorize(Roles = "Admin,Editor")]
 [DenySpotifyUsers]
@@ -40,6 +45,13 @@ public class PlaylistsController : Controller
     {
         if (!ModelState.IsValid)
         {
+            PopulateTrackOptions(model.TrackIds);
+            return View("Create", model);
+        }
+
+        if (_playlistRepository.ExistsByName(model.Name))
+        {
+            ModelState.AddModelError("Name", $"A playlist named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
             return View("Create", model);
         }
@@ -100,6 +112,14 @@ public class PlaylistsController : Controller
 
         if (!ModelState.IsValid)
         {
+            PopulateTrackOptions(model.TrackIds);
+            return View("Edit", model);
+        }
+
+        // Use route id to exclude current playlist from duplicate check
+        if (_playlistRepository.ExistsByName(model.Name, id))
+        {
+            ModelState.AddModelError("Name", $"A playlist named '{model.Name.Trim()}' already exists.");
             PopulateTrackOptions(model.TrackIds);
             return View("Edit", model);
         }

@@ -4,6 +4,8 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
+// Data access for tracks: synchronous CRUD over the EF Core context, eager-loading the
+// album, artists, and images each track is shown with. Scoped per request.
 public class TrackRepository
 {
     private readonly SpotifyDbContext _context;
@@ -18,7 +20,6 @@ public class TrackRepository
         return _context.Tracks
             .Include(track => track.Album)
             .Include(track => track.Artists)
-            .Include(track => track.Images)
             .AsTracking()
             .ToList();
     }
@@ -28,7 +29,6 @@ public class TrackRepository
         return _context.Tracks
             .Include(track => track.Album)
             .Include(track => track.Artists)
-            .Include(track => track.Images)
             .FirstOrDefault(track => track.Id == id);
     }
 
@@ -42,6 +42,20 @@ public class TrackRepository
     {
         _context.Tracks.Update(track);
         _context.SaveChanges();
+    }
+
+    // Case-insensitive duplicate-name check, optionally excluding one track (used when editing
+    // so a track doesn't clash with itself). Mirrors AlbumRepository/ArtistRepository/PlaylistRepository.
+    public bool ExistsByName(string name, string? excludeId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+
+        var normalized = name.Trim().ToLowerInvariant();
+        var query = _context.Tracks.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(excludeId))
+            query = query.Where(track => track.Id != excludeId);
+
+        return query.Any(track => track.Name.Trim().ToLower() == normalized);
     }
 
     public void Delete(string id)

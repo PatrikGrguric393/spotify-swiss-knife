@@ -1,5 +1,10 @@
 namespace spotify_swiss_knife.Services;
 
+// Stores uploaded album-cover images on the local filesystem under "<storage>/album-covers".
+// The storage root comes from FileStorage:Path (absolute, or relative to the content root),
+// defaulting to an "uploads" folder. Files are saved under a generated GUID name to avoid
+// collisions and path-traversal from the original filename; only a known image allowlist is
+// accepted. Registered as a singleton — it holds only the resolved path, no per-request state.
 public class AlbumCoverStorage
 {
     private static readonly Dictionary<string, string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)

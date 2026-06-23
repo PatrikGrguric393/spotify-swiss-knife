@@ -1,142 +1,142 @@
 .form-control {
-	background: #000;
-	border: 2px solid #0f0;
-	color: #0f0;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
-	padding: 8px 12px;
-	width: 100%;
-	box-sizing: border-box;
-	transition: all 0.2s ease;
+    background: #000;
+    border: 2px solid #0f0;
+    color: #0f0;
+    font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', monospace;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .form-container {
-	max-width: 600px;
-	margin: 20px auto;
-	padding: 20px;
-	border: 2px solid #0f0;
-	border-radius: 4px;
-	background: rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 2px solid #0f0;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .form-container h2 {
-	color: #0f0;
-	margin-bottom: 20px;
+    color: #0f0;
+    margin-bottom: 20px;
 }
 
 .form-actions {
-	display: flex;
-	gap: 10px;
-	margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .btn {
-	/* Match the .entity-detail-trigger exactly for consistent sizing */
-	padding: 0.38rem 0.6rem;
-	line-height: 1.15;
-	font-size: 0.92rem;
-	border: 1px solid #0f0;
-	background: #000;
-	color: #0f0;
-	font-family: inherit;
-	cursor: pointer;
-	transition: background-color 0.12s ease, color 0.12s ease;
-	text-decoration: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.4rem;
-	margin: 0 0.5rem 0 0;
+    /* Match the .entity-detail-trigger exactly for consistent sizing */
+    padding: 0.38rem 0.6rem;
+    line-height: 1.15;
+    font-size: 0.92rem;
+    border: 1px solid #0f0;
+    background: #000;
+    color: #0f0;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 0 0.5rem 0 0;
 }
 
 .btn:hover {
-	background: #0f0;
-	color: #000;
+    background: #0f0;
+    color: #000;
 }
 
 .btn-primary {
-	flex: 1;
+    flex: 1;
 }
 
 .btn-secondary {
-	flex: 1;
-	border-color: #666;
-	color: #666;
+    flex: 1;
+    border-color: #666;
+    color: #666;
 }
 
 .btn-secondary:hover {
-	background: #666;
-	color: #fff;
+    background: #666;
+    color: #fff;
 }
 
 .form-control:focus {
-	outline: none;
-	border-color: #00ff00;
-	box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    outline: none;
+    border-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
 .form-control.field-error {
-	border-color: #ff0000;
-	box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
 }
 
 .form-control.field-error:focus {
-	border-color: #ff0000;
-	box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    border-color: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
 }
 
 .validation-error {
-	margin-top: 4px;
-	padding: 8px;
-	background: rgba(255, 0, 0, 0.1);
-	border-left: 3px solid #ff0000;
-	display: none;
+    margin-top: 4px;
+    padding: 8px;
+    background: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid #ff0000;
+    display: none;
 }
 
 .validation-error.show {
-	display: block;
-	animation: slideIn 0.2s ease;
+    display: block;
+    animation: slideIn 0.2s ease;
 }
 
 .validation-error-message {
-	color: #ff0000;
-	font-size: 0.9rem;
-	line-height: 1.4;
+    color: #ff0000;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 .validation-error-message + .validation-error-message {
-	margin-top: 4px;
+    margin-top: 4px;
 }
 
 .form-group {
-	margin-bottom: 16px;
+    margin-bottom: 16px;
 }
 
 .form-group label,
 .form-group-label {
-	color: #0f0;
-	font-weight: 500;
-	display: block;
-	margin-bottom: 6px;
-	font-size: 0.95rem;
+    color: #0f0;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
 }
 
 .form-group label.required::after,
 .form-group-label.required::after {
-	content: ' *';
-	color: #ff0000;
+    content: ' *';
+    color: #ff0000;
 }
 
 .validation-summary {
-	background: rgba(255, 0, 0, 0.1);
-	border: 2px solid #ff0000;
-	border-radius: 4px;
-	padding: 12px;
-	margin-bottom: 20px;
-	display: none;
+    background: rgba(255, 0, 0, 0.1);
+    border: 2px solid #ff0000;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 20px;
+    display: none;
 }
 
 .validation-summary.show {
-	display: block;
+    display: block;
 }
 
 /*
@@ -146,293 +146,293 @@
  * summary never renders as a stray red block.
  */
 .validation-summary.validation-summary-errors {
-	display: block;
+    display: block;
 }
 
 .validation-summary.validation-summary-valid {
-	display: none;
+    display: none;
 }
 
 /* MVC renders the model-level messages as a <ul><li>; match the list palette */
 .validation-summary ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .validation-summary li {
-	color: #ff0000;
-	font-size: 0.9rem;
-	padding: 4px 0 4px 16px;
-	margin: 0;
-	position: relative;
+    color: #ff0000;
+    font-size: 0.9rem;
+    padding: 4px 0 4px 16px;
+    margin: 0;
+    position: relative;
 }
 
 .validation-summary li::before {
-	content: '✕';
-	position: absolute;
-	left: 0;
-	color: #ff0000;
+    content: '✕';
+    position: absolute;
+    left: 0;
+    color: #ff0000;
 }
 
 .validation-summary-title {
-	color: #ff0000;
-	font-weight: bold;
-	margin-bottom: 8px;
+    color: #ff0000;
+    font-weight: bold;
+    margin-bottom: 8px;
 }
 
 .validation-summary-list {
-	list-style: none;
-	padding: 0;
-	margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .validation-summary-list li {
-	color: #ff0000;
-	font-size: 0.9rem;
-	padding: 4px 0;
-	padding-left: 16px;
-	position: relative;
+    color: #ff0000;
+    font-size: 0.9rem;
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
 }
 
 .validation-summary-list li::before {
-	content: '✕';
-	position: absolute;
-	left: 0;
-	color: #ff0000;
+    content: '✕';
+    position: absolute;
+    left: 0;
+    color: #ff0000;
 }
 
 .form-control.field-success {
-	border-color: #00ff00;
-	box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
+    border-color: #00ff00;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
 }
 
 @keyframes slideIn {
-	from {
-		opacity: 0;
-		transform: translateY(-4px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .form-control:disabled {
-	background: #0a0a0a;
-	border-color: #005500;
-	color: #005500;
-	cursor: not-allowed;
+    background: #0a0a0a;
+    border-color: #005500;
+    color: #005500;
+    cursor: not-allowed;
 }
 
 .dpc-wrapper--field {
-	display: block;
-	width: 100%;
+    display: block;
+    width: 100%;
 }
 
 .dpc-wrapper--field .dpc-trigger {
-	width: 100%;
-	min-width: 0;
-	text-align: left;
-	border-width: 2px;
-	padding: 8px 12px;
-	font-size: 1rem;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+    border-width: 2px;
+    padding: 8px 12px;
+    font-size: 1rem;
 }
 
 .dpc-wrapper--field.dpc-wrapper--error .dpc-trigger {
-	border-color: #ff0000;
-	box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
 }
 
 .dpc-wrapper--field .dpc-panel {
-	left: 0;
-	right: 0;
-	min-width: 0;
+    left: 0;
+    right: 0;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
-	.validation-error {
-		font-size: 0.85rem;
-		padding: 6px;
-	}
+    .validation-error {
+        font-size: 0.85rem;
+        padding: 6px;
+    }
 
-	.validation-error-message {
-		font-size: 0.8rem;
-	}
+    .validation-error-message {
+        font-size: 0.8rem;
+    }
 
-	.form-control {
-		padding: 6px 10px;
-	}
+    .form-control {
+        padding: 6px 10px;
+    }
 
-	/* Ensure .btn matches .entity-detail-trigger on mobile */
-	.btn {
-		width: 100%;
-		max-width: 12rem;
-		padding: 0.32rem 0.5rem;
-		font-size: 0.84rem;
-		margin: 0 0 0.5rem 0; /* stacked spacing */
-	}
+    /* Ensure .btn matches .entity-detail-trigger on mobile */
+    .btn {
+        width: 100%;
+        max-width: 12rem;
+        padding: 0.32rem 0.5rem;
+        font-size: 0.84rem;
+        margin: 0 0 0.5rem 0; /* stacked spacing */
+    }
 
-	/* When buttons are inline (e.g., actions row), restore left/right spacing
-	   by using gap on the container rather than margins on buttons */
-	.form-actions {
-		gap: 0.5rem;
-	}
+    /* When buttons are inline (e.g., actions row), restore left/right spacing
+       by using gap on the container rather than margins on buttons */
+    .form-actions {
+        gap: 0.5rem;
+    }
 
-	.dpc-wrapper--field .dpc-trigger {
-		padding: 6px 10px;
-	}
+    .dpc-wrapper--field .dpc-trigger {
+        padding: 6px 10px;
+    }
 }
 
 /* ---- Album cover upload (Create/Edit forms) ---- */
 .album-cover-help {
-	color: #7ab37a;
-	font-size: 0.85rem;
-	margin: 0 0 8px;
-	line-height: 1.4;
+    color: #7ab37a;
+    font-size: 0.85rem;
+    margin: 0 0 8px;
+    line-height: 1.4;
 }
 
 /* Model-binding carrier only. The .album-cover-dropzone owns all interaction;
    this input is populated via DataTransfer and must never render visible chrome. */
 .album-cover-input {
-	display: none;
+    display: none;
 }
 
 .album-cover-current,
 .album-cover-preview {
-	margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 .album-cover-current-caption {
-	display: block;
-	color: #7ab37a;
-	font-size: 0.8rem;
-	margin-top: 4px;
+    display: block;
+    color: #7ab37a;
+    font-size: 0.8rem;
+    margin-top: 4px;
 }
 
 .album-cover-thumb,
 .album-cover-preview img {
-	display: block;
-	width: 140px;
-	height: 140px;
-	object-fit: cover;
-	border: 2px solid #0f0;
-	background: #030303;
+    display: block;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border: 2px solid #0f0;
+    background: #030303;
 }
 
 .album-cover-preview img {
-	border-style: dashed;
+    border-style: dashed;
 }
 
 .album-cover-remove {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	color: #0f0;
-	font-weight: 500;
-	margin-bottom: 12px;
-	cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f0;
+    font-weight: 500;
+    margin-bottom: 12px;
+    cursor: pointer;
 }
 
 .album-cover-remove input {
-	width: auto;
-	margin: 0;
-	cursor: pointer;
+    width: auto;
+    margin: 0;
+    cursor: pointer;
 }
 
 /* ---- Album cover dropzone (single-file, non-uploading) ---- */
 .album-cover-dz-layout {
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
-	align-items: flex-start;
-	gap: 12px;
-	margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
 }
 
 .album-cover-dz-layout .album-cover-current,
 .album-cover-dz-layout .album-cover-preview {
-	margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 /* Override Dropzone's full-width defaults for the single-image cover tile */
 .album-cover-dropzone {
-	border: 1px solid #0f0;
-	border-radius: 0;
-	background: #000;
-	color: #0f0;
-	min-height: 140px;
-	width: 140px;
-	max-width: 100%;
-	padding: 1rem;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	text-align: center;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #0f0;
+    border-radius: 0;
+    background: #000;
+    color: #0f0;
+    min-height: 140px;
+    width: 140px;
+    max-width: 100%;
+    padding: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .album-cover-dropzone:hover,
 .album-cover-dropzone.dz-drag-hover {
-	border-color: #0ff;
-	box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
+    border-color: #0ff;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
 .album-cover-dropzone:focus-visible {
-	outline: 2px solid #83ffcf;
-	outline-offset: 1px;
-	box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
+    outline: 2px solid #83ffcf;
+    outline-offset: 1px;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
 }
 
 .album-cover-dropzone .dz-message {
-	margin: 0;
-	color: #0f0;
-	font-size: 0.875rem;
-	font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', 'Courier New', monospace;
-	line-height: 1.4;
+    margin: 0;
+    color: #0f0;
+    font-size: 0.875rem;
+    font-family: 'Cascadia Code', 'IBM Plex Mono', 'Source Code Pro', 'Courier New', monospace;
+    line-height: 1.4;
 }
 
 /* This is a staging control, not an uploader: hide all upload chrome */
 .album-cover-dropzone .dz-preview {
-	display: none;
+    display: none;
 }
 
 @media (max-width: 768px) {
-	.album-cover-dropzone {
-		width: 100%;
-		min-height: 120px;
-		font-size: 0.85rem;
-	}
+    .album-cover-dropzone {
+        width: 100%;
+        min-height: 120px;
+        font-size: 0.85rem;
+    }
 }
 
 /* ---- Album cover thumbnails in the library listing ---- */
 .album-row-name {
-	display: flex;
-	align-items: center;
-	gap: 0.65rem;
-	min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
 }
 
 .album-row-thumb {
-	flex: 0 0 auto;
-	width: 40px;
-	height: 40px;
-	object-fit: cover;
-	border: 1px solid #0f0;
-	background: #030303;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border: 1px solid #0f0;
+    background: #030303;
 }
 
 .album-row-thumb--placeholder {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	color: #4f8f4f;
-	font-size: 1.1rem;
-	line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #4f8f4f;
+    font-size: 1.1rem;
+    line-height: 1;
 }
 
 .album-row-title {
-	min-width: 0;
-	overflow-wrap: anywhere;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }

@@ -5,6 +5,11 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
+// Background worker that runs scheduled playlist shuffles. Once a minute it loads every enabled
+// schedule whose NextRunAt is due, shuffles its playlist using the owner's stored Spotify token,
+// then advances NextRunAt from the schedule's cron expression. Each run is isolated: a failing
+// schedule is logged and skipped without stopping the others, and NextRunAt is always advanced
+// (in a finally) so a persistent failure can't make the same schedule fire on every tick.
 public class ShuffleSchedulerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -64,7 +69,7 @@ public class ShuffleSchedulerService : BackgroundService
                 return;
             }
 
-            var result = await spotifyAuth.ShufflePlaylistAsync(accessToken, schedule.PlaylistId, schedule.RandomnessLevel);
+            var result = await spotifyAuth.ShufflePlaylistAsync(accessToken, schedule.PlaylistId);
 
             if (result.Succeeded)
             {

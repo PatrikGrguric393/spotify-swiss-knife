@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Lightweight album projection for list/grid views. Built from an <see cref="Album"/> entity
+/// via <see cref="FromEntity"/>; carries no nested artists or tracks.
+/// </summary>
 public class AlbumListDto
 {
     public string Id { get; set; } = string.Empty;

@@ -1,12 +1,7 @@
-using System.ComponentModel.DataAnnotations;
-using spotify_swiss_knife.Models;
-
 namespace spotify_swiss_knife.Models.FormModels;
 
+/// <summary>The set of playlist ids selected for an immediate (manual) shuffle.</summary>
 public class PlaylistShuffleForm
 {
-    [Required]
-    public string PlaylistId { get; set; } = string.Empty;
-
-    public ShuffleRandomnessLevel RandomnessLevel { get; set; } = ShuffleRandomnessLevel.Medium;
+    public List<string> PlaylistIds { get; set; } = [];
 }

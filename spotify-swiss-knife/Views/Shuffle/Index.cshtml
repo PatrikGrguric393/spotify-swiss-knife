@@ -1,12 +1,16 @@
 @model spotify_swiss_knife.Models.ShufflePlaylistPage
 
 @{
-    ViewData["Title"] = "Shuffle Playlist";
+    ViewData["Title"] = "Shuffle Playlists";
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/css/shuffle.css" asp-append-version="true">
 }
 
 <section class="library-page shuffle-page">
-    <h1>Shuffle Playlist</h1>
-    <p>Select a playlist, choose randomness, and start the shuffle immediately.</p>
+    <h1>Shuffle Playlists</h1>
+    <p>Pick one or more playlists and shuffle their tracks in place.</p>
 
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
@@ -17,130 +21,89 @@
     }
     else
     {
-        <section class="shuffle-panel" aria-labelledby="shuffleControlsTitle">
-            <h2 id="shuffleControlsTitle" class="shuffle-panel-title">Shuffle a playlist</h2>
+        <form id="shuffleForm"
+              class="shuffle-form"
+              action="@Url.Action("Index", "Shuffle")"
+              method="post">
+            @Html.AntiForgeryToken()
 
-            <form action="@Url.Action("Index", "Shuffle")" method="post" class="shuffle-form">
-                @Html.AntiForgeryToken()
-
-                <div class="shuffle-form-pair">
-                    <div class="shuffle-form-row">
-                        <label asp-for="Input.PlaylistId">Playlist</label>
-                        <select asp-for="Input.PlaylistId" class="shuffle-input" required>
-                            <option value="">Select playlist</option>
-                            @foreach (var playlist in Model.Playlists)
-                            {
-                                <option value="@playlist.Id">@playlist.Name (@playlist.Tracks.Total tracks)</option>
-                            }
-                        </select>
-                        <span class="shuffle-validation" asp-validation-for="Input.PlaylistId"></span>
+            <div class="shuffle-playlist-panel-wrap">
+                <section class="bulk-save-panel shuffle-playlist-panel" aria-labelledby="shufflePlaylistsTitle">
+                    <div class="bulk-save-panel-head">
+                        <h2 id="shufflePlaylistsTitle" class="shuffle-panel-title">Playlists</h2>
+                        <span class="bulk-save-count" id="shufflePlaylistCount" aria-live="polite">0 playlists selected</span>
                     </div>
 
-                    <div class="shuffle-form-row">
-                        <label asp-for="Input.RandomnessLevel">Randomness level</label>
-                        <select asp-for="Input.RandomnessLevel" class="shuffle-input">
-                            @foreach (var level in Enum.GetValues<spotify_swiss_knife.Models.ShuffleRandomnessLevel>())
-                            {
-                                <option value="@level">@level</option>
-                            }
-                        </select>
+                    <div class="search-box bulk-save-search">
+                        <label for="shufflePlaylistSearch" class="visually-hidden">Search your playlists</label>
+                        <div class="search-input-wrap">
+                            <input id="shufflePlaylistSearch"
+                                   type="search"
+                                   class="search-input"
+                                   placeholder="Search your playlists..."
+                                   autocomplete="off"
+                                   aria-label="Search your playlists"
+                                   aria-controls="shufflePlaylistTableBody" />
+                            <button type="button" class="search-clear-btn" id="shufflePlaylistSearchClear" hidden aria-label="Clear search">
+                                <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+                        <span class="search-status bulk-save-search-status" id="shufflePlaylistSearchStatus" aria-live="polite"></span>
                     </div>
-                </div>
 
-                <div class="shuffle-form-actions">
-                    <button type="submit" class="shuffle-submit">
-                        <span class="shuffle-spinner" aria-hidden="true"></span>
-                        <span class="shuffle-submit-label">Start shuffle</span>
-                    </button>
-                </div>
+                    <div class="table-wrap bulk-save-table-wrap shuffle-table-wrap">
+                        <table class="entity-table bulk-save-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Cover</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Tracks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shufflePlaylistTableBody">
+                            </tbody>
+                        </table>
+                        <p class="bulk-save-empty" id="shufflePlaylistEmpty">No playlists found.</p>
+                    </div>
+                </section>
+            </div>
 
-                <p class="shuffle-status" role="status" aria-live="polite" aria-atomic="true">No shuffle has been run yet.</p>
-
-                <p class="shuffle-last-run" hidden>
-                    Last shuffled:
-                    <time class="shuffle-time"></time>
+            <div class="shuffle-actions">
+                <button type="submit" class="shuffle-submit" id="shuffleSubmit" disabled>
+                    <span class="shuffle-spinner" aria-hidden="true"></span>
+                    <span class="shuffle-submit-label">Start shuffle</span>
+                </button>
+                <p class="shuffle-validation bulk-save-hint" id="shuffleHint">Select at least one playlist.</p>
+                <p class="shuffle-status" id="shuffleStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+                <p class="shuffle-last-run" id="shuffleLastRun" hidden>
+                    Last shuffled: <time class="shuffle-time" id="shuffleTime"></time>
                 </p>
+            </div>
 
-            </form>
-        </section>
+            <div id="shuffleHiddenInputs" hidden></div>
+        </form>
     }
-
 </section>
 
-@section Scripts {
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        window.DateFmt.localizePending();
-
-        document.querySelectorAll('.shuffle-form').forEach(function (form) {
-            var submit = form.querySelector('.shuffle-submit');
-            var label = form.querySelector('.shuffle-submit-label');
-            var status = form.querySelector('.shuffle-status');
-            var lastRun = form.querySelector('.shuffle-last-run');
-            var timeEl = form.querySelector('.shuffle-time');
-            var inFlight = false;
-
-            function setLoading(loading) {
-                if (submit) {
-                    submit.disabled = loading;
-                    if (loading) {
-                        submit.setAttribute('aria-busy', 'true');
-                        submit.classList.add('is-shuffling');
-                    } else {
-                        submit.removeAttribute('aria-busy');
-                        submit.classList.remove('is-shuffling');
-                    }
-                }
-                if (label) {
-                    label.textContent = loading ? 'Shuffling…' : 'Start shuffle';
-                }
-            }
-
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                if (inFlight) {
-                    return;
-                }
-                inFlight = true;
-
-                setLoading(true);
-                if (status) {
-                    status.textContent = 'Shuffling…';
-                }
-
-                fetch(form.action, { method: 'POST', body: new FormData(form) })
-                    .then(function (response) {
-                        return response.json();
-                    })
-                    .then(function (result) {
-                        if (result.success === true) {
-                            if (status) {
-                                status.textContent = result.message;
-                            }
-                            if (result.shuffledAtUtc && timeEl && lastRun) {
-                                timeEl.setAttribute('datetime', result.shuffledAtUtc);
-                                timeEl.setAttribute('data-utc', result.shuffledAtUtc);
-                                timeEl.textContent = window.DateFmt.formatTimestamp(result.shuffledAtUtc);
-                                lastRun.removeAttribute('hidden');
-                            }
-                        } else {
-                            if (status) {
-                                status.textContent = result.message;
-                            }
-                        }
-                    })
-                    .catch(function () {
-                        if (status) {
-                            status.textContent = 'Shuffle failed. Please try again.';
-                        }
-                    })
-                    .finally(function () {
-                        setLoading(false);
-                        inFlight = false;
-                    });
-            });
-        });
-    });
+@if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <script id="shufflePlaylistData" type="application/json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Playlists.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name ?? "",
+                tracks = p.Tracks?.Total ?? 0,
+                imageUrl = p.Images.FirstOrDefault()?.Url
+            }),
+            new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
     </script>
+}
+
+@section Scripts {
+    @if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <script src="~/js/bulk-grid-utils.js" asp-append-version="true"></script>
+        <script src="~/js/shuffle.js" asp-append-version="true"></script>
+    }
 }

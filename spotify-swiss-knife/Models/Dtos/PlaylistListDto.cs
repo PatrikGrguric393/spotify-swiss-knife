@@ -1,5 +1,9 @@
 namespace spotify_swiss_knife.Models.Dtos;
 
+/// <summary>
+/// Lightweight playlist projection for list views, with a track count instead of the tracks.
+/// Built via <see cref="FromEntity"/>.
+/// </summary>
 public class PlaylistListDto
 {
     public string Id { get; set; } = string.Empty;

@@ -91,21 +91,6 @@ public class SpotifyDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyCo
 				new { TrackId = "track-river-in-binary", Spotify = "https://open.spotify.com/track/track-river-in-binary" },
 				new { TrackId = "track-static-sunrise", Spotify = "https://open.spotify.com/track/track-static-sunrise" },
 				new { TrackId = "track-solar-echo", Spotify = "https://open.spotify.com/track/track-solar-echo" });
-			entity.OwnsMany(track => track.Images, image =>
-			{
-				image.WithOwner().HasForeignKey("TrackId");
-				image.Property<int>("Id");
-				image.HasKey("TrackId", "Id");
-				image.ToTable("TrackImages");
-				image.HasData(
-					new { TrackId = "track-midnight-circuit", Id = 1, Url = "https://images.example.com/tracks/midnight-circuit-640.jpg", Height = 640, Width = 640 },
-					new { TrackId = "track-midnight-circuit", Id = 2, Url = "https://images.example.com/tracks/midnight-circuit-300.jpg", Height = 300, Width = 300 },
-					new { TrackId = "track-gravity-bloom", Id = 1, Url = "https://images.example.com/tracks/gravity-bloom.jpg", Height = 640, Width = 640 },
-					new { TrackId = "track-river-in-binary", Id = 1, Url = "https://images.example.com/tracks/river-in-binary.jpg", Height = (int?)null, Width = (int?)null },
-					new { TrackId = "track-static-sunrise", Id = 1, Url = "https://images.example.com/tracks/static-sunrise.jpg", Height = 512, Width = 512 },
-					new { TrackId = "track-solar-echo", Id = 1, Url = "https://images.example.com/tracks/solar-echo.jpg", Height = 640, Width = 640 },
-					new { TrackId = "track-solar-echo", Id = 2, Url = "https://images.example.com/tracks/solar-echo-square.jpg", Height = 300, Width = 300 });
-			});
 		});
 
 		modelBuilder.Entity<Playlist>(entity =>

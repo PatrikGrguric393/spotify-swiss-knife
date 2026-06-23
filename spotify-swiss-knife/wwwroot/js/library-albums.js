@@ -1,15 +1,4 @@
 (function () {
-    function makeStatusRow(colspan, text) {
-        var tr = document.createElement('tr');
-        var td = document.createElement('td');
-        td.setAttribute('colspan', colspan);
-        td.style.padding = '0.6rem 0.75rem';
-        td.style.color = '#b6ffb6';
-        td.textContent = text;
-        tr.appendChild(td);
-        return tr;
-    }
-
     function renderRows(rows) {
         var tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
@@ -87,7 +76,7 @@
             tbody.appendChild(tr);
         });
         if (rows.length === 0) {
-            tbody.appendChild(makeStatusRow(4, 'No results'));
+            tbody.appendChild(window.LibraryList.makeStatusRow(4, 'No results'));
         }
     }
 
@@ -99,7 +88,7 @@
             if (status) status.textContent = 'Loading...';
             if (tbody) {
                 tbody.innerHTML = '';
-                tbody.appendChild(makeStatusRow(4, 'Loading...'));
+                tbody.appendChild(window.LibraryList.makeStatusRow(4, 'Loading...'));
             }
         }
 
@@ -125,61 +114,26 @@
             .catch(function(err) { console.error('Album search failed', err); });
     }
 
-    function fetchSearch(q) { return doSearch(q, {}); }
-
     document.addEventListener('DOMContentLoaded', function() {
         var table = document.querySelector('.entity-table');
         if (table) window.DateFmt.localizePending(table);
 
-        var searchInput = document.getElementById('albumSearch');
-        if (!searchInput) return;
-
-        var timer = 0;
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            timer = setTimeout(function() { fetchSearch(searchInput.value); }, 250);
-        });
-
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                var first = document.querySelector('.entity-table tbody tr[data-details-id]');
-                if (first && typeof first.focus === 'function') first.focus();
+        window.LibraryList.setup({
+            searchInputId: 'albumSearch',
+            rowSelector: '.entity-table tbody tr[data-details-id]',
+            doSearch: doSearch,
+            onReady: function (ctx) {
+                var searchInput = ctx.input;
+                var onDateSelect = function() { ctx.fetchSearch(searchInput.value); };
+                window.Dpc.initDateRange(onDateSelect, {
+                    fromHiddenId: 'albumDateFrom',
+                    toHiddenId: 'albumDateTo',
+                    clearBtnId: 'albumDateClear',
+                    triggerFromId: 'triggerFrom',
+                    triggerToId: 'triggerTo',
+                    timerCtx: ctx
+                });
             }
         });
-
-        var onDateSelect = function() { fetchSearch(searchInput.value); };
-
-        window.Dpc.selfInit = true;
-        window.Dpc.initDpcWrappers(onDateSelect);
-        document.querySelectorAll('.dpc').forEach(function(el) {
-            window.Dpc.buildCalendar(el, onDateSelect);
-        });
-
-        var clearBtn = document.getElementById('albumDateClear');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
-                var fromHidden = document.getElementById('albumDateFrom');
-                var toHidden = document.getElementById('albumDateTo');
-                if (fromHidden) fromHidden.value = '';
-                if (toHidden) toHidden.value = '';
-                var trigFrom = document.getElementById('triggerFrom');
-                var trigTo = document.getElementById('triggerTo');
-                if (trigFrom) trigFrom.textContent = 'From: —';
-                if (trigTo) trigTo.textContent = 'To: —';
-                document.querySelectorAll('.dpc').forEach(function(el) {
-                    if (el._state) window.Dpc.renderCalendar(el, el._state, onDateSelect);
-                });
-                clearTimeout(timer);
-                fetchSearch(searchInput.value);
-            });
-        }
-
-        fetchSearch('');
-
-        if (window.LibraryAutoRefresh) {
-            window.LibraryAutoRefresh.start(function() { return doSearch(searchInput.value, { quiet: true }); }, 5000);
-        }
     });
 })();

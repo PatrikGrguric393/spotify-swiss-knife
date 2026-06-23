@@ -4,6 +4,9 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Services;
 
+// Data access for albums: synchronous CRUD over the EF Core context. Read methods eager-load
+// artists, images, and the track list, then project the tracks into the paged `Tracks` shape
+// the views and API expect (the relational TrackList is the stored form). Scoped per request.
 public class AlbumRepository
 {
     private readonly SpotifyDbContext _context;
@@ -19,7 +22,6 @@ public class AlbumRepository
             .Include(album => album.Artists)
             .Include(album => album.Images)
             .Include(album => album.TrackList).ThenInclude(track => track.Artists)
-            .Include(album => album.TrackList).ThenInclude(track => track.Images)
             .AsTracking()
             .ToList();
 
@@ -40,12 +42,11 @@ public class AlbumRepository
     public Album? GetById(string id)
     {
         var album = _context.Albums
-            .Include(a => a.Artists)
-            .Include(a => a.Images)
-            .Include(a => a.TrackList).ThenInclude(track => track.Artists)
-            .Include(a => a.TrackList).ThenInclude(track => track.Images)
+            .Include(album => album.Artists)
+            .Include(album => album.Images)
+            .Include(album => album.TrackList).ThenInclude(track => track.Artists)
             .AsTracking()
-            .FirstOrDefault(a => a.Id == id);
+            .FirstOrDefault(album => album.Id == id);
 
         if (album is null) return null;
 

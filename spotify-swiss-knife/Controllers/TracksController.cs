@@ -2,11 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using spotify_swiss_knife.Filters;
+using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Services;
 using System.Globalization;
 
 namespace spotify_swiss_knife.Controllers;
 
+// Server-rendered CRUD for the local library's tracks, under /lib/tracks. Listing is public;
+// create/edit require an Admin or Editor local account and deletes are Admin-only. Durations are
+// entered/displayed as m:ss but stored as milliseconds (see TryParseDuration/FormatDuration).
+// DenySpotifyUsers keeps Spotify-connected visitors out. JSON counterpart: TracksApiController.
 [Route("lib")]
 [Authorize(Roles = "Admin,Editor")]
 [DenySpotifyUsers]
@@ -47,6 +52,13 @@ public class TracksController : Controller
 
         if (!ModelState.IsValid)
         {
+            PopulateArtistOptions(model.ArtistIds);
+            return View("Create", model);
+        }
+
+        if (_trackRepository.ExistsByName(model.Name))
+        {
+            ModelState.AddModelError("Name", $"A track named '{model.Name.Trim()}' already exists.");
             PopulateArtistOptions(model.ArtistIds);
             return View("Create", model);
         }
@@ -100,6 +112,14 @@ public class TracksController : Controller
 
         if (!ModelState.IsValid)
         {
+            PopulateArtistOptions(model.ArtistIds);
+            return View("Edit", model);
+        }
+
+        // Use route id to exclude current track from duplicate check
+        if (_trackRepository.ExistsByName(model.Name, id))
+        {
+            ModelState.AddModelError("Name", $"A track named '{model.Name.Trim()}' already exists.");
             PopulateArtistOptions(model.ArtistIds);
             return View("Edit", model);
         }
@@ -178,11 +198,7 @@ public class TracksController : Controller
         return _artistRepository.GetAll().Where(a => wanted.Contains(a.Id)).ToList();
     }
 
-    private static string FormatDuration(int durationMs)
-    {
-        var totalSeconds = durationMs / 1000;
-        return $"{totalSeconds / 60}:{totalSeconds % 60:D2}";
-    }
+    private static string FormatDuration(int durationMs) => DurationFormat.MinutesSeconds(durationMs);
 
     private static bool TryParseDuration(string? input, out int durationMs)
     {
