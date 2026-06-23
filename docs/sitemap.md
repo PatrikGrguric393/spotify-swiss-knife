@@ -78,6 +78,16 @@ Every action requires a connected Spotify account (the `SpotifyConnect` scheme i
 
 Due schedules are executed out-of-band by the `ShuffleSchedulerService` hosted background service (60-second tick), not by an HTTP route.
 
+### Bulk album save — `BulkAlbumSaveController` (`/bulk-album-save`)
+
+Every action requires a connected Spotify account (`[RequireSpotifyAuth]`). The controller operates on the user's live Spotify account (search and playlists), not the local library: it lets a user pick albums and bulk-add every track from them to one or more of their own playlists.
+
+| URL                          | Controller             | Akcija                  | View(s)                                              |
+| ---------------------------- | ---------------------- | ----------------------- | ---------------------------------------------------- |
+| /bulk-album-save             | BulkAlbumSaveController | Index                   | Shared/_Layout.cshtml, BulkAlbumSave/Index.cshtml    |
+| /bulk-album-save/search-albums| BulkAlbumSaveController | SearchAlbums(q)         | — (JSON)                                             |
+| /bulk-album-save/confirm     | BulkAlbumSaveController | POST -> Confirm(...)    | — (JSON)                                             |
+
 ### Files — `FilesController` (`/files`) — requires `[Authorize]`
 
 | URL                  | Controller      | Akcija              | View(s)                                      |

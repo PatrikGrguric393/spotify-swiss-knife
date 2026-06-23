@@ -41,7 +41,6 @@
 	- `AlbumId:string?` (FK -> `Albums.Id`)
 	- `ExternalUrls_Spotify:string` (owned)
 - Related tables:
-	- `TrackImages` via `Images`
 	- `TrackArtists` (M-M join with `Artists`)
 	- `PlaylistTrackEntries` (1-* from `Tracks` to `PlaylistTrackEntries`)
 
@@ -54,6 +53,7 @@
 	- `SnapshotId:string`
 	- `LastShuffled:DateTime?`
 	- `ExternalUrls_Spotify:string` (owned)
+	- `Owner_Id:string?` (owned)
 	- `Owner_DisplayName:string?` (owned)
 	- `Owner_ExternalUrls_Spotify:string` (owned)
 - Related tables:
@@ -74,15 +74,6 @@
 - PK: `(AlbumId, Id)`
 - Columns:
 	- `AlbumId:string` (FK -> `Albums.Id`)
-	- `Id:int`
-	- `Url:string`
-	- `Height:int?`
-	- `Width:int?`
-
-### TrackImages (owned `Image`)
-- PK: `(TrackId, Id)`
-- Columns:
-	- `TrackId:string` (FK -> `Tracks.Id`)
 	- `Id:int`
 	- `Url:string`
 	- `Height:int?`
@@ -149,7 +140,6 @@
 	- `UserId:string` (index; Spotify account id, links logically to `SpotifyTokens.SpotifyUserId`)
 	- `PlaylistId:string`
 	- `PlaylistName:string`
-	- `RandomnessLevel:int` (enum `ShuffleRandomnessLevel`)
 	- `CronExpression:string` (standard 5-field cron, UTC)
 	- `IsEnabled:bool`
 	- `LastRunAt:DateTimeOffset?`
@@ -166,6 +156,7 @@
 	- `ContentType:string`
 	- `FileSize:long`
 	- `UploadedAt:DateTime`
+	- `LinkedAlbumId:string?` (FK -> `Albums.Id`, set null on delete; optional link to an album)
 
 ## Identity & Infrastructure Tables
 
@@ -196,5 +187,6 @@
 - `Albums (0..*) <-> (0..*) Artists` via `AlbumArtists`
 - `Tracks (0..*) <-> (0..*) Artists` via `TrackArtists`
 - `AspNetUsers (1) -> (0..*) UserFiles` via `UserFiles.UserId` (FK, cascade)
+- `Albums (1) -> (0..*) UserFiles` via `UserFiles.LinkedAlbumId` (FK, set null; optional)
 - `AspNetUsers (1) -> (0..*) RefreshTokens` via `RefreshTokens.UserId` (logical; indexed, no enforced FK)
 - `SpotifyTokens (1) -> (0..*) ScheduledShuffles` via `ScheduledShuffles.UserId` matching `SpotifyTokens.SpotifyUserId` (logical; indexed, no enforced FK)
