@@ -10,6 +10,7 @@
    site.css base rules; do not remove them or shuffle-page rendering changes. */
 .shuffle-page {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
 }
 
@@ -108,4 +109,18 @@
     .shuffle-page h1 {
         font-size: 1.55rem;
     }
+}
+
+/* ---- Multi-playlist list in the schedules table (Index) ---- */
+.schedule-playlist-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.schedule-playlist-list li {
+    color: #9cff9c;
+    word-break: break-word;
 }

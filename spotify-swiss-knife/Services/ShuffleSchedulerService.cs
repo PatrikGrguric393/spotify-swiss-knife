@@ -69,26 +69,33 @@ public class ShuffleSchedulerService : BackgroundService
                 return;
             }
 
-            var result = await spotifyAuth.ShufflePlaylistAsync(accessToken, schedule.PlaylistId);
+            // Shuffle every playlist in the schedule. One playlist's failure is logged and
+            // skipped without aborting the rest, mirroring the manual multi-playlist shuffle.
+            foreach (var playlistId in schedule.PlaylistIds)
+            {
+                ct.ThrowIfCancellationRequested();
 
-            if (result.Succeeded)
-            {
-                _logger.LogInformation(
-                    "Scheduled shuffle {Id} completed for playlist {PlaylistId}. Tracks: {Tracks}, moved: {Moved}.",
-                    schedule.Id, schedule.PlaylistId, result.TrackCount, result.MovedCount);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Scheduled shuffle {Id} failed for playlist {PlaylistId}: {Error}.",
-                    schedule.Id, schedule.PlaylistId, result.Error);
+                var result = await spotifyAuth.ShufflePlaylistAsync(accessToken, playlistId);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation(
+                        "Scheduled shuffle {Id} completed for playlist {PlaylistId}. Tracks: {Tracks}, moved: {Moved}.",
+                        schedule.Id, playlistId, result.TrackCount, result.MovedCount);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Scheduled shuffle {Id} failed for playlist {PlaylistId}: {Error}.",
+                        schedule.Id, playlistId, result.Error);
+                }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Unhandled error in scheduled shuffle {Id} for playlist {PlaylistId}.",
-                schedule.Id, schedule.PlaylistId);
+                "Unhandled error in scheduled shuffle {Id}.",
+                schedule.Id);
         }
         finally
         {

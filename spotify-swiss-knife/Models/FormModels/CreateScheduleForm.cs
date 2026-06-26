@@ -10,11 +10,11 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// </summary>
 public class CreateScheduleForm : IValidatableObject
 {
-    [Required]
-    public string PlaylistId { get; set; } = string.Empty;
-
-    [Required]
-    public string PlaylistName { get; set; } = string.Empty;
+    // Selected playlists. PlaylistNames[i] is the display name for PlaylistIds[i]; the two
+    // lists are posted as parallel hidden fields and stay index-aligned. At least one is required
+    // (enforced in Validate).
+    public List<string> PlaylistIds { get; set; } = [];
+    public List<string> PlaylistNames { get; set; } = [];
 
     // How often the shuffle runs. Determines which day field is honored:
     // Daily ignores both; Weekly/CustomWeekly use DaysOfWeek; Monthly uses DayOfMonth.
@@ -39,6 +39,9 @@ public class CreateScheduleForm : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (PlaylistIds.Count == 0)
+            yield return new ValidationResult("Select at least one playlist.", [nameof(PlaylistIds)]);
+
         var frequency = Frequency ?? ShuffleFrequency.Weekly;
 
         switch (frequency)

@@ -142,7 +142,11 @@ public class AccountController : Controller
     }
 
     [HttpGet("denied")]
-    public IActionResult Denied() => View();
+    public IActionResult Denied()
+    {
+        ViewData["BackUrl"] = PreviousPage.ResolveBackUrl(HttpContext);
+        return View();
+    }
 
     [HttpGet("users")]
     [Authorize(Roles = "Admin")]

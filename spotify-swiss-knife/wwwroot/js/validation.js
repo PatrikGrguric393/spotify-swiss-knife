@@ -22,6 +22,8 @@ class FormValidator {
 
 	init() {
 		this.form.dataset.validationInitialized = 'true';
+		this.form.setAttribute('novalidate', 'novalidate');
+		this.formError = this.form.querySelector('[data-form-error]');
 		const inputs = this.form.querySelectorAll('input, textarea, select');
 		inputs.forEach((input) => {
 			if (input.type === 'hidden' || input.type === 'checkbox') return;
@@ -279,6 +281,7 @@ class FormValidator {
 	handleSubmit(e) {
 		if (!this.validateAll()) {
 			e.preventDefault();
+			this.showFormError('Please fix the highlighted fields before continuing.');
 			for (const fieldName in this.fields) {
 				if (!this.fields[fieldName].isValid) {
 					this.fields[fieldName].element.focus();
@@ -292,7 +295,21 @@ class FormValidator {
 					return;
 				}
 			}
+		} else {
+			this.hideFormError();
 		}
+	}
+
+	showFormError(message) {
+		if (!this.formError) return;
+		this.formError.textContent = message;
+		this.formError.classList.add('show');
+	}
+
+	hideFormError() {
+		if (!this.formError) return;
+		this.formError.textContent = '';
+		this.formError.classList.remove('show');
 	}
 
 	escapeHtml(text) {

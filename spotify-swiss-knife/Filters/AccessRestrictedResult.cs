@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Filters;
@@ -19,7 +20,12 @@ internal static class AccessRestrictedResult
             StatusCode = StatusCodes.Status403Forbidden,
             ViewData = new ViewDataDictionary<AccessRestrictedViewModel>(metadataProvider, context.ModelState)
             {
-                Model = new AccessRestrictedViewModel { Heading = heading, Message = message },
+                Model = new AccessRestrictedViewModel
+                {
+                    Heading = heading,
+                    Message = message,
+                    BackUrl = PreviousPage.ResolveBackUrl(context.HttpContext),
+                },
             },
         };
     }

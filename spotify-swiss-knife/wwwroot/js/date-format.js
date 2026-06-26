@@ -1,8 +1,8 @@
 (function () {
     var locale = navigator.language || 'en';
-    var timestampFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' });
-    var dateOnlyFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short' });
-    var dateShortFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short' });
+    var timestampFmt = new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    var dateOnlyFmt = new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
+    var dateShortFmt = new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
 
     function formatTimestamp(isoUtc) {
         if (!isoUtc) return '';

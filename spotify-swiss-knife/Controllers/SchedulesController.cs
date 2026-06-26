@@ -82,8 +82,8 @@ public class SchedulesController : SpotifyControllerBase
         var schedule = new ScheduledShuffle
         {
             UserId = userId,
-            PlaylistId = form.PlaylistId,
-            PlaylistName = form.PlaylistName,
+            PlaylistIds = form.PlaylistIds,
+            PlaylistNames = form.PlaylistNames,
             CronExpression = cron,
             IsEnabled = true,
             NextRunAt = nextRun,
@@ -93,8 +93,8 @@ public class SchedulesController : SpotifyControllerBase
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Schedule {Id} created by {UserId} for playlist {PlaylistId} ({Name}); cron \"{Cron}\", next run {NextRun}.",
-            schedule.Id, userId, schedule.PlaylistId, schedule.PlaylistName, cron, nextRun);
+            "Schedule {Id} created by {UserId} for {Count} playlist(s) [{PlaylistIds}]; cron \"{Cron}\", next run {NextRun}.",
+            schedule.Id, userId, schedule.PlaylistIds.Count, string.Join(", ", schedule.PlaylistIds), cron, nextRun);
 
         return RedirectToAction(nameof(Index));
     }
@@ -140,8 +140,8 @@ public class SchedulesController : SpotifyControllerBase
         _db.ScheduledShuffles.Remove(schedule);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Schedule {Id} deleted by {UserId} (playlist {PlaylistId}).",
-            schedule.Id, userId, schedule.PlaylistId);
+        _logger.LogInformation("Schedule {Id} deleted by {UserId} ({Count} playlist(s)).",
+            schedule.Id, userId, schedule.PlaylistIds.Count);
 
         return RedirectToAction(nameof(Index));
     }

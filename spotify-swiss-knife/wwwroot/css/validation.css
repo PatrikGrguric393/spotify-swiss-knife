@@ -97,6 +97,19 @@
     animation: slideIn 0.2s ease;
 }
 
+/*
+ * Form-level summary rendered directly below the submit button. Reuses the
+ * .validation-error box but carries its own text colour (its message is plain
+ * text, not a wrapped .validation-error-message) and extra top spacing to sit
+ * apart from the button row.
+ */
+.validation-error--form {
+    margin-top: 16px;
+    color: #ff0000;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
 .validation-error-message {
     color: #ff0000;
     font-size: 0.9rem;

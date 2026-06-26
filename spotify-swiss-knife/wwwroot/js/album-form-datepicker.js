@@ -9,7 +9,7 @@
         }
     } catch (e) {}
 
-    var triggerFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short' });
+    var triggerFmt = new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
     var headerFmt  = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
     var ariaFmt    = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     var weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });

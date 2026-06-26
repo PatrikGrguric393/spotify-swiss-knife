@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -101,6 +102,26 @@ public class SpotifyAuthService
     // calls, which all send application/json.
     private static StringContent JsonBody<T>(T payload) =>
         new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+    // Sends a request, retrying on 429 (rate limit). Spotify normally returns a Retry-After
+    // header (seconds) saying exactly how long to wait, so we honor it; when it's absent we
+    // fall back to exponential backoff (1s, 2s, 4s…) since a flat short wait can be far too
+    // brief under heavy throttling. Takes a factory because a sent HttpRequestMessage can't be
+    // reused; caps attempts so a persistently limited call still returns rather than looping.
+    private async Task<HttpResponseMessage> SendWithRetryAsync(Func<HttpRequestMessage> makeRequest)
+    {
+        const int maxAttempts = 5;
+        var response = await _httpClient.SendAsync(makeRequest());
+        for (var attempt = 1; attempt < maxAttempts &&
+            response.StatusCode == HttpStatusCode.TooManyRequests; attempt++)
+        {
+            var wait = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(1 << (attempt - 1));
+            await Task.Delay(wait);
+            response = await _httpClient.SendAsync(makeRequest());
+        }
+
+        return response;
+    }
 
     // Posts to the token endpoint with the client credentials in a Basic header — shared by the
     // authorization-code exchange and the refresh flow, which differ only in their form fields.
@@ -344,10 +365,12 @@ public class SpotifyAuthService
         for (var offset = 0; offset < uris.Count; offset += AddBatchLimit)
         {
             var batch = uris.Skip(offset).Take(AddBatchLimit).ToList();
-            var request = BearerRequest(HttpMethod.Post, url, accessToken);
-            request.Content = JsonBody(new AddTracksRequest { Uris = batch });
-
-            var response = await _httpClient.SendAsync(request);
+            var response = await SendWithRetryAsync(() =>
+            {
+                var request = BearerRequest(HttpMethod.Post, url, accessToken);
+                request.Content = JsonBody(new AddTracksRequest { Uris = batch });
+                return request;
+            });
             if (!response.IsSuccessStatusCode)
             {
                 await LogApiFailureAsync(response,
@@ -416,42 +439,38 @@ public class SpotifyAuthService
 
     // Shuffles a Spotify playlist in place. Requires playlist-modify-* scopes.
     //
-    // Fast path: a playlist that fits one replace batch and has no local files is
-    // rewritten with a single atomic PUT of the shuffled track URIs — two API calls
-    // total regardless of length. Replacing all items in one request leaves no
-    // truncation window, so it is safe despite being destructive in principle.
+    // Replace path (no local files): the whole playlist is rewritten in ceil(n/100)
+    // requests — a PUT of the first shuffled batch overwrites it, then any remainder is
+    // appended. Independent of length, this stays well under the rate limit.
     //
-    // Fallback: larger playlists, or any containing local files (which the API can't
-    // re-add by URI), use a non-destructive index reorder that preserves local files
-    // and metadata at the cost of one request per moved item.
+    // Reorder fallback (has local files): the API can't re-add local files by URI, so those
+    // playlists use a non-destructive index reorder — one request per moved item, which is
+    // 429-retried — that preserves local files and metadata.
     public async Task<SpotifyShuffleResult> ShufflePlaylistAsync(
         string accessToken, string playlistId)
     {
-        var page = await GetFirstItemsPageAsync(accessToken, playlistId);
-        if (page is null)
+        var items = await GetAllItemsAsync(accessToken, playlistId);
+        if (items is null)
         {
             return SpotifyShuffleResult.Fail(
                 "We couldn't read that Spotify playlist. Your session may have expired or lacks the " +
                 "permission to modify it — please disconnect and reconnect Spotify.");
         }
 
-        if (page.Total <= 1)
+        if (items.Count <= 1)
         {
-            return SpotifyShuffleResult.Ok(page.Total, 0);
+            return SpotifyShuffleResult.Ok(items.Count, 0);
         }
 
-        var uris = page.Items.Select(item => item.Uri).ToList();
-        var fitsOneBatch = page.Total <= ReplaceBatchLimit && page.Next is null && uris.Count == page.Total;
-        var replaceable = fitsOneBatch
-            && page.Items.All(item => !item.IsLocal)
-            && uris.All(uri => !string.IsNullOrEmpty(uri));
-
-        if (replaceable)
+        // Replace only works when every item can be re-added by URI; local files can't, so
+        // their presence forces the reorder fallback.
+        var noLocalFiles = items.All(item => !item.IsLocal && !string.IsNullOrEmpty(item.Uri));
+        if (noLocalFiles)
         {
-            return await ReplaceShuffleAsync(accessToken, playlistId, uris!);
+            return await ReplaceShuffleAsync(accessToken, playlistId, items.Select(item => item.Uri!).ToList());
         }
 
-        return await ReorderShuffleAsync(accessToken, playlistId, page.Total);
+        return await ReorderShuffleAsync(accessToken, playlistId, items.Count);
     }
 
     private async Task<SpotifyShuffleResult> ReplaceShuffleAsync(
@@ -460,7 +479,14 @@ public class SpotifyAuthService
         var shuffled = PlaylistShuffler.Shuffle(uris);
         var moved = shuffled.Where((uri, index) => uri != uris[index]).Count();
 
-        var ok = await ReplacePlaylistItemsAsync(accessToken, playlistId, shuffled);
+        // A replace sets at most one batch, so the first batch overwrites the playlist and any
+        // remainder is appended in order.
+        var ok = await ReplacePlaylistItemsAsync(accessToken, playlistId, shuffled.Take(ReplaceBatchLimit).ToList());
+        if (ok && shuffled.Count > ReplaceBatchLimit)
+        {
+            ok = await AddTracksToPlaylistAsync(accessToken, playlistId, shuffled.Skip(ReplaceBatchLimit).ToList());
+        }
+
         return ok
             ? SpotifyShuffleResult.Ok(shuffled.Count, moved)
             : SpotifyShuffleResult.Fail(
@@ -512,32 +538,49 @@ public class SpotifyAuthService
         return SpotifyShuffleResult.Ok(total, moved);
     }
 
-    // Fetches the playlist total and the first page of items (URIs + local flags), enough
-    // to decide between the replace fast path and the reorder fallback.
-    private async Task<ShuffleItemsPage?> GetFirstItemsPageAsync(string accessToken, string playlistId)
+    // Reads every item in the playlist (URIs + local flags), following pagination. Both the
+    // strategy choice (any local files?) and the replace path's URI list need the full set.
+    // Returns null if any page read fails.
+    private async Task<List<ShuffleItem>?> GetAllItemsAsync(string accessToken, string playlistId)
     {
-        var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items" +
-            $"?limit={ReplaceBatchLimit}&fields=total,next,items(is_local,item(uri),track(uri))";
-        var request = BearerRequest(HttpMethod.Get, url, accessToken);
+        var items = new List<ShuffleItem>();
+        string? url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items" +
+            $"?limit={ReplaceBatchLimit}&fields=next,items(is_local,item(uri),track(uri))";
 
-        var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
+        while (url is not null)
         {
-            await LogApiFailureAsync(response, $"GET /playlists/{playlistId}/items (shuffle read)");
-            return null;
+            var request = BearerRequest(HttpMethod.Get, url, accessToken);
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                await LogApiFailureAsync(response, $"GET /playlists/{playlistId}/items (shuffle read)");
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var page = JsonSerializer.Deserialize<ShuffleItemsPage>(json);
+            if (page is null)
+            {
+                return null;
+            }
+
+            items.AddRange(page.Items);
+            url = page.Next;
         }
 
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<ShuffleItemsPage>(json);
+        return items;
     }
 
     private async Task<bool> ReplacePlaylistItemsAsync(string accessToken, string playlistId, List<string> uris)
     {
         var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
-        var request = BearerRequest(HttpMethod.Put, url, accessToken);
-        request.Content = JsonBody(new PlaylistReplaceRequest { Uris = uris });
+        var response = await SendWithRetryAsync(() =>
+        {
+            var request = BearerRequest(HttpMethod.Put, url, accessToken);
+            request.Content = JsonBody(new PlaylistReplaceRequest { Uris = uris });
+            return request;
+        });
 
-        var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             await LogApiFailureAsync(response, $"PUT /playlists/{playlistId}/items (shuffle replace)");
@@ -577,16 +620,19 @@ public class SpotifyAuthService
         string accessToken, string playlistId, int rangeStart, int insertBefore, string snapshotId)
     {
         var url = $"{PlaylistBaseUrl}/{Uri.EscapeDataString(playlistId)}/items";
-        var request = BearerRequest(HttpMethod.Put, url, accessToken);
-        request.Content = JsonBody(new PlaylistReorderRequest
+        var response = await SendWithRetryAsync(() =>
         {
-            RangeStart = rangeStart,
-            InsertBefore = insertBefore,
-            RangeLength = 1,
-            SnapshotId = snapshotId,
+            var request = BearerRequest(HttpMethod.Put, url, accessToken);
+            request.Content = JsonBody(new PlaylistReorderRequest
+            {
+                RangeStart = rangeStart,
+                InsertBefore = insertBefore,
+                RangeLength = 1,
+                SnapshotId = snapshotId,
+            });
+            return request;
         });
 
-        var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             await LogApiFailureAsync(response,
@@ -640,9 +686,6 @@ public class SpotifyAuthService
 
     private sealed class ShuffleItemsPage
     {
-        [JsonPropertyName("total")]
-        public int Total { get; set; }
-
         [JsonPropertyName("next")]
         public string? Next { get; set; }
 

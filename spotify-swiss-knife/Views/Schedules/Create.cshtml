@@ -20,8 +20,7 @@
         <form method="post" action="@Url.Action("Create", "Schedules")" class="shuffle-form">
             @Html.AntiForgeryToken()
 
-            <input type="hidden" name="PlaylistId" id="PlaylistId" value="@Model.PlaylistId" />
-            <input type="hidden" name="PlaylistName" id="PlaylistName" value="@Model.PlaylistName" />
+            <div id="selectedPlaylistInputs"></div>
 
             <div class="shuffle-form-row">
                 <span class="shuffle-form-label" id="schedulePlaylistLabel">Playlist</span>
@@ -29,7 +28,7 @@
                 <div class="shuffle-playlist-panel-wrap">
                     <section class="bulk-save-panel shuffle-playlist-panel" aria-labelledby="schedulePlaylistLabel">
                         <div class="bulk-save-panel-head">
-                            <span class="bulk-save-count" id="schedulePlaylistCount" aria-live="polite">No playlist selected</span>
+                            <span class="bulk-save-count" id="schedulePlaylistCount" aria-live="polite">No playlists selected</span>
                         </div>
 
                         <div class="search-box bulk-save-search">
@@ -66,7 +65,7 @@
                     </section>
                 </div>
 
-                <span class="shuffle-validation" asp-validation-for="PlaylistId"></span>
+                <span class="shuffle-validation" asp-validation-for="PlaylistIds"></span>
             </div>
 
             <div class="shuffle-form-row">
@@ -210,24 +209,31 @@
         new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
 </script>
 
+<script id="scheduleSelectedPlaylistIds" type="application/json">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.PlaylistIds ?? new List<string>(),
+        new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+</script>
+
 @section Scripts {
     <script src="~/js/bulk-grid-utils.js" asp-append-version="true"></script>
     <script>
-    // Single-select playlist picker. Sets the hidden PlaylistId/PlaylistName the
-    // form posts. Clicking a row selects it and deselects any other; re-clicking
-    // the selected row is a no-op, since a schedule must target exactly one
-    // playlist and there is no valid "none" state once one is chosen. With no
-    // initial selection the hidden PlaylistId stays empty so `required` validation fails.
+    // Multi-select playlist picker. A schedule can target any number of playlists.
+    // Clicking a row toggles its selection (highlighted via .is-selected); clicking
+    // a selected row deselects it. Selection lives in a Set keyed by playlist id, so
+    // it survives search/filtering even when a selected row isn't currently rendered.
+    // On every change we rebuild the hidden inputs in #selectedPlaylistInputs as
+    // index-aligned repeated PlaylistIds/PlaylistNames inputs (the POST source of
+    // truth). When empty, no inputs are posted so server-side validation fails.
     (function () {
-        var hiddenId = document.getElementById('PlaylistId');
-        var hiddenName = document.getElementById('PlaylistName');
+        var inputsHost = document.getElementById('selectedPlaylistInputs');
         var search = document.getElementById('schedulePlaylistSearch');
         var searchClear = document.getElementById('schedulePlaylistSearchClear');
         var searchStatus = document.getElementById('schedulePlaylistSearchStatus');
         var tbody = document.getElementById('schedulePlaylistTableBody');
         var empty = document.getElementById('schedulePlaylistEmpty');
         var count = document.getElementById('schedulePlaylistCount');
-        if (!tbody || !hiddenId) { return; }
+        if (!tbody || !inputsHost) { return; }
 
         var escapeHtml = window.BulkGrid.escapeHtml;
         var coverCell = window.BulkGrid.coverCell;
@@ -238,11 +244,26 @@
             try { allPlaylists = JSON.parse(dataEl.textContent) || []; } catch (e) { allPlaylists = []; }
         }
 
-        var selectedId = hiddenId.value || '';
+        var nameById = {};
+        for (var n = 0; n < allPlaylists.length; n++) {
+            nameById[allPlaylists[n].id] = allPlaylists[n].name || '';
+        }
 
-        function rowHtml(p, selected) {
+        // Seed selection from the model (re-render after a validation error).
+        var selected = new Set();
+        var seedEl = document.getElementById('scheduleSelectedPlaylistIds');
+        if (seedEl) {
+            try {
+                (JSON.parse(seedEl.textContent) || []).forEach(function (id) {
+                    if (id) { selected.add(id); }
+                });
+            } catch (e) { /* leave empty */ }
+        }
+
+        function rowHtml(p, isSelected) {
             var id = escapeHtml(p.id);
-            return '<tr class="' + (selected ? 'is-selected' : '') + '" data-id="' + id + '">' +
+            return '<tr class="' + (isSelected ? 'is-selected' : '') + '" data-id="' + id + '"' +
+                ' aria-selected="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td data-label="Cover">' + coverCell(p.imageUrl) + '</td>' +
                 '<td data-label="Name"><span class="bulk-save-name">' + escapeHtml(p.name) + '</span></td>' +
                 '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(p.tracks) + '</span></td>' +
@@ -252,7 +273,7 @@
         function render(list) {
             var html = '';
             for (var i = 0; i < list.length; i++) {
-                html += rowHtml(list[i], list[i].id === selectedId);
+                html += rowHtml(list[i], selected.has(list[i].id));
             }
             tbody.innerHTML = html;
         }
@@ -286,8 +307,22 @@
         }
 
         function updateCount() {
-            var sel = allPlaylists.find(function (p) { return p.id === selectedId; });
-            count.textContent = sel ? ('Selected: ' + sel.name) : 'No playlist selected';
+            var c = selected.size;
+            count.textContent = c === 0
+                ? 'No playlists selected'
+                : (c + (c === 1 ? ' playlist selected' : ' playlists selected'));
+        }
+
+        // Rebuild repeated hidden inputs. PlaylistIds[i] aligns with PlaylistNames[i]
+        // because we append both for each id in the same loop / document order.
+        function syncInputs() {
+            var html = '';
+            selected.forEach(function (id) {
+                var name = nameById[id] || '';
+                html += '<input type="hidden" name="PlaylistIds" value="' + escapeHtml(id) + '">' +
+                        '<input type="hidden" name="PlaylistNames" value="' + escapeHtml(name) + '">';
+            });
+            inputsHost.innerHTML = html;
         }
 
         tbody.addEventListener('click', function (e) {
@@ -295,14 +330,16 @@
             var row = e.target.closest('tr[data-id]');
             if (!row) { return; }
             var id = row.dataset.id;
-            if (id === selectedId) { return; }
-            var prev = tbody.querySelector('tr.is-selected');
-            if (prev) { prev.classList.remove('is-selected'); }
-            row.classList.add('is-selected');
-            selectedId = id;
-            var p = allPlaylists.find(function (x) { return x.id === id; });
-            hiddenId.value = id;
-            hiddenName.value = p ? p.name : '';
+            if (selected.has(id)) {
+                selected.delete(id);
+                row.classList.remove('is-selected');
+                row.setAttribute('aria-selected', 'false');
+            } else {
+                selected.add(id);
+                row.classList.add('is-selected');
+                row.setAttribute('aria-selected', 'true');
+            }
+            syncInputs();
             updateCount();
         });
 
@@ -315,6 +352,7 @@
         search.addEventListener('input', renderView);
 
         renderView();
+        syncInputs();
         updateCount();
     }());
 

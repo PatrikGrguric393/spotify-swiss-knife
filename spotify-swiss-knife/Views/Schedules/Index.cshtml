@@ -4,6 +4,10 @@
     ViewData["Title"] = "Scheduled Shuffles";
 }
 
+@section Head {
+    <link rel="stylesheet" href="~/css/shuffle.css" asp-append-version="true">
+}
+
 <section class="library-page shuffle-page">
     <h1>Scheduled Shuffles</h1>
 
@@ -35,8 +39,33 @@
                 <tbody>
                 @foreach (var schedule in Model)
                 {
+                    var playlistNames = schedule.PlaylistNames ?? new List<string>();
+                    var playlistCount = playlistNames.Count;
+                    var playlistSummary = playlistCount > 0
+                        ? string.Join(", ", playlistNames)
+                        : (playlistCount == 0 ? "No playlists" : "");
+                    var playlistAria = playlistCount switch
+                    {
+                        0 => "no playlists",
+                        1 => playlistNames[0],
+                        _ => $"{playlistCount} playlists"
+                    };
                     <tr>
-                        <td data-label="Playlist">@schedule.PlaylistName</td>
+                        <td data-label="Playlist">
+                            @if (playlistCount > 1)
+                            {
+                                <ul class="schedule-playlist-list">
+                                    @foreach (var name in playlistNames)
+                                    {
+                                        <li>@name</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                @playlistSummary
+                            }
+                        </td>
                         <td data-label="Schedule"><code>@schedule.CronExpression</code></td>
                         <td data-label="Status">
                             @if (schedule.IsEnabled)
@@ -73,15 +102,15 @@
                                 <form method="post" action="@Url.Action("Toggle", "Schedules", new { id = schedule.Id })">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="shuffle-submit"
-                                            aria-label="@(schedule.IsEnabled ? "Disable" : "Enable") schedule for @schedule.PlaylistName">
+                                            aria-label="@(schedule.IsEnabled ? "Disable" : "Enable") schedule for @playlistAria">
                                         @(schedule.IsEnabled ? "Disable" : "Enable")
                                     </button>
                                 </form>
                                 <form method="post" action="@Url.Action("Delete", "Schedules", new { id = schedule.Id })">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="shuffle-submit btn-danger"
-                                            aria-label="Delete schedule for @schedule.PlaylistName"
-                                            data-confirm="Delete schedule for @schedule.PlaylistName?">Delete</button>
+                                            aria-label="Delete schedule for @playlistAria"
+                                            data-confirm="Delete schedule for @playlistAria?">Delete</button>
                                 </form>
                             </div>
                         </td>
