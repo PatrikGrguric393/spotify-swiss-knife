@@ -10,6 +10,7 @@ public class UserRegisterForm : UserForm
 {
     [Required]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
+    [RegularExpression(@"^(?=.*\d).+$", ErrorMessage = "Password must contain at least one digit.")]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
 

@@ -11,6 +11,8 @@ public abstract class UserForm
 {
     [Required]
     [EmailAddress]
+    [RegularExpression(@"^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$",
+        ErrorMessage = "Enter a valid email address.")]
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 

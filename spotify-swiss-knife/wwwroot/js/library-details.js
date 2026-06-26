@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatDateValue(value) {
         var str = String(value);
         var hasTime = /[tT ]\d{2}:\d{2}/.test(str);
-        return hasTime ? window.DateFmt.formatTimestamp(str) : window.DateFmt.formatDateMedium(str);
+        return hasTime ? window.DateFmt.formatTimestamp(str) : window.DateFmt.formatDateShort(str);
     }
 
     function formatValue(value) {

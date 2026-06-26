@@ -126,6 +126,8 @@ class FormValidator {
 			errors.push(`${label} is required`);
 		}
 
+		const formatErrorStart = errors.length;
+
 		if (value) {
 			if (input.hasAttribute('data-val-length-max')) {
 				const maxLength = parseInt(input.getAttribute('data-val-length-max'));
@@ -171,12 +173,17 @@ class FormValidator {
 			}
 
 			if (input.type === 'email') {
-				const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 				if (!emailPattern.test(value)) {
 					const label = this.getFieldLabel(input);
 					errors.push(`${label} must be a valid email address`);
 				}
 			}
+		}
+
+		const title = input.getAttribute('title');
+		if (title && errors.length > formatErrorStart) {
+			errors.splice(formatErrorStart, errors.length - formatErrorStart, title);
 		}
 
 		if (input.hasAttribute('data-match') && value) {

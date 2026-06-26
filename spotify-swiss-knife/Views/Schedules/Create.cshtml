@@ -6,6 +6,11 @@
     var playlists = (ViewBag.Playlists as IEnumerable<spotify_swiss_knife.Models.Playlist>) ?? Enumerable.Empty<spotify_swiss_knife.Models.Playlist>();
 }
 
+@section Head {
+    <link rel="stylesheet" href="~/css/bulk-album-save.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/shuffle.css" asp-append-version="true">
+}
+
 <section class="library-page shuffle-page">
     <h1>New Scheduled Shuffle</h1>
 
@@ -15,17 +20,52 @@
         <form method="post" action="@Url.Action("Create", "Schedules")" class="shuffle-form">
             @Html.AntiForgeryToken()
 
+            <input type="hidden" name="PlaylistId" id="PlaylistId" value="@Model.PlaylistId" />
             <input type="hidden" name="PlaylistName" id="PlaylistName" value="@Model.PlaylistName" />
 
             <div class="shuffle-form-row">
-                <label for="PlaylistId">Playlist</label>
-                <select id="PlaylistId" name="PlaylistId" class="shuffle-input" required>
-                    <option value="">Select playlist</option>
-                    @foreach (var playlist in playlists)
-                    {
-                        <option value="@playlist.Id" selected="@(Model.PlaylistId == playlist.Id ? "selected" : null)">@playlist.Name</option>
-                    }
-                </select>
+                <span class="shuffle-form-label" id="schedulePlaylistLabel">Playlist</span>
+
+                <div class="shuffle-playlist-panel-wrap">
+                    <section class="bulk-save-panel shuffle-playlist-panel" aria-labelledby="schedulePlaylistLabel">
+                        <div class="bulk-save-panel-head">
+                            <span class="bulk-save-count" id="schedulePlaylistCount" aria-live="polite">No playlist selected</span>
+                        </div>
+
+                        <div class="search-box bulk-save-search">
+                            <label for="schedulePlaylistSearch" class="visually-hidden">Search your playlists</label>
+                            <div class="search-input-wrap">
+                                <input id="schedulePlaylistSearch"
+                                       type="search"
+                                       class="search-input"
+                                       placeholder="Search your playlists..."
+                                       autocomplete="off"
+                                       aria-label="Search your playlists"
+                                       aria-controls="schedulePlaylistTableBody" />
+                                <button type="button" class="search-clear-btn" id="schedulePlaylistSearchClear" hidden aria-label="Clear search">
+                                    <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+                            <span class="search-status bulk-save-search-status" id="schedulePlaylistSearchStatus" aria-live="polite"></span>
+                        </div>
+
+                        <div class="table-wrap bulk-save-table-wrap shuffle-table-wrap">
+                            <table class="entity-table bulk-save-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Cover</th>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Tracks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedulePlaylistTableBody">
+                                </tbody>
+                            </table>
+                            <p class="bulk-save-empty" id="schedulePlaylistEmpty">No playlists found.</p>
+                        </div>
+                    </section>
+                </div>
+
                 <span class="shuffle-validation" asp-validation-for="PlaylistId"></span>
             </div>
 
@@ -158,21 +198,124 @@
     </section>
 </section>
 
+<script id="schedulePlaylistData" type="application/json">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        playlists.Select(p => new
+        {
+            id = p.Id,
+            name = p.Name ?? "",
+            tracks = p.Tracks?.Total ?? 0,
+            imageUrl = p.Images.FirstOrDefault()?.Url
+        }),
+        new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+</script>
+
 @section Scripts {
+    <script src="~/js/bulk-grid-utils.js" asp-append-version="true"></script>
     <script>
+    // Single-select playlist picker. Sets the hidden PlaylistId/PlaylistName the
+    // form posts. Clicking a row selects it and deselects any other; re-clicking
+    // the selected row is a no-op, since a schedule must target exactly one
+    // playlist and there is no valid "none" state once one is chosen. With no
+    // initial selection the hidden PlaylistId stays empty so `required` validation fails.
     (function () {
-        var select = document.getElementById('PlaylistId');
-        var hidden = document.getElementById('PlaylistName');
+        var hiddenId = document.getElementById('PlaylistId');
+        var hiddenName = document.getElementById('PlaylistName');
+        var search = document.getElementById('schedulePlaylistSearch');
+        var searchClear = document.getElementById('schedulePlaylistSearchClear');
+        var searchStatus = document.getElementById('schedulePlaylistSearchStatus');
+        var tbody = document.getElementById('schedulePlaylistTableBody');
+        var empty = document.getElementById('schedulePlaylistEmpty');
+        var count = document.getElementById('schedulePlaylistCount');
+        if (!tbody || !hiddenId) { return; }
 
-        function syncName() {
-            var opt = select.options[select.selectedIndex];
-            hidden.value = opt && opt.value ? opt.text : '';
+        var escapeHtml = window.BulkGrid.escapeHtml;
+        var coverCell = window.BulkGrid.coverCell;
+
+        var allPlaylists = [];
+        var dataEl = document.getElementById('schedulePlaylistData');
+        if (dataEl) {
+            try { allPlaylists = JSON.parse(dataEl.textContent) || []; } catch (e) { allPlaylists = []; }
         }
 
-        if (select) {
-            syncName();
-            select.addEventListener('change', syncName);
+        var selectedId = hiddenId.value || '';
+
+        function rowHtml(p, selected) {
+            var id = escapeHtml(p.id);
+            return '<tr class="' + (selected ? 'is-selected' : '') + '" data-id="' + id + '">' +
+                '<td data-label="Cover">' + coverCell(p.imageUrl) + '</td>' +
+                '<td data-label="Name"><span class="bulk-save-name">' + escapeHtml(p.name) + '</span></td>' +
+                '<td data-label="Tracks"><span class="bulk-save-muted">' + escapeHtml(p.tracks) + '</span></td>' +
+                '</tr>';
         }
+
+        function render(list) {
+            var html = '';
+            for (var i = 0; i < list.length; i++) {
+                html += rowHtml(list[i], list[i].id === selectedId);
+            }
+            tbody.innerHTML = html;
+        }
+
+        function updateEmpty(rowCount, query) {
+            if (rowCount > 0) { empty.hidden = true; return; }
+            empty.hidden = false;
+            empty.textContent = query ? 'No playlists match your search.' : 'No playlists found.';
+        }
+
+        function filter(query) {
+            var q = query.trim().toLowerCase();
+            return allPlaylists.filter(function (p) {
+                return [p.name || '', String(p.tracks)].join('  ').toLowerCase().indexOf(q) !== -1;
+            });
+        }
+
+        function renderView() {
+            var query = search.value.trim();
+            searchClear.hidden = search.value === '';
+            if (query === '') {
+                render(allPlaylists);
+                updateEmpty(allPlaylists.length, '');
+                searchStatus.textContent = '';
+            } else {
+                var matches = filter(query);
+                render(matches);
+                updateEmpty(matches.length, query);
+                searchStatus.textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
+            }
+        }
+
+        function updateCount() {
+            var sel = allPlaylists.find(function (p) { return p.id === selectedId; });
+            count.textContent = sel ? ('Selected: ' + sel.name) : 'No playlist selected';
+        }
+
+        tbody.addEventListener('click', function (e) {
+            if (e.target.tagName === 'A') { return; }
+            var row = e.target.closest('tr[data-id]');
+            if (!row) { return; }
+            var id = row.dataset.id;
+            if (id === selectedId) { return; }
+            var prev = tbody.querySelector('tr.is-selected');
+            if (prev) { prev.classList.remove('is-selected'); }
+            row.classList.add('is-selected');
+            selectedId = id;
+            var p = allPlaylists.find(function (x) { return x.id === id; });
+            hiddenId.value = id;
+            hiddenName.value = p ? p.name : '';
+            updateCount();
+        });
+
+        searchClear.addEventListener('click', function () {
+            search.value = '';
+            searchClear.hidden = true;
+            search.focus();
+            renderView();
+        });
+        search.addEventListener('input', renderView);
+
+        renderView();
+        updateCount();
     }());
 
     (function () {
@@ -189,6 +332,12 @@
         var utcHintEl = document.getElementById('scheduleTimeUtcHint');
         var cols      = Array.prototype.slice.call(root.querySelectorAll('.timewheel-col'));
 
+        var backdrop = document.createElement('div');
+        backdrop.className = 'timewheel-backdrop';
+        backdrop.hidden = true;
+        document.body.appendChild(backdrop);
+        backdrop.addEventListener('pointerdown', function () { close(false); });
+
         var state = {
             hour:   clampInt(root.getAttribute('data-hour'), 23),
             minute: clampInt(root.getAttribute('data-minute'), 59)
@@ -200,7 +349,11 @@
             if (n > max) { n = max; }
             return n;
         }
-        function pad2(n) { return ('0' + n).slice(-2); }
+        function pad2(n) {
+            var i = Math.trunc(Number(n));
+            if (!isFinite(i) || i < 0) { i = 0; }
+            return ('0' + i).slice(-2);
+        }
 
         // Same value the server reads: minutes to add to local time to reach UTC.
         function offsetMinutes() { return new Date().getTimezoneOffset(); }
@@ -228,7 +381,8 @@
 
         function rowHeight(col) {
             var opt = col.querySelector('.timewheel-opt');
-            return opt ? opt.getBoundingClientRect().height : 44;
+            var h = opt ? opt.getBoundingClientRect().height : 0;
+            return (h > 0) ? h : 44;
         }
 
         function buildColumn(col) {
@@ -267,7 +421,9 @@
 
         function indexFromScroll(col) {
             var rh = rowHeight(col);
-            return Math.max(0, Math.min(col._max, Math.round(col.scrollTop / rh)));
+            var idx = Math.round(col.scrollTop / rh);
+            if (!isFinite(idx)) { idx = 0; }
+            return Math.max(0, Math.min(col._max, idx));
         }
 
         function markCentered(col) {
@@ -325,10 +481,13 @@
 
         function open() {
             panel.hidden = false;
+            backdrop.hidden = false;
             trigger.setAttribute('aria-expanded', 'true');
-            cols.forEach(function (col) {
-                var idx = (col._unit === 'hour') ? state.hour : state.minute;
-                scrollToIndex(col, idx, false);
+            requestAnimationFrame(function () {
+                cols.forEach(function (col) {
+                    var idx = (col._unit === 'hour') ? state.hour : state.minute;
+                    scrollToIndex(col, idx, false);
+                });
             });
             document.addEventListener('pointerdown', onOutside, true);
             document.addEventListener('keydown', onDocKey, true);
@@ -338,6 +497,7 @@
         function close(focusTrigger) {
             if (panel.hidden) { return; }
             panel.hidden = true;
+            backdrop.hidden = true;
             trigger.setAttribute('aria-expanded', 'false');
             document.removeEventListener('pointerdown', onOutside, true);
             document.removeEventListener('keydown', onDocKey, true);
@@ -463,7 +623,8 @@
 
         function rowHeight() {
             var opt = col.querySelector('.timewheel-opt');
-            return opt ? opt.getBoundingClientRect().height : 44;
+            var h = opt ? opt.getBoundingClientRect().height : 0;
+            return (h > 0) ? h : 44;
         }
         function idToVal(i) { return min + i; }
         function valToIndex(v) { return v - min; }
@@ -482,7 +643,9 @@
         function indexFromScroll() {
             var rh = rowHeight();
             var maxIdx = max - min;
-            return Math.max(0, Math.min(maxIdx, Math.round(col.scrollTop / rh)));
+            var idx = Math.round(col.scrollTop / rh);
+            if (!isFinite(idx)) { idx = 0; }
+            return Math.max(0, Math.min(maxIdx, idx));
         }
         function mark(idx) {
             var opts = col.querySelectorAll('.timewheel-opt');

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
+using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 
@@ -14,6 +15,7 @@ namespace spotify_swiss_knife.Controllers;
 // UserFile.LinkedAlbumId, so this controller routes those reads/deletes through that store.
 [Route("files")]
 [Authorize]
+[DenySpotifyUsers]
 public class FilesController : Controller
 {
     private readonly SpotifyDbContext _db;

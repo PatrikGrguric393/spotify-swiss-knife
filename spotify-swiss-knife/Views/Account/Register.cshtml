@@ -75,19 +75,19 @@
 
         <div class="form-group">
             <label asp-for="OIB" class="required"></label>
-            <input asp-for="OIB" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="11" data-val-length-max="11" pattern="[0-9]{11}" placeholder="Enter your 11-digit OIB" aria-describedby="error-OIB" />
+            <input asp-for="OIB" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="11" data-val-length-max="11" pattern="[0-9]{11}" title="OIB must be exactly 11 digits" placeholder="Enter your 11-digit OIB" aria-describedby="error-OIB" />
             @{ FieldErrors("OIB"); }
         </div>
 
         <div class="form-group">
             <label asp-for="JMBAG" class="required"></label>
-            <input asp-for="JMBAG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="10" data-val-length-max="10" pattern="[0-9]{10}" placeholder="Enter your 10-digit JMBAG" aria-describedby="error-JMBAG" />
+            <input asp-for="JMBAG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="10" data-val-length-max="10" pattern="[0-9]{10}" title="JMBAG must be exactly 10 digits" placeholder="Enter your 10-digit JMBAG" aria-describedby="error-JMBAG" />
             @{ FieldErrors("JMBAG"); }
         </div>
 
         <div class="form-group">
             <label asp-for="Password" class="required"></label>
-            <input asp-for="Password" id="Password" class="form-control" type="password" autocomplete="new-password" required placeholder="At least 6 characters" aria-describedby="error-Password" />
+            <input asp-for="Password" id="Password" class="form-control" type="password" autocomplete="new-password" required pattern="(?=.*\d).*" title="Password must be at least 6 characters and contain at least one digit" placeholder="At least 6 characters" aria-describedby="error-Password" />
             @{ FieldErrors("Password"); }
         </div>
 

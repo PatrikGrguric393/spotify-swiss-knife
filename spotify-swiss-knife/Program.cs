@@ -78,6 +78,7 @@ builder.Services.AddHostedService<ShuffleSchedulerService>();
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     {
         options.Password.RequiredLength = 6;
+        options.Password.RequireDigit = true;
         options.Password.RequireNonAlphanumeric = false;
         options.User.RequireUniqueEmail = true;
         options.SignIn.RequireConfirmedAccount = false;

@@ -93,13 +93,51 @@ public class SpotifyAuthController : Controller
     }
 
     [HttpGet("confirm")]
-    public IActionResult Confirm()
+    public async Task<IActionResult> Confirm()
     {
         if (!TempData.ContainsKey("auth_access_token"))
             return RedirectToAction("Index", "Home");
 
-        TempData.Keep();
-        ViewData["DisplayName"] = TempData["auth_display_name"]?.ToString() ?? "User";
+        // Guard against a local account signing in between callback and confirm.
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            TempData["LoginError"] = "You're signed in with a local account. Log out first to connect Spotify instead.";
+            return RedirectToAction("Index", "Login");
+        }
+
+        // Sign in as session-only immediately so the user is logged in even if they
+        // close the page without clicking either button on the confirm view.
+        TempData.Keep(); // preserve tokens for the optional persist-upgrade POST
+
+        var accessToken = TempData["auth_access_token"]!.ToString()!;
+        var refreshToken = TempData["auth_refresh_token"]?.ToString() ?? string.Empty;
+        var expiresIn = int.TryParse(TempData["auth_expires_in"]?.ToString(), out var exp) ? exp : 3600;
+        var userId = TempData["auth_user_id"]!.ToString()!;
+        var displayName = TempData["auth_display_name"]?.ToString();
+        var email = TempData["auth_email"]?.ToString();
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId),
+            new(ClaimTypes.Name, displayName ?? userId),
+            new(ClaimTypes.Email, email ?? string.Empty),
+            new("access_token", accessToken),
+            new("token_expiry", DateTimeOffset.UtcNow.AddSeconds(expiresIn).ToString("O")),
+        };
+
+        if (!string.IsNullOrEmpty(refreshToken))
+            claims.Add(new Claim("refresh_token", refreshToken));
+
+        var identity = new ClaimsIdentity(claims, SpotifyAuthDefaults.Scheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync(SpotifyAuthDefaults.Scheme, principal,
+            new AuthenticationProperties { IsPersistent = false, AllowRefresh = true });
+        await _spotifyAuth.PersistTokensAsync(userId, accessToken, refreshToken, expiresIn);
+        _logger.LogInformation("Spotify account connected: {DisplayName} ({UserId}), persistent: false (session default).",
+            displayName ?? userId, userId);
+
+        ViewData["DisplayName"] = displayName ?? "User";
         return View();
     }
 
@@ -107,13 +145,19 @@ public class SpotifyAuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmPost(bool persist)
     {
+        // Session-only sign-in already happened on the GET; only the persist upgrade needs work.
+        if (!persist)
+            return RedirectToAction("Index", "Home");
+
         var accessToken = TempData["auth_access_token"]?.ToString();
-        var refreshToken = TempData["auth_refresh_token"]?.ToString();
+        var refreshToken = TempData["auth_refresh_token"]?.ToString() ?? string.Empty;
         var expiresIn = int.TryParse(TempData["auth_expires_in"]?.ToString(), out var exp) ? exp : 3600;
         var userId = TempData["auth_user_id"]?.ToString();
         var displayName = TempData["auth_display_name"]?.ToString();
         var email = TempData["auth_email"]?.ToString();
 
+        // TempData may have expired (e.g. user waited too long); they're already signed in
+        // session-only from the GET, so just send them home.
         if (accessToken == null || userId == null)
             return RedirectToAction("Index", "Home");
 
@@ -138,17 +182,16 @@ public class SpotifyAuthController : Controller
 
         var identity = new ClaimsIdentity(claims, SpotifyAuthDefaults.Scheme);
         var principal = new ClaimsPrincipal(identity);
-        var authProps = new AuthenticationProperties
-        {
-            IsPersistent = persist,
-            ExpiresUtc = persist ? DateTimeOffset.UtcNow.AddDays(30) : null,
-            AllowRefresh = true,
-        };
 
-        await HttpContext.SignInAsync(SpotifyAuthDefaults.Scheme, principal, authProps);
-        await _spotifyAuth.PersistTokensAsync(userId, accessToken, refreshToken ?? string.Empty, expiresIn);
-        _logger.LogInformation("Spotify account connected: {DisplayName} ({UserId}), persistent: {Persist}.",
-            displayName ?? userId, userId, persist);
+        await HttpContext.SignInAsync(SpotifyAuthDefaults.Scheme, principal,
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+                AllowRefresh = true,
+            });
+        _logger.LogInformation("Spotify account upgraded to persistent: {DisplayName} ({UserId}).",
+            displayName ?? userId, userId);
         return RedirectToAction("Index", "Home");
     }
 

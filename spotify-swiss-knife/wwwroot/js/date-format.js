@@ -1,8 +1,8 @@
 (function () {
     var locale = navigator.language || 'en';
-    var timestampFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
-    var dateOnlyFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' });
-    var dateMediumFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+    var timestampFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' });
+    var dateOnlyFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short' });
+    var dateShortFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short' });
 
     function formatTimestamp(isoUtc) {
         if (!isoUtc) return '';
@@ -24,7 +24,7 @@
         return val;
     }
 
-    function formatDateMedium(val) {
+    function formatDateShort(val) {
         if (!val) return '';
         var parts = String(val).split('-');
         var d;
@@ -34,7 +34,7 @@
             d = new Date(val);
         }
         if (Number.isNaN(d.getTime())) return val;
-        return dateMediumFmt.format(d);
+        return dateShortFmt.format(d);
     }
 
     function localizePending(root) {
@@ -55,7 +55,7 @@
         locale: locale,
         formatTimestamp: formatTimestamp,
         formatDateOnly: formatDateOnly,
-        formatDateMedium: formatDateMedium,
+        formatDateShort: formatDateShort,
         localizePending: localizePending
     };
 })();
