@@ -30,7 +30,7 @@ public class Playlist
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("owner")]
-    public Owner Owner { get; set; } = new Owner();
+    public Owner Owner { get; set; } = new();
 
     [JsonPropertyName("snapshot_id")]
     public string SnapshotId { get; set; } = string.Empty;
@@ -61,5 +61,5 @@ public class Playlist
     }
 
     // UTC timestamp of the last shuffle run; null until the playlist has been shuffled once.
-    public DateTime? LastShuffled { get; set; } = null;
+    public DateTime? LastShuffled { get; set; }
 }

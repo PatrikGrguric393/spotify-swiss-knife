@@ -1,21 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Services;
 using System.Globalization;
 
 namespace spotify_swiss_knife.Controllers;
 
-// Server-rendered CRUD for the local library's tracks, under /lib/tracks. Listing is public;
-// create/edit require an Admin or Editor local account and deletes are Admin-only. Durations are
-// entered/displayed as m:ss but stored as milliseconds (see TryParseDuration/FormatDuration).
-// DenySpotifyUsers keeps Spotify-connected visitors out. JSON counterpart: TracksApiController.
-[Route("lib")]
-[Authorize(Roles = "Admin,Editor")]
-[DenySpotifyUsers]
-public class TracksController : Controller
+public class TracksController : LibraryControllerBase
 {
     private const int MaxDurationMs = 3600000;
 
@@ -72,7 +63,7 @@ public class TracksController : Controller
             DurationMs = durationMs,
             IsLocal = model.IsLocal,
             ExternalUrls = new Models.ExternalUrls(),
-            Artists = GetSelectedArtists(model.ArtistIds)
+            Artists = FilterByIds(_artistRepository.GetAll(), a => a.Id, model.ArtistIds)
         };
 
         _trackRepository.Add(track);
@@ -116,7 +107,6 @@ public class TracksController : Controller
             return View("Edit", model);
         }
 
-        // Use route id to exclude current track from duplicate check
         if (_trackRepository.ExistsByName(model.Name, id))
         {
             ModelState.AddModelError("Name", $"A track named '{model.Name.Trim()}' already exists.");
@@ -129,7 +119,7 @@ public class TracksController : Controller
         track.DiscNumber = model.DiscNumber;
         track.DurationMs = durationMs;
         track.IsLocal = model.IsLocal;
-        track.Artists = GetSelectedArtists(model.ArtistIds);
+        track.Artists = FilterByIds(_artistRepository.GetAll(), a => a.Id, model.ArtistIds);
 
         _trackRepository.Update(track);
         return RedirectToAction(nameof(Index));
@@ -182,21 +172,8 @@ public class TracksController : Controller
         }).ToList());
     }
 
-    private void PopulateArtistOptions(IEnumerable<string>? selectedArtistIds)
-    {
-        var selected = new HashSet<string>(selectedArtistIds ?? []);
-        ViewBag.ArtistOptions = _artistRepository.GetAll()
-            .OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(a => new SelectListItem { Value = a.Id, Text = a.Name, Selected = selected.Contains(a.Id) })
-            .ToList();
-    }
-
-    private List<Models.Artist> GetSelectedArtists(IEnumerable<string> artistIds)
-    {
-        var wanted = new HashSet<string>(artistIds ?? []);
-        if (wanted.Count == 0) return [];
-        return _artistRepository.GetAll().Where(a => wanted.Contains(a.Id)).ToList();
-    }
+    private void PopulateArtistOptions(IEnumerable<string>? selectedIds) =>
+        ViewBag.ArtistOptions = ToSelectList(_artistRepository.GetAll(), a => a.Id, a => a.Name, selectedIds);
 
     private static string FormatDuration(int durationMs) => DurationFormat.MinutesSeconds(durationMs);
 

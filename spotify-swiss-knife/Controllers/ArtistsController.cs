@@ -1,19 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using spotify_swiss_knife.Filters;
-using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
-// Server-rendered CRUD for the local library's artists, under /lib/artists. Listing is public,
-// but creating, editing, and deleting require an Admin or Editor local account (deletes are
-// Admin-only and soft, see ArtistRepository.SoftDelete). DenySpotifyUsers keeps Spotify-connected
-// visitors out of the local library entirely. The JSON CRUD counterpart is ArtistsApiController.
-[Route("lib")]
-[Authorize(Roles = "Admin,Editor")]
-[DenySpotifyUsers]
-public class ArtistsController : Controller
+public class ArtistsController : LibraryControllerBase
 {
     private readonly ArtistRepository _artistRepository;
 
@@ -39,15 +30,14 @@ public class ArtistsController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult CreatePost([FromForm] Models.FormModels.ArtistCreateForm model)
     {
-        if (!ModelState.IsValid)
-            return View("Create", model);
+        ValidateSpotifyUrl(model.SpotifyUrl);
 
-        if (!TryValidateSpotifyUrl(model.SpotifyUrl))
+        if (!ModelState.IsValid)
             return View("Create", model);
 
         if (_artistRepository.ExistsByName(model.Name))
         {
-            ModelState.AddModelError("Name", $"An artist named '{(model.Name ?? string.Empty).Trim()}' already exists.");
+            ModelState.AddModelError("Name", $"An artist named '{model.Name.Trim()}' already exists.");
             return View("Create", model);
         }
 
@@ -82,15 +72,14 @@ public class ArtistsController : Controller
         var artist = _artistRepository.GetById(id, includeDeleted: true);
         if (artist is null) return NotFound();
 
-        if (!ModelState.IsValid)
-            return View("Edit", model);
+        ValidateSpotifyUrl(model.SpotifyUrl);
 
-        if (!TryValidateSpotifyUrl(model.SpotifyUrl))
+        if (!ModelState.IsValid)
             return View("Edit", model);
 
         if (_artistRepository.ExistsByName(model.Name, id))
         {
-            ModelState.AddModelError("Name", $"An artist named '{(model.Name ?? string.Empty).Trim()}' already exists.");
+            ModelState.AddModelError("Name", $"An artist named '{model.Name.Trim()}' already exists.");
             return View("Edit", model);
         }
 
@@ -138,13 +127,5 @@ public class ArtistsController : Controller
     {
         if (string.IsNullOrWhiteSpace(q)) return Json(new { isUnique = false });
         return Json(new { isUnique = !_artistRepository.ExistsByName(q, excludeId) });
-    }
-
-    // Validates the optional Spotify URL, recording a model error for redisplay when invalid.
-    private bool TryValidateSpotifyUrl(string? url)
-    {
-        if (SpotifyUrl.IsValid(url)) return true;
-        ModelState.AddModelError("SpotifyUrl", SpotifyUrl.ValidationMessage);
-        return false;
     }
 }

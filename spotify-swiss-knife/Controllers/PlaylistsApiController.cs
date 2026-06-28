@@ -54,44 +54,23 @@ public class PlaylistsApiController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<PlaylistDetailDto> Create([FromBody] PlaylistCreateDto dto)
     {
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_playlistRepository.ExistsByName(dto.Name))
             return UnprocessableEntity(new { message = $"A playlist named '{dto.Name.Trim()}' already exists." });
 
         var playlist = new Playlist
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid().ToString("N"),
             Name = dto.Name.Trim(),
             Description = dto.Description?.Trim() ?? string.Empty,
-            SnapshotId = Guid.NewGuid().ToString(),
+            SnapshotId = Guid.NewGuid().ToString("N"),
             ExternalUrls = new ExternalUrls { Spotify = (dto.SpotifyUrl ?? string.Empty).Trim() },
             Owner = new Owner { DisplayName = dto.OwnerDisplayName?.Trim() }
         };
 
         if (dto.TrackIds.Count > 0)
-        {
-            var trackMap = _db.Tracks
-                .Where(t => dto.TrackIds.Contains(t.Id))
-                .ToDictionary(t => t.Id);
-
-            var items = dto.TrackIds
-                .Where(trackMap.ContainsKey)
-                .Select(tid => new PlaylistTrack { Track = trackMap[tid] })
-                .ToList();
-
-            playlist.Tracks = new PlaylistTracksPage
-            {
-                Total = items.Count,
-                Limit = items.Count,
-                Offset = 0,
-                Items = items
-            };
-        }
+            playlist.Tracks = BuildTracksPage(dto.TrackIds);
 
         _playlistRepository.Add(playlist);
 
@@ -112,11 +91,7 @@ public class PlaylistsApiController : ApiControllerBase
         var playlist = _playlistRepository.GetById(id);
         if (playlist is null) return NotFound();
 
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_playlistRepository.ExistsByName(dto.Name, id))
             return UnprocessableEntity(new { message = $"A playlist named '{dto.Name.Trim()}' already exists." });
@@ -128,22 +103,7 @@ public class PlaylistsApiController : ApiControllerBase
         playlist.Owner ??= new Owner();
         playlist.Owner.DisplayName = dto.OwnerDisplayName?.Trim();
 
-        var trackMap = _db.Tracks
-            .Where(t => dto.TrackIds.Contains(t.Id))
-            .ToDictionary(t => t.Id);
-
-        var items = dto.TrackIds
-            .Where(trackMap.ContainsKey)
-            .Select(tid => new PlaylistTrack { Track = trackMap[tid] })
-            .ToList();
-
-        playlist.Tracks = new PlaylistTracksPage
-        {
-            Total = items.Count,
-            Limit = items.Count,
-            Offset = 0,
-            Items = items
-        };
+        playlist.Tracks = BuildTracksPage(dto.TrackIds);
 
         _playlistRepository.Save(playlist);
 
@@ -164,5 +124,15 @@ public class PlaylistsApiController : ApiControllerBase
 
         _playlistRepository.Delete(id);
         return NoContent();
+    }
+
+    private PlaylistTracksPage BuildTracksPage(List<string> trackIds)
+    {
+        var trackMap = _db.Tracks.Where(t => trackIds.Contains(t.Id)).ToDictionary(t => t.Id);
+        var items = trackIds
+            .Where(trackMap.ContainsKey)
+            .Select(tid => new PlaylistTrack { Track = trackMap[tid] })
+            .ToList();
+        return new PlaylistTracksPage { Total = items.Count, Limit = items.Count, Offset = 0, Items = items };
     }
 }

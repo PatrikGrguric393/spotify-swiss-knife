@@ -7,7 +7,7 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// <see cref="HasExistingCover"/> tells the view whether to offer removing the current cover,
 /// and <see cref="RemoveCoverImage"/> requests that removal.
 /// </summary>
-public class AlbumEditForm : AlbumForm
+public sealed class AlbumEditForm : AlbumForm
 {
     [Required]
     [Display(Name = "Album ID")]

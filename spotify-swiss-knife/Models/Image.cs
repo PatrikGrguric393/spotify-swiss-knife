@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace spotify_swiss_knife.Models;
 
 /// <summary>
-/// A single cover/profile image as returned by the Spotify Web API and persisted with the
-/// owning <see cref="Album"/>, <see cref="Track"/> or <see cref="Playlist"/>.
+/// A single cover image as returned by the Spotify Web API and persisted with the owning
+/// <see cref="Album"/> or <see cref="Playlist"/>.
 /// </summary>
 /// <remarks>
 /// This is the EF-mapped image entity. <see cref="SpotifyImage"/> is a separate, unmapped

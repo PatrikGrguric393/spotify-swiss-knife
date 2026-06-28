@@ -63,22 +63,7 @@
                    tabindex="-1"
                    aria-hidden="true"
                    aria-describedby="error-CoverImage" />
-            @{
-                var coverErrors = ViewData.ModelState["CoverImage"]?.Errors;
-                if (coverErrors != null && coverErrors.Count > 0)
-                {
-                    <div class="validation-error show" id="error-CoverImage" role="alert" aria-live="polite">
-                        @foreach (var error in coverErrors)
-                        {
-                            <div class="validation-error-message">@error.ErrorMessage</div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="validation-error" id="error-CoverImage" role="alert" aria-live="polite"></div>
-                }
-            }
+            <partial name="_FieldErrors" model="@("CoverImage")" />
         </div>
 
         <div class="form-actions">

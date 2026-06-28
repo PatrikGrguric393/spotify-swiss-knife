@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace spotify_swiss_knife.Models.FormModels;
 
 /// <summary>Login form: email, password, and the "remember me" persistence toggle.</summary>
-public class UserLoginForm
+public sealed class UserLoginForm
 {
     [Required]
     [EmailAddress]

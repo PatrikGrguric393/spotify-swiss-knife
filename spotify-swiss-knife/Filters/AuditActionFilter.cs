@@ -41,9 +41,9 @@ public sealed class AuditActionFilter : IAsyncActionFilter
             return;
         }
 
-        var descriptor = context.ActionDescriptor.RouteValues;
-        var controller = descriptor.TryGetValue("controller", out var c) ? c : "?";
-        var action = descriptor.TryGetValue("action", out var a) ? a : "?";
+        var routeValues = context.ActionDescriptor.RouteValues;
+        var controller = routeValues.TryGetValue("controller", out var c) ? c : "?";
+        var action = routeValues.TryGetValue("action", out var a) ? a : "?";
         var user = LogScrub.User(await ResolveUserAsync(http));
 
         // Correlate every log written during this action to the request and the acting user.

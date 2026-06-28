@@ -9,22 +9,7 @@
 <div class="form-group">
     <label asp-for="Name" class="required"></label>
     <input asp-for="Name" class="form-control" required maxlength="300" data-val-length-max="300" data-val-length-min="1" placeholder="Enter album name" aria-describedby="error-Name" />
-    @{
-        var nameErrors = ViewData.ModelState["Name"]?.Errors;
-        if (nameErrors != null && nameErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
-                @foreach (var error in nameErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("Name")" />
 </div>
 
 <div class="form-group">
@@ -35,22 +20,7 @@
         <option value="single">Single</option>
         <option value="compilation">Compilation</option>
     </select>
-    @{
-        var albumTypeErrors = ViewData.ModelState["AlbumType"]?.Errors;
-        if (albumTypeErrors != null && albumTypeErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-AlbumType" role="alert" aria-live="polite">
-                @foreach (var error in albumTypeErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-AlbumType" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("AlbumType")" />
 </div>
 
 <div class="form-group album-track-picker album-artist-picker" data-album-artist-picker>
@@ -80,22 +50,7 @@
             }
         </div>
 
-        @{
-            var artistIdErrors = ViewData.ModelState["ArtistIds"]?.Errors;
-            if (artistIdErrors != null && artistIdErrors.Count > 0)
-            {
-                <div class="validation-error show" id="error-ArtistIds" role="alert" aria-live="polite">
-                    @foreach (var error in artistIdErrors)
-                    {
-                        <div class="validation-error-message">@error.ErrorMessage</div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="validation-error" id="error-ArtistIds" role="alert" aria-live="polite"></div>
-            }
-        }
+        <partial name="_FieldErrors" model="@("ArtistIds")" />
     </fieldset>
 </div>
 
@@ -126,65 +81,20 @@
             }
         </div>
 
-        @{
-            var trackIdErrors = ViewData.ModelState["TrackIds"]?.Errors;
-            if (trackIdErrors != null && trackIdErrors.Count > 0)
-            {
-                <div class="validation-error show" id="error-TrackIds" role="alert" aria-live="polite">
-                    @foreach (var error in trackIdErrors)
-                    {
-                        <div class="validation-error-message">@error.ErrorMessage</div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="validation-error" id="error-TrackIds" role="alert" aria-live="polite"></div>
-            }
-        }
+        <partial name="_FieldErrors" model="@("TrackIds")" />
     </fieldset>
 </div>
 
 <div class="form-group">
     <label asp-for="Label"></label>
     <input asp-for="Label" class="form-control" maxlength="100" placeholder="Enter label (optional)" aria-describedby="error-Label" />
-    @{
-        var labelErrors = ViewData.ModelState["Label"]?.Errors;
-        if (labelErrors != null && labelErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-Label" role="alert" aria-live="polite">
-                @foreach (var error in labelErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-Label" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("Label")" />
 </div>
 
 <div class="form-group">
     <label asp-for="Popularity"></label>
     <input asp-for="Popularity" class="form-control" type="number" min="0" max="100" aria-describedby="error-Popularity" />
-    @{
-        var popularityErrors = ViewData.ModelState["Popularity"]?.Errors;
-        if (popularityErrors != null && popularityErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-Popularity" role="alert" aria-live="polite">
-                @foreach (var error in popularityErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-Popularity" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("Popularity")" />
 </div>
 
 <div class="form-group">
@@ -212,19 +122,5 @@
         </div>
     </div>
     <input type="hidden" asp-for="ReleaseDate" id="releaseDate" />
-    @{
-        if (releaseDateErrors != null && releaseDateErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-ReleaseDate" role="alert" aria-live="polite">
-                @foreach (var error in releaseDateErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-ReleaseDate" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("ReleaseDate")" />
 </div>

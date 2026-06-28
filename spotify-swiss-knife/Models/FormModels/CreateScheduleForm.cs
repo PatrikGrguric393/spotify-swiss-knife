@@ -8,7 +8,7 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// the UTC cron string that gets stored. <see cref="Validate"/> enforces the per-frequency day
 /// rules.
 /// </summary>
-public class CreateScheduleForm : IValidatableObject
+public sealed class CreateScheduleForm : IValidatableObject
 {
     // Selected playlists. PlaylistNames[i] is the display name for PlaylistIds[i]; the two
     // lists are posted as parallel hidden fields and stay index-aligned. At least one is required
@@ -27,8 +27,10 @@ public class CreateScheduleForm : IValidatableObject
     // Calendar day of the month (1–31), used only when Frequency is Monthly.
     public int? DayOfMonth { get; set; }
 
-    // "HH:mm" as entered in the client's local timezone, e.g. "08:00".
-    // Converted to UTC in ToCronExpression using TimezoneOffsetMinutes.
+    // The time the user selected in their LOCAL timezone (e.g. "08:00"), NOT UTC yet.
+    // The field is named TimeUtc because the Schedules view binds to it by that name via
+    // asp-for / getElementById — renaming it here requires a matching rename in the view.
+    // ToCronExpression converts this value to UTC using TimezoneOffsetMinutes.
     [Required]
     [RegularExpression(@"^([01]\d|2[0-3]):[0-5]\d$", ErrorMessage = "Enter a valid time (HH:mm).")]
     public string TimeUtc { get; set; } = "08:00";

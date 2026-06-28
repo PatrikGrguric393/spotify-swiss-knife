@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Options;
+using spotify_swiss_knife.Configuration;
+
 namespace spotify_swiss_knife.Services;
 
 // Stores uploaded album-cover images on the local filesystem under "<storage>/album-covers".
@@ -18,9 +21,9 @@ public class AlbumCoverStorage
 
     private readonly string _coverPath;
 
-    public AlbumCoverStorage(IConfiguration configuration, IWebHostEnvironment env)
+    public AlbumCoverStorage(IOptions<FileStorageOptions> options, IWebHostEnvironment env)
     {
-        var configuredPath = configuration["FileStorage:Path"];
+        var configuredPath = options.Value.Path;
         var basePath = string.IsNullOrWhiteSpace(configuredPath)
             ? Path.Combine(env.ContentRootPath, "uploads")
             : Path.IsPathRooted(configuredPath)

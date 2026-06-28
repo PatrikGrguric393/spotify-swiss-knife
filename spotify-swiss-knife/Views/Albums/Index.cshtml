@@ -57,8 +57,6 @@
         </div>
     </div>
 
-    <p>All albums from the mock repository.</p>
-
     <div class="table-actions">
         <a class="btn btn-primary" href="@Url.Action("Create", "Albums")">Create Album</a>
     </div>
@@ -120,17 +118,7 @@
     </div>
 </section>
 
-<div class="entity-detail-backdrop" id="entityDetailBackdrop" hidden>
-    <section class="entity-detail-modal" role="dialog" aria-modal="true" aria-labelledby="entityDetailTitle">
-        <div class="entity-detail-header">
-            <h2 id="entityDetailTitle">Details</h2>
-            <button type="button" class="entity-detail-close" id="entityDetailClose" aria-label="Close details">Close</button>
-        </div>
-        <div class="entity-detail-body">
-            <div class="entity-detail-content" id="entityDetailContent"></div>
-        </div>
-    </section>
-</div>
+<partial name="_EntityDetailModal" />
 
 @section Scripts {
     <script src="~/js/album-form-datepicker.js" asp-append-version="true"></script>

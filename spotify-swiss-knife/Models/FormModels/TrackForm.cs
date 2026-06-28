@@ -19,7 +19,7 @@ public abstract class TrackForm
     [Display(Name = "Track Number")]
     public int TrackNumber { get; set; }
 
-    [Range(0, 5, ErrorMessage = "Disc number must be between 0 and 5")]
+    [Range(1, 5, ErrorMessage = "Disc number must be between 1 and 5")]
     [Display(Name = "Disc Number")]
     public int DiscNumber { get; set; } = 1;
 

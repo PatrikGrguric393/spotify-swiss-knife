@@ -4,7 +4,7 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// Submission for the bulk album-save: the selected album ids to copy into each of the
 /// selected playlist ids.
 /// </summary>
-public class BulkAlbumSaveForm
+public sealed class BulkAlbumSaveForm
 {
     public List<string> AlbumIds { get; set; } = [];
 

@@ -37,7 +37,6 @@ public class FilesController : Controller
                 : Path.Combine(env.ContentRootPath, configuredPath);
     }
 
-    // Admins and editors may see, download, and delete any user's file.
     private bool CanAccessAnyFile() => User.IsInRole("Admin") || User.IsInRole("Editor");
 
     [HttpGet("")]

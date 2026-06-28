@@ -5,24 +5,6 @@
     var returnUrl = ViewData["ReturnUrl"] as string ?? string.Empty;
     var dobValue = Model.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty;
     var dobLabel = "Pick a date";
-
-    void FieldErrors(string field)
-    {
-        var errors = ViewData.ModelState[field]?.Errors;
-        if (errors != null && errors.Count > 0)
-        {
-            <div class="validation-error show" id="error-@field" role="alert" aria-live="polite">
-                @foreach (var error in errors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-@field" role="alert" aria-live="polite"></div>
-        }
-    }
 }
 
 <div class="form-container">
@@ -37,19 +19,19 @@
         <div class="form-group">
             <label asp-for="Email" class="required"></label>
             <input asp-for="Email" class="form-control" type="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="error-Email" />
-            @{ FieldErrors("Email"); }
+            <partial name="_FieldErrors" model="@("Email")" />
         </div>
 
         <div class="form-group">
             <label asp-for="FirstName" class="required"></label>
             <input asp-for="FirstName" class="form-control" autocomplete="given-name" required maxlength="100" data-val-length-max="100" placeholder="Enter your first name" aria-describedby="error-FirstName" />
-            @{ FieldErrors("FirstName"); }
+            <partial name="_FieldErrors" model="@("FirstName")" />
         </div>
 
         <div class="form-group">
             <label asp-for="LastName" class="required"></label>
             <input asp-for="LastName" class="form-control" autocomplete="family-name" required maxlength="100" data-val-length-max="100" placeholder="Enter your last name" aria-describedby="error-LastName" />
-            @{ FieldErrors("LastName"); }
+            <partial name="_FieldErrors" model="@("LastName")" />
         </div>
 
         <div class="form-group">
@@ -70,31 +52,31 @@
                 </div>
             </div>
             <input type="hidden" name="DateOfBirth" id="registerDob" value="@dobValue" />
-            @{ FieldErrors("DateOfBirth"); }
+            <partial name="_FieldErrors" model="@("DateOfBirth")" />
         </div>
 
         <div class="form-group">
             <label asp-for="OIB" class="required"></label>
             <input asp-for="OIB" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="11" data-val-length-max="11" pattern="[0-9]{11}" title="OIB must be exactly 11 digits" placeholder="Enter your 11-digit OIB" aria-describedby="error-OIB" />
-            @{ FieldErrors("OIB"); }
+            <partial name="_FieldErrors" model="@("OIB")" />
         </div>
 
         <div class="form-group">
             <label asp-for="JMBAG" class="required"></label>
             <input asp-for="JMBAG" class="form-control" inputmode="numeric" autocomplete="off" required maxlength="10" data-val-length-max="10" pattern="[0-9]{10}" title="JMBAG must be exactly 10 digits" placeholder="Enter your 10-digit JMBAG" aria-describedby="error-JMBAG" />
-            @{ FieldErrors("JMBAG"); }
+            <partial name="_FieldErrors" model="@("JMBAG")" />
         </div>
 
         <div class="form-group">
             <label asp-for="Password" class="required"></label>
             <input asp-for="Password" id="Password" class="form-control" type="password" autocomplete="new-password" required pattern="(?=.*\d).*" title="Password must be at least 6 characters and contain at least one digit" placeholder="At least 6 characters" aria-describedby="error-Password" />
-            @{ FieldErrors("Password"); }
+            <partial name="_FieldErrors" model="@("Password")" />
         </div>
 
         <div class="form-group">
             <label asp-for="ConfirmPassword" class="required"></label>
             <input asp-for="ConfirmPassword" id="ConfirmPassword" class="form-control" type="password" autocomplete="new-password" required data-match="#Password" placeholder="Re-enter your password" aria-describedby="error-ConfirmPassword" />
-            @{ FieldErrors("ConfirmPassword"); }
+            <partial name="_FieldErrors" model="@("ConfirmPassword")" />
         </div>
 
         <div class="form-actions">

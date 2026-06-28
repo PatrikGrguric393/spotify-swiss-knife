@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Tests.Infrastructure;
 
+// Boots the real application for integration tests with two swaps that make it runnable without
+// external dependencies: the Npgsql-backed DbContext is replaced with a per-factory in-memory
+// EF database, and the Spotify-dependent background scheduler is dropped. Each instance gets its
+// own database name so test classes stay isolated.
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName = $"ssk-tests-{Guid.NewGuid()}";

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace spotify_swiss_knife.Models;
 
 /// <summary>
@@ -6,5 +8,11 @@ namespace spotify_swiss_knife.Models;
 /// </summary>
 public class ExternalUrls
 {
+    [JsonPropertyName("spotify")]
     public string Spotify { get; set; } = string.Empty;
+
+    // Spotify returns an empty string rather than null when no URL exists.
+    // Use this instead of .Spotify directly to get a clean nullable value.
+    [JsonIgnore]
+    public string? SpotifyUrl => string.IsNullOrEmpty(Spotify) ? null : Spotify;
 }

@@ -26,22 +26,7 @@
         @Html.Raw(string.IsNullOrWhiteSpace(excludeIdSelector) ? string.Empty : $" data-exclude-id-selector=\"{excludeIdSelector}\"")
     />
 
-    @{
-        var nameErrors = ViewData.ModelState["Name"]?.Errors;
-        if (nameErrors != null && nameErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-Name" role="alert" aria-live="polite">
-                @foreach (var error in nameErrors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-Name" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("Name")" />
 </div>
 
 <div class="form-group">
@@ -58,17 +43,5 @@
         data-validate-spotify="true"
     />
 
-    @{
-        var urlErrors = ViewData.ModelState["SpotifyUrl"]?.Errors;
-        if (urlErrors != null && urlErrors.Count > 0)
-        {
-            <div class="validation-error show" id="error-SpotifyUrl" role="alert" aria-live="polite">
-                <div class="validation-error-message">@urlErrors[0].ErrorMessage</div>
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-SpotifyUrl" role="alert" aria-live="polite"></div>
-        }
-    }
+    <partial name="_FieldErrors" model="@("SpotifyUrl")" />
 </div>

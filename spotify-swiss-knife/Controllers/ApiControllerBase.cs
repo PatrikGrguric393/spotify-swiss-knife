@@ -5,31 +5,28 @@ using spotify_swiss_knife.Infrastructure;
 
 namespace spotify_swiss_knife.Controllers;
 
-// Shared base for the JSON CRUD API controllers (api/albums, api/artists, api/tracks,
-// api/playlists). The API authenticates exclusively via JWT bearer tokens. Pinning the scheme
-// here means [Authorize(Roles = ...)] on the actions evaluates the bearer identity rather than
-// the Identity cookie used by the MVC app; [AllowAnonymous] GETs still bypass it.
+// Pinning the JWT bearer scheme here means [Authorize(Roles = ...)] on actions evaluates the
+// bearer identity rather than the Identity cookie used by the MVC app.
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public abstract class ApiControllerBase : ControllerBase
 {
-    // Validates the optional Spotify URL on a create/update DTO. Returns false with a
-    // user-facing message when the value is present but isn't a valid spotify.com link.
-    protected static bool TryValidateSpotifyUrl(string? url, out string error)
+    protected ActionResult? SpotifyUrlValidationProblem(string? url)
     {
-        if (SpotifyUrl.IsValid(url))
-        {
-            error = string.Empty;
-            return true;
-        }
-
-        error = SpotifyUrl.ValidationMessage;
-        return false;
+        if (SpotifyUrl.IsValid(url)) return null;
+        ModelState.AddModelError("SpotifyUrl", SpotifyUrl.ValidationMessage);
+        return ValidationProblem(ModelState);
     }
 
-    // Applies the shared list-search behaviour used by every CRUD GetAll endpoint: a blank query
-    // returns the source unchanged, otherwise items are kept when the query exactly matches the id
-    // or appears anywhere in the name (both case-insensitive). Selectors let each controller point
-    // at its own entity's id/name without duplicating the filter.
+    // 404 when any requested related id has no matching row, so unknown references fail loudly
+    // instead of being silently dropped.
+    protected NotFoundObjectResult? MissingReferenceProblem(
+        IEnumerable<string> requestedIds, IEnumerable<string> foundIds, string entityName)
+    {
+        var missing = requestedIds.Except(foundIds).ToList();
+        if (missing.Count == 0) return null;
+        return NotFound(new { message = $"{entityName}(s) not found: {string.Join(", ", missing)}." });
+    }
+
     protected static IEnumerable<T> ApplySearchFilter<T>(
         IEnumerable<T> items, string? query, Func<T, string> idSelector, Func<T, string> nameSelector)
     {

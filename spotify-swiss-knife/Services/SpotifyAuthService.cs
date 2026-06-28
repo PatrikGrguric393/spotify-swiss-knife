@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using spotify_swiss_knife.Configuration;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 
@@ -41,23 +43,23 @@ public class SpotifyAuthService
     private const int ReplaceBatchLimit = 100;
 
     public SpotifyAuthService(
-        IConfiguration config,
+        IOptions<SpotifyOptions> options,
         IHttpClientFactory httpClientFactory,
         SpotifyDbContext db,
         ILogger<SpotifyAuthService> logger)
     {
-        _clientId = Required(config, "Spotify:ClientId");
-        _clientSecret = Required(config, "Spotify:ClientSecret");
-        _redirectUri = Required(config, "Spotify:RedirectUri");
+        var spotify = options.Value;
+        _clientId = RequireNonEmpty(spotify.ClientId, nameof(spotify.ClientId));
+        _clientSecret = RequireNonEmpty(spotify.ClientSecret, nameof(spotify.ClientSecret));
+        _redirectUri = RequireNonEmpty(spotify.RedirectUri, nameof(spotify.RedirectUri));
         _httpClient = httpClientFactory.CreateClient("spotify");
         _db = db;
         _logger = logger;
 
-        static string Required(IConfiguration config, string key)
+        static string RequireNonEmpty(string value, string name)
         {
-            var value = config[key];
             if (string.IsNullOrWhiteSpace(value))
-                throw new InvalidOperationException($"{key} is not configured.");
+                throw new InvalidOperationException($"Spotify:{name} is not configured.");
             return value;
         }
     }

@@ -1,0 +1,46 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model spotify_swiss_knife.Models.FormModels.PlaylistForm
+
+
+<div class="form-group">
+    <label asp-for="Name" class="required"></label>
+    <input asp-for="Name" class="form-control" required maxlength="200" data-val-length-max="200" data-val-length-min="1" placeholder="Enter playlist name" aria-describedby="error-Name" />
+    <partial name="_FieldErrors" model="@("Name")" />
+</div>
+
+<div class="form-group">
+    <label asp-for="Description"></label>
+    <textarea asp-for="Description" class="form-control" maxlength="500" data-val-length-max="500" rows="4" placeholder="Enter description (optional)" aria-describedby="error-Description"></textarea>
+    <partial name="_FieldErrors" model="@("Description")" />
+</div>
+
+<div class="form-group album-track-picker" data-playlist-track-picker>
+    <fieldset class="album-track-picker-fieldset">
+        <legend>Songs</legend>
+        <p class="album-track-picker-help">Search songs, then check every song you want in this playlist.</p>
+        <label class="album-track-picker-search-label" for="playlistTrackSearch">Search songs</label>
+        <input id="playlistTrackSearch" type="search" class="form-control album-track-picker-search" placeholder="Search by song name" autocomplete="off" data-playlist-track-search aria-describedby="playlistTrackPickerStatus error-TrackIds" />
+        <div class="album-track-picker-status" id="playlistTrackPickerStatus" role="status" aria-live="polite"></div>
+
+        <div class="album-track-picker-list entity-selection-list" role="group" aria-label="Available songs">
+            @{
+                var selectedTrackIds = new HashSet<string>(Model.TrackIds ?? []);
+                var trackOptions = ViewBag.TrackOptions as IEnumerable<SelectListItem> ?? [];
+                foreach (var trackOption in trackOptions)
+                {
+                    var optionId = $"playlist-track-option-{trackOption.Value}";
+                    var optionText = trackOption.Text ?? string.Empty;
+                    var searchValue = optionText.ToLowerInvariant();
+                    var isSelected = selectedTrackIds.Contains(trackOption.Value ?? string.Empty) || trackOption.Selected;
+
+                    <label class="album-track-picker-item entity-selection-item" data-playlist-track-row data-search-text="@searchValue">
+                        <input id="@optionId" type="checkbox" name="TrackIds" value="@trackOption.Value" @(isSelected ? "checked" : null) data-playlist-track-checkbox />
+                        <span class="album-track-picker-item-text">@optionText</span>
+                    </label>
+                }
+            }
+        </div>
+
+        <partial name="_FieldErrors" model="@("TrackIds")" />
+    </fieldset>
+</div>

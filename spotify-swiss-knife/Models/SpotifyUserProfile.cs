@@ -5,7 +5,7 @@ namespace spotify_swiss_knife.Models;
 /// <summary>
 /// The current user's Spotify profile (/me). Transient deserialization target; not persisted.
 /// </summary>
-public class SpotifyUserProfile
+public sealed class SpotifyUserProfile
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
@@ -24,7 +24,7 @@ public class SpotifyUserProfile
 /// Profile image shape used only by <see cref="SpotifyUserProfile"/>. Kept separate from the
 /// persisted <see cref="Image"/> entity so profile data stays purely transient (unmapped).
 /// </summary>
-public class SpotifyImage
+public sealed class SpotifyImage
 {
     [JsonPropertyName("url")]
     public string Url { get; set; } = string.Empty;

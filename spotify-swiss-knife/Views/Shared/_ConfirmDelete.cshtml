@@ -1,0 +1,25 @@
+@{
+    var entityType = ViewBag.EntityType as string ?? string.Empty;
+    var entityName = ViewBag.EntityName as string ?? string.Empty;
+    var cancelUrl = ViewBag.CancelUrl as string ?? string.Empty;
+    var warning = ViewBag.Warning as string;
+}
+
+<div class="form-container">
+    <h2>Delete @entityType</h2>
+
+    <p>Are you sure you want to delete the @entityType.ToLower() <strong>@entityName</strong>?</p>
+
+    @if (!string.IsNullOrEmpty(warning))
+    {
+        <p>@warning</p>
+    }
+
+    <form method="post" data-submit-once>
+        @Html.AntiForgeryToken()
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a href="@cancelUrl" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

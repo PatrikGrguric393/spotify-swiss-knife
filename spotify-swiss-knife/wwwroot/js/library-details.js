@@ -143,13 +143,79 @@ document.addEventListener('DOMContentLoaded', function () {
         return node;
     }
 
+    function isObjectArray(value) {
+        return Array.isArray(value) && value.length > 0 && value.every(function (item) {
+            return item !== null && typeof item === 'object' && !Array.isArray(item);
+        });
+    }
+
+    function renderTableSection(key, items) {
+        var section = document.createElement('div');
+        section.className = 'entity-detail-table-section';
+
+        var heading = document.createElement('h3');
+        heading.className = 'entity-detail-table-heading';
+        heading.textContent = formatLabel(key);
+        section.appendChild(heading);
+
+        var wrap = document.createElement('div');
+        wrap.className = 'entity-detail-table-wrap';
+
+        var columns = [];
+        items.forEach(function (item) {
+            Object.keys(item).forEach(function (col) {
+                if (columns.indexOf(col) === -1) {
+                    columns.push(col);
+                }
+            });
+        });
+
+        var table = document.createElement('table');
+        table.className = 'entity-detail-table';
+
+        var thead = document.createElement('thead');
+        var headRow = document.createElement('tr');
+        columns.forEach(function (col) {
+            var th = document.createElement('th');
+            th.textContent = formatLabel(col);
+            headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        items.forEach(function (item) {
+            var row = document.createElement('tr');
+            columns.forEach(function (col) {
+                var cell = document.createElement('td');
+                cell.setAttribute('data-label', formatLabel(col));
+                cell.appendChild(formatValue(item[col]));
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        wrap.appendChild(table);
+        section.appendChild(wrap);
+        return section;
+    }
+
     function renderDetailList(data) {
         detailContent.textContent = '';
 
-        var list = document.createElement('dl');
-        list.className = 'entity-detail-list';
+        var scalarKeys = [];
+        var tableKeys = [];
 
-        var keys = Object.keys(data).sort(function (a, b) {
+        Object.keys(data).forEach(function (key) {
+            if (isObjectArray(data[key])) {
+                tableKeys.push(key);
+            } else {
+                scalarKeys.push(key);
+            }
+        });
+
+        scalarKeys.sort(function (a, b) {
             if (a === 'Name') {
                 return -1;
             }
@@ -161,7 +227,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return a.localeCompare(b);
         });
 
-        keys.forEach(function (key) {
+        var list = document.createElement('dl');
+        list.className = 'entity-detail-list';
+
+        scalarKeys.forEach(function (key) {
             var label = document.createElement('dt');
             label.textContent = formatLabel(key);
 
@@ -173,6 +242,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         detailContent.appendChild(list);
+
+        tableKeys.forEach(function (key) {
+            detailContent.appendChild(renderTableSection(key, data[key]));
+        });
     }
 
     function openDetails(entityType, detailsId) {

@@ -1,13 +1,39 @@
 (function () {
+    function buildDetailPayload(r) {
+        var tracks = (r.tracks || []).map(function (t, index) {
+            return {
+                '#': index + 1,
+                Song: t.song,
+                Artists: t.artists,
+                Duration: t.duration
+            };
+        });
+
+        var payload = {
+            Name: r.name,
+            Owner: r.owner,
+            TrackCount: r.tracksCount,
+            LastShuffled: r.lastShuffled || null,
+            Tracks: tracks
+        };
+
+        if (r.description) {
+            payload.Description = r.description;
+        }
+
+        return payload;
+    }
+
     function renderRows(rows) {
         var tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
         tbody.innerHTML = '';
         rows.forEach(function(r) {
-            var contentsId = 'playlist-contents-' + r.id;
+            var detailsId = 'playlist-details-' + r.id;
             var tr = document.createElement('tr');
             tr.setAttribute('tabindex', '0');
-            tr.setAttribute('data-contents-id', contentsId);
+            tr.setAttribute('data-details-id', detailsId);
+            tr.setAttribute('data-entity-type', 'Playlist');
             tr.setAttribute('aria-label', 'View tracks for ' + r.name);
 
             var tdName = document.createElement('td');
@@ -38,8 +64,14 @@
             del.href = '/lib/playlists/delete/' + encodeURIComponent(r.id);
             del.textContent = 'Delete';
 
+            var payload = document.createElement('script');
+            payload.type = 'application/json';
+            payload.id = detailsId;
+            payload.textContent = JSON.stringify(buildDetailPayload(r));
+
             tdActions.appendChild(edit);
             tdActions.appendChild(del);
+            tdActions.appendChild(payload);
             tr.appendChild(tdName);
             tr.appendChild(tdOwner);
             tr.appendChild(tdTracks);
@@ -88,7 +120,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         window.LibraryList.setup({
             searchInputId: 'playlistSearch',
-            rowSelector: '.entity-table tbody tr[data-contents-id]',
+            rowSelector: '.entity-table tbody tr[data-details-id]',
             doSearch: doSearch,
             onReady: function (ctx) {
                 var searchInput = ctx.input;

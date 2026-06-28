@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using spotify_swiss_knife.Configuration;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Models;
 
@@ -21,14 +23,15 @@ public class JwtTokenService
     private readonly int _accessTokenMinutes;
     private readonly int _refreshTokenDays;
 
-    public JwtTokenService(IConfiguration config, SpotifyDbContext db, SigningKeyProvider keyProvider)
+    public JwtTokenService(IOptions<JwtOptions> options, SpotifyDbContext db, SigningKeyProvider keyProvider)
     {
         _db = db;
         _keyProvider = keyProvider;
-        _issuer = config["Jwt:Issuer"] ?? "spotify-swiss-knife";
-        _audience = config["Jwt:Audience"] ?? "spotify-swiss-knife-api";
-        _accessTokenMinutes = int.TryParse(config["Jwt:AccessTokenMinutes"], out var m) ? m : 60;
-        _refreshTokenDays = int.TryParse(config["Jwt:RefreshTokenDays"], out var d) ? d : 30;
+        var jwt = options.Value;
+        _issuer = jwt.Issuer;
+        _audience = jwt.Audience;
+        _accessTokenMinutes = jwt.AccessTokenMinutes;
+        _refreshTokenDays = jwt.RefreshTokenDays;
     }
 
     public (string Token, int ExpiresInSeconds) CreateAccessToken(AppUser user, IEnumerable<string> roles)

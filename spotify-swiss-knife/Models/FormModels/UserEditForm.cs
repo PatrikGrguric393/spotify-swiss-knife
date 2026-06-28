@@ -6,7 +6,7 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// Admin user-edit form: the shared <see cref="UserForm"/> profile fields plus the user id and
 /// their assigned role.
 /// </summary>
-public class UserEditForm : UserForm
+public sealed class UserEditForm : UserForm
 {
     public string Id { get; set; } = string.Empty;
 

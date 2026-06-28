@@ -124,6 +124,17 @@
     <script src="~/js/library-autorefresh.js" asp-append-version="true"></script>
     <script src="~/js/validation.js" asp-append-version="true"></script>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('form[data-submit-once]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var btn = form.querySelector('button[type=submit]');
+                if (btn) btn.disabled = true;
+            });
+        });
+    });
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

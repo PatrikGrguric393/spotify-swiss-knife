@@ -136,7 +136,7 @@
                 name = p.Name ?? "",
                 description = p.Description ?? "",
                 tracks = p.Tracks?.Total ?? 0,
-                imageUrl = p.Images.FirstOrDefault()?.Url,
+                imageUrl = p.Images?.FirstOrDefault()?.Url,
                 spotifyUrl = p.ExternalUrls?.Spotify ?? ""
             }),
             new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))

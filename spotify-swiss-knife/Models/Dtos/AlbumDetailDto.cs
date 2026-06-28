@@ -5,7 +5,7 @@ namespace spotify_swiss_knife.Models.Dtos;
 /// <c>TotalTracks</c> reflects the loaded track set (<c>TrackList.Count</c>), unlike
 /// <see cref="AlbumListDto"/> which uses the album's stored count.
 /// </summary>
-public class AlbumDetailDto
+public sealed class AlbumDetailDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -16,8 +16,8 @@ public class AlbumDetailDto
     public string? Label { get; set; }
     public int Popularity { get; set; }
     public string? SpotifyUrl { get; set; }
-    public IReadOnlyCollection<ArtistListDto> Artists { get; set; } = new List<ArtistListDto>();
-    public IReadOnlyCollection<TrackListDto> Tracks { get; set; } = new List<TrackListDto>();
+    public IReadOnlyCollection<ArtistListDto> Artists { get; set; } = [];
+    public IReadOnlyCollection<TrackListDto> Tracks { get; set; } = [];
 
     public static AlbumDetailDto FromEntity(Album album) => new()
     {
@@ -29,7 +29,7 @@ public class AlbumDetailDto
         TotalTracks = album.TrackList.Count,
         Label = album.Label,
         Popularity = album.Popularity,
-        SpotifyUrl = album.ExternalUrls?.Spotify,
+        SpotifyUrl = album.ExternalUrls.SpotifyUrl,
         Artists = album.Artists.Select(ArtistListDto.FromEntity).ToList(),
         Tracks = album.TrackList.Select(TrackListDto.FromEntity).ToList()
     };

@@ -32,7 +32,7 @@ public class SchedulesController : SpotifyControllerBase
     {
         var userId = await GetSpotifyUserIdAsync();
         if (userId is null)
-            return RedirectToLogin();
+            return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
 
         var schedules = await _db.ScheduledShuffles
             .Where(s => s.UserId == userId)
@@ -47,7 +47,7 @@ public class SchedulesController : SpotifyControllerBase
     {
         var (userId, accessToken) = await GetSpotifyCredentialsAsync();
         if (userId is null || accessToken is null)
-            return RedirectToLogin();
+            return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
 
         var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
         ViewBag.Playlists = playlists ?? [];
@@ -60,7 +60,7 @@ public class SchedulesController : SpotifyControllerBase
     {
         var (userId, accessToken) = await GetSpotifyCredentialsAsync();
         if (userId is null || accessToken is null)
-            return RedirectToLogin();
+            return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
 
         if (!ModelState.IsValid)
         {
@@ -103,23 +103,17 @@ public class SchedulesController : SpotifyControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int id)
     {
-        var userId = await GetSpotifyUserIdAsync();
-        if (userId is null)
-            return RedirectToLogin();
+        var (schedule, error) = await FindOwnedScheduleAsync(id);
+        if (error is not null) return error;
 
-        var schedule = await _db.ScheduledShuffles
-            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
-        if (schedule is null)
-            return NotFound();
-
-        schedule.IsEnabled = !schedule.IsEnabled;
+        schedule!.IsEnabled = !schedule.IsEnabled;
         if (schedule.IsEnabled)
             schedule.NextRunAt = ShuffleSchedulerService.ComputeNextRun(schedule.CronExpression, DateTimeOffset.UtcNow);
 
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Schedule {Id} toggled to {State} by {UserId}.",
-            schedule.Id, schedule.IsEnabled ? "enabled" : "disabled", userId);
+            schedule.Id, schedule.IsEnabled ? "enabled" : "disabled", schedule.UserId);
 
         return RedirectToAction(nameof(Index));
     }
@@ -128,24 +122,24 @@ public class SchedulesController : SpotifyControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var userId = await GetSpotifyUserIdAsync();
-        if (userId is null)
-            return RedirectToLogin();
+        var (schedule, error) = await FindOwnedScheduleAsync(id);
+        if (error is not null) return error;
 
-        var schedule = await _db.ScheduledShuffles
-            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
-        if (schedule is null)
-            return NotFound();
-
-        _db.ScheduledShuffles.Remove(schedule);
+        _db.ScheduledShuffles.Remove(schedule!);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Schedule {Id} deleted by {UserId} ({Count} playlist(s)).",
-            schedule.Id, userId, schedule.PlaylistIds.Count);
+            schedule!.Id, schedule.UserId, schedule.PlaylistIds.Count);
 
         return RedirectToAction(nameof(Index));
     }
 
-    private IActionResult RedirectToLogin() =>
-        RedirectToAction("Login", "SpotifyAuth", new { returnUrl = Url.Action("Index", "Schedules") });
+    private async Task<(ScheduledShuffle? Schedule, IActionResult? Error)> FindOwnedScheduleAsync(int id)
+    {
+        var userId = await GetSpotifyUserIdAsync();
+        if (userId is null)
+            return (null, RedirectToSpotifyLogin(Url.Action(nameof(Index))));
+        var schedule = await _db.ScheduledShuffles.FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+        return schedule is null ? (null, NotFound()) : (schedule, null);
+    }
 }

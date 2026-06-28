@@ -5,17 +5,13 @@ using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.Tests.Infrastructure;
 
-/// <summary>
-/// Arrange helpers that insert the minimal valid rows a single test needs,
-/// straight through the real DbContext. Each entity gets a unique id so tests
-/// never depend on the application's HasData seed or on each other.
-/// </summary>
+// Arrange helpers that insert the minimal valid rows a single test needs, straight through the
+// real DbContext. Each entity gets a unique id so tests never depend on the application's
+// HasData seed or on each other.
 public static class SeedData
 {
-    /// <summary>
-    /// Creates an Identity user assigned to <paramref name="role"/> (creating the role if the
-    /// database reset wiped it) and returns the username so a test can log in as that user.
-    /// </summary>
+    // Creates an Identity user assigned to `role` (re-creating the role if the database reset
+    // wiped it) and returns the username so a test can log in as that user.
     public static async Task<string> CreateUserAsync(IServiceScope scope, string role, string password)
     {
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
@@ -30,6 +26,8 @@ public static class SeedData
             UserName = username,
             Email = username,
             EmailConfirmed = true,
+            // OIB and JMBAG are required non-null identity fields on AppUser; no test asserts on
+            // them, so fixed dummy values are fine.
             OIB = "00000000000",
             JMBAG = "0000000000"
         };
@@ -107,8 +105,9 @@ public static class SeedData
         };
 
         db.Playlists.Add(playlist);
-        await db.SaveChangesAsync();
 
+        // playlist.Id is assigned above, so the join rows can be added before saving and
+        // persisted together in a single round-trip.
         for (var i = 0; i < trackIds.Length; i++)
         {
             db.PlaylistTrackEntries.Add(new PlaylistTrackEntry
@@ -119,9 +118,7 @@ public static class SeedData
             });
         }
 
-        if (trackIds.Length > 0)
-            await db.SaveChangesAsync();
-
+        await db.SaveChangesAsync();
         return playlist;
     }
 }

@@ -32,6 +32,8 @@ public abstract class AlbumForm
     [Display(Name = "Release Date")]
     public string ReleaseDate { get; set; } = string.Empty;
 
+    // The form requires at least one track/artist; the API write DTO (AlbumWriteDto) does not —
+    // the API is intentionally more permissive to allow partial saves and bulk imports.
     [MinLength(1, ErrorMessage = "Select at least one song")]
     [Display(Name = "Songs")]
     public List<string> TrackIds { get; set; } = [];

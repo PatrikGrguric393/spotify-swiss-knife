@@ -229,6 +229,42 @@ public class AlbumsApiTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Create_WithNonExistentArtist_ReturnsNotFound()
+    {
+        var payload = new
+        {
+            name = "Orphan Artist Album",
+            albumType = "album",
+            releaseDate = "2023-05-01",
+            popularity = 10,
+            artistIds = new[] { MissingId },
+            trackIds = Array.Empty<string>()
+        };
+
+        var response = await Client.PostAsync(BaseUrl, JsonBody(payload));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Create_WithNonExistentTrack_ReturnsNotFound()
+    {
+        var payload = new
+        {
+            name = "Orphan Track Album",
+            albumType = "album",
+            releaseDate = "2023-05-01",
+            popularity = 10,
+            artistIds = Array.Empty<string>(),
+            trackIds = new[] { MissingId }
+        };
+
+        var response = await Client.PostAsync(BaseUrl, JsonBody(payload));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Create_DuplicateName_ReturnsUnprocessableEntityAndDoesNotInsert()
     {
         using var arrange = NewScope();
@@ -276,6 +312,48 @@ public class AlbumsApiTests : IntegrationTestBase
     public async Task Update_NonExistentAlbum_ReturnsNotFound()
     {
         var response = await Client.PutAsync($"{BaseUrl}/{MissingId}", JsonBody(ValidPayload("Ghost")));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Update_WithNonExistentArtist_ReturnsNotFound()
+    {
+        using var arrange = NewScope();
+        var album = await SeedData.CreateAlbumAsync(Db(arrange), "Album");
+
+        var payload = new
+        {
+            name = "Album",
+            albumType = "album",
+            releaseDate = "2023-05-01",
+            popularity = 10,
+            artistIds = new[] { MissingId },
+            trackIds = Array.Empty<string>()
+        };
+
+        var response = await Client.PutAsync($"{BaseUrl}/{album.Id}", JsonBody(payload));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Update_WithNonExistentTrack_ReturnsNotFound()
+    {
+        using var arrange = NewScope();
+        var album = await SeedData.CreateAlbumAsync(Db(arrange), "Album");
+
+        var payload = new
+        {
+            name = "Album",
+            albumType = "album",
+            releaseDate = "2023-05-01",
+            popularity = 10,
+            artistIds = Array.Empty<string>(),
+            trackIds = new[] { MissingId }
+        };
+
+        var response = await Client.PutAsync($"{BaseUrl}/{album.Id}", JsonBody(payload));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

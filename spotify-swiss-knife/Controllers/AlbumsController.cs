@@ -1,25 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using spotify_swiss_knife.DAL;
-using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
 using spotify_swiss_knife.Services;
 using System.Globalization;
 
 namespace spotify_swiss_knife.Controllers;
 
-// Server-rendered CRUD for the local library's albums, under /lib/albums. Listing and the cover
-// image endpoint are public; create/edit require an Admin or Editor local account and deletes are
-// Admin-only. Beyond the album record this also manages the album's track membership and its
-// uploaded cover image (stored via AlbumCoverStorage and tracked as a UserFile). DenySpotifyUsers
-// keeps Spotify-connected visitors out. The JSON counterpart is AlbumsApiController.
-[Route("lib")]
-[Authorize(Roles = "Admin,Editor")]
-[DenySpotifyUsers]
-public class AlbumsController : Controller
+public class AlbumsController : LibraryControllerBase
 {
     private static readonly HashSet<string> AllowedAlbumTypes = ["album", "single", "compilation"];
 
@@ -30,7 +20,13 @@ public class AlbumsController : Controller
     private readonly SpotifyDbContext _db;
     private readonly UserManager<AppUser> _userManager;
 
-    public AlbumsController(AlbumRepository albumRepository, TrackRepository trackRepository, ArtistRepository artistRepository, AlbumCoverStorage coverStorage, SpotifyDbContext db, UserManager<AppUser> userManager)
+    public AlbumsController(
+        AlbumRepository albumRepository,
+        TrackRepository trackRepository,
+        ArtistRepository artistRepository,
+        AlbumCoverStorage coverStorage,
+        SpotifyDbContext db,
+        UserManager<AppUser> userManager)
     {
         _albumRepository = albumRepository;
         _trackRepository = trackRepository;
@@ -64,36 +60,26 @@ public class AlbumsController : Controller
         ValidateCoverImage(model.CoverImage);
 
         if (!ModelState.IsValid)
-        {
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Create", model);
-        }
+            return InvalidForm(model, "Create");
 
         if (_albumRepository.ExistsByName(model.Name))
         {
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Create", model);
+            return InvalidForm(model, "Create");
         }
 
-        var selectedTracks = GetSelectedTracks(model.TrackIds);
+        var selectedTracks = FilterByIds(_trackRepository.GetAll(), t => t.Id, model.TrackIds);
         if (selectedTracks.Count != model.TrackIds.Count)
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Create", model);
+            return InvalidForm(model, "Create");
         }
 
-        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+        var selectedArtists = FilterByIds(_artistRepository.GetAll(), a => a.Id, model.ArtistIds);
         if (selectedArtists.Count != model.ArtistIds.Count)
         {
             ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Create", model);
+            return InvalidForm(model, "Create");
         }
 
         var album = new Models.Album
@@ -189,40 +175,28 @@ public class AlbumsController : Controller
         ValidateCoverImage(model.CoverImage);
 
         if (!ModelState.IsValid)
-        {
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Edit", model);
-        }
+            return InvalidForm(model, "Edit");
 
-        // Use route id to exclude current album from duplicate check
         if (_albumRepository.ExistsByName(model.Name, id))
         {
             ModelState.AddModelError("Name", $"An album named '{model.Name.Trim()}' already exists.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Edit", model);
+            return InvalidForm(model, "Edit");
         }
 
         var allTracks = _trackRepository.GetAll();
-        var wantedIds = new HashSet<string>(model.TrackIds ?? []);
-        var selectedTracks = allTracks.Where(t => wantedIds.Contains(t.Id)).ToList();
+        var selectedTracks = FilterByIds(allTracks, t => t.Id, model.TrackIds);
 
-        if (selectedTracks.Count != wantedIds.Count)
+        if (selectedTracks.Count != model.TrackIds.Count)
         {
             ModelState.AddModelError(nameof(model.TrackIds), "One or more selected tracks are invalid.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Edit", model);
+            return InvalidForm(model, "Edit");
         }
 
-        var selectedArtists = GetSelectedArtists(model.ArtistIds);
+        var selectedArtists = FilterByIds(_artistRepository.GetAll(), a => a.Id, model.ArtistIds);
         if (selectedArtists.Count != model.ArtistIds.Count)
         {
             ModelState.AddModelError(nameof(model.ArtistIds), "One or more selected artists are invalid.");
-            PopulateTrackOptions(model.TrackIds);
-            PopulateArtistOptions(model.ArtistIds);
-            return View("Edit", model);
+            return InvalidForm(model, "Edit");
         }
 
         var previousTrackIds = new HashSet<string>(allTracks.Where(t => t.AlbumId == id).Select(t => t.Id));
@@ -362,37 +336,18 @@ public class AlbumsController : Controller
         }).ToList());
     }
 
-    private void PopulateTrackOptions(IEnumerable<string>? selectedTrackIds)
+    private IActionResult InvalidForm(Models.FormModels.AlbumForm model, string viewName)
     {
-        var selected = new HashSet<string>(selectedTrackIds ?? []);
-        ViewBag.TrackOptions = _trackRepository.GetAll()
-            .OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(t => new SelectListItem { Value = t.Id, Text = t.Name, Selected = selected.Contains(t.Id) })
-            .ToList();
+        PopulateTrackOptions(model.TrackIds);
+        PopulateArtistOptions(model.ArtistIds);
+        return View(viewName, model);
     }
 
-    private void PopulateArtistOptions(IEnumerable<string>? selectedArtistIds)
-    {
-        var selected = new HashSet<string>(selectedArtistIds ?? []);
-        ViewBag.ArtistOptions = _artistRepository.GetAll()
-            .OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(a => new SelectListItem { Value = a.Id, Text = a.Name, Selected = selected.Contains(a.Id) })
-            .ToList();
-    }
+    private void PopulateTrackOptions(IEnumerable<string>? selectedIds) =>
+        ViewBag.TrackOptions = ToSelectList(_trackRepository.GetAll(), t => t.Id, t => t.Name, selectedIds);
 
-    private List<Models.Track> GetSelectedTracks(IEnumerable<string> trackIds)
-    {
-        var wanted = new HashSet<string>(trackIds ?? []);
-        if (wanted.Count == 0) return [];
-        return _trackRepository.GetAll().Where(t => wanted.Contains(t.Id)).ToList();
-    }
-
-    private List<Models.Artist> GetSelectedArtists(IEnumerable<string> artistIds)
-    {
-        var wanted = new HashSet<string>(artistIds ?? []);
-        if (wanted.Count == 0) return [];
-        return _artistRepository.GetAll().Where(a => wanted.Contains(a.Id)).ToList();
-    }
+    private void PopulateArtistOptions(IEnumerable<string>? selectedIds) =>
+        ViewBag.ArtistOptions = ToSelectList(_artistRepository.GetAll(), a => a.Id, a => a.Name, selectedIds);
 
     private void ValidateAlbumTypeAndTrackCount(Models.FormModels.AlbumForm model)
     {

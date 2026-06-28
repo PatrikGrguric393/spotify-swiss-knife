@@ -2,31 +2,9 @@
 
 @{
     ViewData["Title"] = "Delete Artist";
+    ViewBag.EntityType = "Artist";
+    ViewBag.EntityName = Model.Name;
+    ViewBag.CancelUrl = Url.Action("Index", "Artists");
 }
 
-<div class="form-container">
-    <h2>Delete Artist</h2>
-
-    <p>Are you sure you want to delete the artist <strong>@Model.Name</strong>?</p>
-
-    <form method="post" id="deleteArtistForm">
-        @Html.AntiForgeryToken()
-        <div class="form-actions">
-            <button type="submit" class="btn btn-danger">Yes, delete</button>
-            <a href="@Url.Action("Index", "Artists")" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
-</div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var form = document.getElementById('deleteArtistForm');
-            if (!form) return;
-            form.addEventListener('submit', function () {
-                var button = form.querySelector('button[type=submit]');
-                if (button) button.disabled = true;
-            });
-        });
-    </script>
-}
+<partial name="_ConfirmDelete" />

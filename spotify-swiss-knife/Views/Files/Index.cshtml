@@ -1,6 +1,5 @@
 @{
     ViewData["Title"] = "Files";
-    Layout = "_Layout";
 }
 
 @section Head {
@@ -114,7 +113,7 @@
 
             const body = files.length
                 ? rows
-                : '<tr><td colspan="5" style="padding: 0.6rem 0.75rem; color: #b6ffb6;">No results</td></tr>';
+                : '<tr><td colspan="5">No results</td></tr>';
 
             container.innerHTML = `
                 <div class="table-wrap">

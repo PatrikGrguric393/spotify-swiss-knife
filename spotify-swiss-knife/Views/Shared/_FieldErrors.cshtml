@@ -1,0 +1,20 @@
+@model string
+
+@{
+    var field = Model ?? string.Empty;
+    var errors = ViewData.ModelState[field]?.Errors;
+}
+
+@if (errors != null && errors.Count > 0)
+{
+    <div class="validation-error show" id="error-@field" role="alert" aria-live="polite">
+        @foreach (var error in errors)
+        {
+            <div class="validation-error-message">@error.ErrorMessage</div>
+        }
+    </div>
+}
+else
+{
+    <div class="validation-error" id="error-@field" role="alert" aria-live="polite"></div>
+}

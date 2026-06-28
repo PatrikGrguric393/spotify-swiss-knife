@@ -204,7 +204,7 @@
             id = p.Id,
             name = p.Name ?? "",
             tracks = p.Tracks?.Total ?? 0,
-            imageUrl = p.Images.FirstOrDefault()?.Url
+            imageUrl = p.Images?.FirstOrDefault()?.Url
         }),
         new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
 </script>

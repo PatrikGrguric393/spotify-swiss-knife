@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using spotify_swiss_knife.Configuration;
 using spotify_swiss_knife.Models;
 
 namespace spotify_swiss_knife.DAL;
@@ -12,7 +14,7 @@ public static class IdentitySeeder
         using var scope = services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var seedAdmin = scope.ServiceProvider.GetRequiredService<IOptions<SeedAdminOptions>>().Value;
 
         foreach (var role in Roles)
         {
@@ -20,8 +22,8 @@ public static class IdentitySeeder
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        var email = config["SeedAdmin:Email"] ?? "admin@ssk.local";
-        var password = config["SeedAdmin:Password"] ?? "Admin123!";
+        var email = seedAdmin.Email;
+        var password = seedAdmin.Password;
 
         var existingAdmin = await userManager.FindByEmailAsync(email);
         if (existingAdmin is null)

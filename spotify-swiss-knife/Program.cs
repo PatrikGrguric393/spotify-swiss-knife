@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using spotify_swiss_knife.Configuration;
 using spotify_swiss_knife.DAL;
 using spotify_swiss_knife.Filters;
 using spotify_swiss_knife.Models;
@@ -49,6 +51,11 @@ builder.Services.AddHttpLogging(options =>
 });
 
 // Add services to the container. AuditActionFilter logs every mutating controller action.
+builder.Services.Configure<SpotifyOptions>(builder.Configuration.GetSection(SpotifyOptions.Section));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.Section));
+builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.Section));
+builder.Services.Configure<SeedAdminOptions>(builder.Configuration.GetSection(SeedAdminOptions.Section));
+
 builder.Services.AddControllersWithViews(options => options.Filters.Add<AuditActionFilter>());
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
@@ -131,16 +138,17 @@ builder.Services.AddAuthentication()
 // resolved through a key resolver so the key is read lazily — the row is created at
 // startup, after the database has migrated.
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-    .Configure<SigningKeyProvider>((options, keyProvider) =>
+    .Configure<SigningKeyProvider, IOptions<JwtOptions>>((options, keyProvider, jwtOptions) =>
     {
+        var jwt = jwtOptions.Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "spotify-swiss-knife",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "spotify-swiss-knife-api",
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
             IssuerSigningKeyResolver = (_, _, _, _) => new[] { keyProvider.GetSigningKey() },
             ClockSkew = TimeSpan.FromSeconds(30),
             NameClaimType = ClaimTypes.Name,

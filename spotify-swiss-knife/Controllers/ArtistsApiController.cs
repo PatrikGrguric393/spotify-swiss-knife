@@ -32,12 +32,7 @@ public class ArtistsApiController : ApiControllerBase
         var artists = ApplySearchFilter(
             _artistRepository.GetAll(includeDeleted), q, artist => artist.Id, artist => artist.Name);
 
-        var result = artists
-            .OrderBy(artist => artist.Name)
-            .Select(ArtistListDto.FromEntity)
-            .ToList();
-
-        return Ok(result);
+        return Ok(artists.OrderBy(artist => artist.Name).Select(ArtistListDto.FromEntity));
     }
 
     [AllowAnonymous]
@@ -61,11 +56,7 @@ public class ArtistsApiController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<ArtistDetailDto> Create([FromBody] ArtistCreateDto dto)
     {
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_artistRepository.ExistsByName(dto.Name))
         {
@@ -74,7 +65,7 @@ public class ArtistsApiController : ApiControllerBase
 
         var artist = new Artist
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid().ToString("N"),
             Name = dto.Name.Trim(),
             ExternalUrls = new ExternalUrls { Spotify = (dto.SpotifyUrl ?? string.Empty).Trim() }
         };
@@ -98,11 +89,7 @@ public class ArtistsApiController : ApiControllerBase
         var artist = _artistRepository.GetById(id, includeDeleted: true);
         if (artist is null) return NotFound();
 
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_artistRepository.ExistsByName(dto.Name, id))
         {

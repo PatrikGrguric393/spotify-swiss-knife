@@ -7,7 +7,7 @@ namespace spotify_swiss_knife.Models.Dtos;
 /// used to obtain a new one. Distinct from <see cref="spotify_swiss_knife.Models.SpotifyTokenResponse"/>,
 /// which models Spotify's token endpoint.
 /// </summary>
-public class TokenResponseDto
+public sealed class TokenResponseDto
 {
     [JsonPropertyName("token_type")]
     public string TokenType { get; set; } = "Bearer";

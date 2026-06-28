@@ -1,20 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using spotify_swiss_knife.Filters;
+using spotify_swiss_knife.Infrastructure;
 using spotify_swiss_knife.Services;
 
 namespace spotify_swiss_knife.Controllers;
 
-// Server-rendered CRUD for the local library's playlists, under /lib/playlists. Listing is
-// public; create/edit require an Admin or Editor local account and deletes are Admin-only. On
-// edit, the existing track order is preserved for retained tracks and newly added tracks are
-// appended (see EditPost). DenySpotifyUsers keeps Spotify-connected visitors out. The JSON
-// counterpart is PlaylistsApiController.
-[Route("lib")]
-[Authorize(Roles = "Admin,Editor")]
-[DenySpotifyUsers]
-public class PlaylistsController : Controller
+public class PlaylistsController : LibraryControllerBase
 {
     private readonly PlaylistRepository _playlistRepository;
     private readonly TrackRepository _trackRepository;
@@ -116,7 +107,6 @@ public class PlaylistsController : Controller
             return View("Edit", model);
         }
 
-        // Use route id to exclude current playlist from duplicate check
         if (_playlistRepository.ExistsByName(model.Name, id))
         {
             ModelState.AddModelError("Name", $"A playlist named '{model.Name.Trim()}' already exists.");
@@ -204,16 +194,22 @@ public class PlaylistsController : Controller
             p.Name,
             Owner = p.Owner.DisplayName,
             TracksCount = p.Tracks.Total,
-            LastShuffled = p.LastShuffled
+            LastShuffled = p.LastShuffled.HasValue
+                ? p.LastShuffled.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+                : null,
+            Description = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description,
+            Tracks = p.Tracks.Items
+                .Select(item => item.Track)
+                .Where(track => track != null)
+                .Select(track => new
+                {
+                    Song = track!.Name,
+                    Artists = string.Join(", ", track.Artists.Select(artist => artist.Name)),
+                    Duration = DurationFormat.MinutesSeconds(track.DurationMs)
+                })
         }).ToList());
     }
 
-    private void PopulateTrackOptions(IEnumerable<string>? selectedTrackIds)
-    {
-        var selected = new HashSet<string>(selectedTrackIds ?? []);
-        ViewBag.TrackOptions = _trackRepository.GetAll()
-            .OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(t => new SelectListItem { Value = t.Id, Text = t.Name, Selected = selected.Contains(t.Id) })
-            .ToList();
-    }
+    private void PopulateTrackOptions(IEnumerable<string>? selectedIds) =>
+        ViewBag.TrackOptions = ToSelectList(_trackRepository.GetAll(), t => t.Id, t => t.Name, selectedIds);
 }

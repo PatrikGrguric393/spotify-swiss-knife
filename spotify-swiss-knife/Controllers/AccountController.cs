@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -31,11 +30,6 @@ public class AccountController : Controller
         _logger = logger;
     }
 
-    // A local account and Spotify are mutually exclusive: a local sign-in/register is
-    // refused while Spotify is connected.
-    private async Task<bool> IsSpotifyConnectedAsync() =>
-        (await HttpContext.AuthenticateAsync(SpotifyAuthDefaults.Scheme)).Succeeded;
-
     private IActionResult RedirectToChooserForSpotifyConflict()
     {
         TempData["LoginError"] = "You're connected with Spotify. Disconnect first to use a local account instead.";
@@ -48,7 +42,7 @@ public class AccountController : Controller
         if (_signInManager.IsSignedIn(User))
             return LocalRedirect(returnUrl ?? "/");
 
-        if (await IsSpotifyConnectedAsync())
+        if (await HttpContext.IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -59,7 +53,7 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(UserRegisterForm model, string? returnUrl = null)
     {
-        if (await IsSpotifyConnectedAsync())
+        if (await HttpContext.IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -99,7 +93,7 @@ public class AccountController : Controller
         if (_signInManager.IsSignedIn(User))
             return LocalRedirect(returnUrl ?? "/");
 
-        if (await IsSpotifyConnectedAsync())
+        if (await HttpContext.IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;
@@ -110,7 +104,7 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(UserLoginForm model, string? returnUrl = null)
     {
-        if (await IsSpotifyConnectedAsync())
+        if (await HttpContext.IsSpotifyConnectedAsync())
             return RedirectToChooserForSpotifyConflict();
 
         ViewData["ReturnUrl"] = returnUrl;

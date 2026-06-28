@@ -54,18 +54,14 @@ public class TracksApiController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<TrackDetailDto> Create([FromBody] TrackCreateDto dto)
     {
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (dto.AlbumId is not null && !_db.Albums.Any(a => a.Id == dto.AlbumId))
             return NotFound(new { message = $"Album '{dto.AlbumId}' not found." });
 
         var track = new Track
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid().ToString("N"),
             Name = dto.Name.Trim(),
             DurationMs = dto.DurationMs,
             DiscNumber = dto.DiscNumber,
@@ -106,11 +102,7 @@ public class TracksApiController : ApiControllerBase
         var track = _trackRepository.GetById(id);
         if (track is null) return NotFound();
 
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (dto.AlbumId is not null && !_db.Albums.Any(a => a.Id == dto.AlbumId))
             return NotFound(new { message = $"Album '{dto.AlbumId}' not found." });

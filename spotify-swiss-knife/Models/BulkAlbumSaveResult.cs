@@ -12,6 +12,9 @@ public sealed record BulkAlbumSaveResult(
     int PlaylistCount,
     IReadOnlyList<string> Warnings)
 {
+    public static BulkAlbumSaveResult Ok(int albumCount, int trackCount, int playlistCount, IReadOnlyList<string>? warnings = null) =>
+        new(true, null, albumCount, trackCount, playlistCount, warnings ?? []);
+
     public static BulkAlbumSaveResult Fail(string error) =>
         new(false, error, 0, 0, 0, []);
 }

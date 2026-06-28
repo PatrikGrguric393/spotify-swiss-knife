@@ -10,5 +10,5 @@ public sealed class BulkAlbumSavePage
 
     // Set when the page can't be used (e.g. playlists failed to load). When present the
     // view shows this instead of the picker.
-    public string ErrorMessage { get; set; } = string.Empty;
+    public string? ErrorMessage { get; set; }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace spotify_swiss_knife.Models.FormModels;
 
 /// <summary>Playlist edit form: <see cref="PlaylistForm"/> plus the playlist id.</summary>
-public class PlaylistEditForm : PlaylistForm
+public sealed class PlaylistEditForm : PlaylistForm
 {
     [Required]
     [Display(Name = "Playlist ID")]

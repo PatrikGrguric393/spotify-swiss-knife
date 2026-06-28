@@ -9,16 +9,14 @@ using spotify_swiss_knife.Models.Dtos;
 
 namespace spotify_swiss_knife.Tests.Infrastructure;
 
-/// <summary>
-/// Shared setup for the API integration tests. One application is booted per test
-/// class (IClassFixture) and the database is reset before each test so tests are
-/// independent of execution order.
-///
-/// The CRUD write endpoints require a JWT bearer token, so <see cref="Client"/> is
-/// authenticated as an Admin before each test and is the default for exercising them.
-/// Tests that assert the authorization rules themselves use <see cref="AnonymousClient"/>
-/// or <see cref="CreateClientAsAsync"/> to act as an anonymous or lesser-privileged caller.
-/// </summary>
+// Shared setup for the API integration tests. One application is booted per test class
+// (IClassFixture) and the database is reset before each test so tests are independent of
+// execution order.
+//
+// The CRUD write endpoints require a JWT bearer token, so Client is authenticated as an Admin
+// before each test and is the default for exercising them. Tests that assert the authorization
+// rules themselves use AnonymousClient or CreateClientAsAsync to act as an anonymous or
+// lesser-privileged caller.
 public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
     // Satisfies the Identity password policy (length, upper, lower, digit) configured in Program.cs.
@@ -26,7 +24,7 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
 
     protected readonly CustomWebApplicationFactory Factory;
 
-    /// <summary>HTTP client authenticated as an Admin — the default for driving the CRUD endpoints.</summary>
+    // HTTP client authenticated as an Admin — the default for driving the CRUD endpoints.
     protected HttpClient Client { get; private set; } = default!;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -44,23 +42,19 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    /// <summary>
-    /// Opens a scope on the application's real service provider so a test can seed
-    /// Arrange data or assert on database state through the same DbContext the API uses.
-    /// </summary>
+    // Opens a scope on the application's real service provider so a test can seed Arrange data
+    // or assert on database state through the same DbContext the API uses.
     protected IServiceScope NewScope() => Factory.Services.CreateScope();
 
     protected static SpotifyDbContext Db(IServiceScope scope) =>
         scope.ServiceProvider.GetRequiredService<SpotifyDbContext>();
 
-    /// <summary>A client carrying no bearer token, for asserting endpoints reject anonymous callers.</summary>
+    // A client carrying no bearer token, for asserting endpoints reject anonymous callers.
     protected HttpClient AnonymousClient() =>
         Factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-    /// <summary>
-    /// Creates a user in <paramref name="role"/>, logs in through the real /api/auth/token
-    /// endpoint, and returns a client carrying that user's bearer token.
-    /// </summary>
+    // Creates a user in `role`, logs in through the real /api/auth/token endpoint, and returns a
+    // client carrying that user's bearer token.
     protected async Task<HttpClient> CreateClientAsAsync(string role)
     {
         string username;
@@ -80,6 +74,6 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
     protected static StringContent JsonBody(object payload) =>
         new(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
 
-    /// <summary>A GUID-shaped id guaranteed not to exist in the database.</summary>
+    // A GUID-shaped id guaranteed not to exist in the database.
     protected static string MissingId => Guid.NewGuid().ToString();
 }

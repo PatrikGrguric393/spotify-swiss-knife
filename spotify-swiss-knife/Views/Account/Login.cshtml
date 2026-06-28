@@ -3,24 +3,6 @@
 @{
     ViewData["Title"] = "Log in";
     var returnUrl = ViewData["ReturnUrl"] as string ?? string.Empty;
-
-    void FieldErrors(string field)
-    {
-        var errors = ViewData.ModelState[field]?.Errors;
-        if (errors != null && errors.Count > 0)
-        {
-            <div class="validation-error show" id="error-@field" role="alert" aria-live="polite">
-                @foreach (var error in errors)
-                {
-                    <div class="validation-error-message">@error.ErrorMessage</div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="validation-error" id="error-@field" role="alert" aria-live="polite"></div>
-        }
-    }
 }
 
 <div class="form-container">
@@ -35,13 +17,13 @@
         <div class="form-group">
             <label asp-for="Email" class="required"></label>
             <input asp-for="Email" class="form-control" type="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="error-Email" />
-            @{ FieldErrors("Email"); }
+            <partial name="_FieldErrors" model="@("Email")" />
         </div>
 
         <div class="form-group">
             <label asp-for="Password" class="required"></label>
             <input asp-for="Password" class="form-control" type="password" autocomplete="current-password" required placeholder="Enter your password" aria-describedby="error-Password" />
-            @{ FieldErrors("Password"); }
+            <partial name="_FieldErrors" model="@("Password")" />
         </div>
 
         <div class="form-group">

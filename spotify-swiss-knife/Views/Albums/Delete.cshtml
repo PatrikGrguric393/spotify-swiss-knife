@@ -2,38 +2,10 @@
 
 @{
     ViewData["Title"] = "Delete Album";
+    ViewBag.EntityType = "Album";
+    ViewBag.EntityName = Model.Name;
+    ViewBag.CancelUrl = Url.Action("Index", "Albums");
+    ViewBag.Warning = "Tracks linked to this album will remain in the library and lose their album association.";
 }
 
-<div class="form-container">
-    <h2>Delete Album</h2>
-
-    <p>Are you sure you want to delete the album <strong>@Model.Name</strong>?</p>
-
-    <p>Tracks linked to this album will remain in the library and lose their album association.</p>
-
-    <form method="post" id="deleteAlbumForm">
-        @Html.AntiForgeryToken()
-        <div class="form-actions">
-            <button type="submit" class="btn btn-danger">Yes, delete</button>
-            <a href="@Url.Action("Index", "Albums")" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
-</div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var form = document.getElementById('deleteAlbumForm');
-            if (!form) {
-                return;
-            }
-
-            form.addEventListener('submit', function () {
-                var button = form.querySelector('button[type=submit]');
-                if (button) {
-                    button.disabled = true;
-                }
-            });
-        });
-    </script>
-}
+<partial name="_ConfirmDelete" />

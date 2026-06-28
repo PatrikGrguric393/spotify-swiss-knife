@@ -4,7 +4,7 @@ namespace spotify_swiss_knife.Models.Dtos;
 /// Full track projection for the detail view, including its album and artists.
 /// Built via <see cref="FromEntity"/>.
 /// </summary>
-public class TrackDetailDto
+public sealed class TrackDetailDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -14,7 +14,7 @@ public class TrackDetailDto
     public bool IsLocal { get; set; }
     public string? SpotifyUrl { get; set; }
     public AlbumListDto? Album { get; set; }
-    public IReadOnlyCollection<ArtistListDto> Artists { get; set; } = new List<ArtistListDto>();
+    public IReadOnlyCollection<ArtistListDto> Artists { get; set; } = [];
 
     public static TrackDetailDto FromEntity(Track track) => new()
     {
@@ -24,7 +24,7 @@ public class TrackDetailDto
         DiscNumber = track.DiscNumber,
         TrackNumber = track.TrackNumber,
         IsLocal = track.IsLocal,
-        SpotifyUrl = track.ExternalUrls?.Spotify,
+        SpotifyUrl = track.ExternalUrls.SpotifyUrl,
         Album = track.Album != null ? AlbumListDto.FromEntity(track.Album) : null,
         Artists = track.Artists.Select(ArtistListDto.FromEntity).ToList()
     };

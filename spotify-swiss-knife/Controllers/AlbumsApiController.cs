@@ -55,18 +55,22 @@ public class AlbumsApiController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public ActionResult<AlbumDetailDto> Create([FromBody] AlbumCreateDto dto)
     {
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_albumRepository.ExistsByName(dto.Name))
             return UnprocessableEntity(new { message = $"An album named '{dto.Name.Trim()}' already exists." });
 
+        var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+        if (MissingReferenceProblem(dto.ArtistIds, artists.Select(a => a.Id), "Artist") is { } artistProblem)
+            return artistProblem;
+
+        var tracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
+        if (MissingReferenceProblem(dto.TrackIds, tracks.Select(t => t.Id), "Track") is { } trackProblem)
+            return trackProblem;
+
         var album = new Album
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid().ToString("N"),
             Name = dto.Name.Trim(),
             AlbumType = dto.AlbumType.Trim(),
             ReleaseDate = dto.ReleaseDate.Trim(),
@@ -77,17 +81,12 @@ public class AlbumsApiController : ApiControllerBase
             ExternalUrls = new ExternalUrls { Spotify = (dto.SpotifyUrl ?? string.Empty).Trim() }
         };
 
-        if (dto.ArtistIds.Count > 0)
-        {
-            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
-            foreach (var artist in artists) album.Artists.Add(artist);
-        }
+        foreach (var artist in artists) album.Artists.Add(artist);
 
         _albumRepository.Add(album);
 
-        if (dto.TrackIds.Count > 0)
+        if (tracks.Count > 0)
         {
-            var tracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
             foreach (var track in tracks) track.AlbumId = album.Id;
             album.TotalTracks = tracks.Count;
             _db.SaveChanges();
@@ -110,14 +109,18 @@ public class AlbumsApiController : ApiControllerBase
         var album = _albumRepository.GetById(id);
         if (album is null) return NotFound();
 
-        if (!TryValidateSpotifyUrl(dto.SpotifyUrl, out var error))
-        {
-            ModelState.AddModelError(nameof(dto.SpotifyUrl), error);
-            return ValidationProblem(ModelState);
-        }
+        if (SpotifyUrlValidationProblem(dto.SpotifyUrl) is { } problem) return problem;
 
         if (_albumRepository.ExistsByName(dto.Name, id))
             return UnprocessableEntity(new { message = $"An album named '{dto.Name.Trim()}' already exists." });
+
+        var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
+        if (MissingReferenceProblem(dto.ArtistIds, artists.Select(a => a.Id), "Artist") is { } artistProblem)
+            return artistProblem;
+
+        var newTracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
+        if (MissingReferenceProblem(dto.TrackIds, newTracks.Select(t => t.Id), "Track") is { } trackProblem)
+            return trackProblem;
 
         album.Name = dto.Name.Trim();
         album.AlbumType = dto.AlbumType.Trim();
@@ -129,25 +132,13 @@ public class AlbumsApiController : ApiControllerBase
         album.ExternalUrls.Spotify = (dto.SpotifyUrl ?? string.Empty).Trim();
 
         album.Artists.Clear();
-        if (dto.ArtistIds.Count > 0)
-        {
-            var artists = _db.Artists.Where(a => dto.ArtistIds.Contains(a.Id)).ToList();
-            foreach (var artist in artists) album.Artists.Add(artist);
-        }
+        foreach (var artist in artists) album.Artists.Add(artist);
 
         var previousTracks = _db.Tracks.Where(t => t.AlbumId == id).ToList();
         foreach (var track in previousTracks) track.AlbumId = null;
 
-        if (dto.TrackIds.Count > 0)
-        {
-            var newTracks = _db.Tracks.Where(t => dto.TrackIds.Contains(t.Id)).ToList();
-            foreach (var track in newTracks) track.AlbumId = id;
-            album.TotalTracks = newTracks.Count;
-        }
-        else
-        {
-            album.TotalTracks = 0;
-        }
+        foreach (var track in newTracks) track.AlbumId = id;
+        album.TotalTracks = newTracks.Count;
 
         _db.SaveChanges();
 
