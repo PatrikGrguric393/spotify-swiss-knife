@@ -66,6 +66,35 @@ ul, ol {
     margin: 0 auto;
 }
 
+/* Services pages break out of the centered 1200px content column and span the
+   full body width. Scoped to these page classes so Library/About stay capped.
+   The 100vw breakout is safe because .app-scroll-area has overflow-x: hidden.
+   Padding mirrors the desktop .app-content gutter so edges line up. */
+.library-page.shuffle-page,
+.library-page.bulk-save-page {
+    max-width: none;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* The shuffle form is otherwise capped at 44rem for readable inputs; on the
+   full-bleed Services pages let it fill the page so its playlist tableview
+   spans the full width. */
+.shuffle-page .shuffle-form {
+    max-width: none;
+}
+
+/* Schedules/Create mixes the wide playlist table with narrow controls
+   (frequency, day/time pickers). Keep those rows at the readable width while
+   the playlist row (.shuffle-playlist-row) stretches full width. */
+.shuffle-page .shuffle-form-row:not(.shuffle-playlist-row),
+.shuffle-page .shuffle-form-actions {
+    max-width: 44rem;
+}
+
 .library-actions {
     display: flex;
     justify-content: flex-start;
@@ -1027,6 +1056,13 @@ body.entity-detail-open .app-scroll-area {
         font-size: 0.95rem;
     }
 
+    /* Tighter gutter for the full-bleed Services pages on narrow screens. */
+    .library-page.shuffle-page,
+    .library-page.bulk-save-page {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
     .table-wrap {
         margin-top: 1rem;
         overflow-x: clip;
@@ -1745,6 +1781,37 @@ body.entity-detail-open .app-scroll-area {
 .btn-danger:focus-visible {
     background-color: #ff5c5c;
     color: #000;
+}
+
+/* ── Compact confirm-delete modal ────────────────────────────
+ * Reuses .entity-detail-backdrop / .entity-detail-modal shell.
+ * Only width, padding and footer layout differ from the full
+ * entity-detail modal.
+ * ─────────────────────────────────────────────────────────── */
+.confirm-modal {
+    width: min(92vw, 400px);
+    max-height: none;
+}
+
+.confirm-modal .entity-detail-body {
+    overflow: visible;
+}
+
+.confirm-modal-message {
+    padding: 1.1rem 1rem 0.9rem;
+    color: #b6ffb6;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    word-break: break-word;
+}
+
+.confirm-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid #093109;
 }
 
 /* Keep cron expression code elements on-theme */

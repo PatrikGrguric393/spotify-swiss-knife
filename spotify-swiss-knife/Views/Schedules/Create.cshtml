@@ -22,7 +22,7 @@
 
             <div id="selectedPlaylistInputs"></div>
 
-            <div class="shuffle-form-row">
+            <div class="shuffle-form-row shuffle-playlist-row">
                 <span class="shuffle-form-label" id="schedulePlaylistLabel">Playlist</span>
 
                 <div class="shuffle-playlist-panel-wrap">
@@ -521,6 +521,14 @@
             panel.hidden = false;
             backdrop.hidden = false;
             trigger.setAttribute('aria-expanded', 'true');
+            var rect = panel.getBoundingClientRect();
+            if (rect.bottom > window.innerHeight) {
+                panel.style.top = 'auto';
+                panel.style.bottom = 'calc(100% + 4px)';
+            } else {
+                panel.style.top = '';
+                panel.style.bottom = '';
+            }
             requestAnimationFrame(function () {
                 cols.forEach(function (col) {
                     var idx = (col._unit === 'hour') ? state.hour : state.minute;
@@ -537,6 +545,8 @@
             panel.hidden = true;
             backdrop.hidden = true;
             trigger.setAttribute('aria-expanded', 'false');
+            panel.style.top = '';
+            panel.style.bottom = '';
             document.removeEventListener('pointerdown', onOutside, true);
             document.removeEventListener('keydown', onDocKey, true);
             if (focusTrigger) { trigger.focus(); }

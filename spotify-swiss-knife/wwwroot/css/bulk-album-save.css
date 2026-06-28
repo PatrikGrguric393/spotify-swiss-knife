@@ -3,9 +3,8 @@
    site.css + validation.css; this file only adds the layout for the
    two-column picker and the per-row selection visuals. */
 
-.bulk-save-page {
-    max-width: 1400px;
-}
+/* Page width is handled by the full-bleed .library-page.bulk-save-page rule in
+   site.css, which spans the full body width. */
 
 /* ---- Two-column picker layout ---- */
 .bulk-save-columns {

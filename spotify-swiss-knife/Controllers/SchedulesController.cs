@@ -49,8 +49,7 @@ public class SchedulesController : SpotifyControllerBase
         if (userId is null || accessToken is null)
             return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
 
-        var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
-        ViewBag.Playlists = playlists ?? [];
+        ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
         return View(new CreateScheduleForm());
     }
 
@@ -64,8 +63,7 @@ public class SchedulesController : SpotifyControllerBase
 
         if (!ModelState.IsValid)
         {
-            var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
-            ViewBag.Playlists = playlists ?? [];
+            ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
             return View(form);
         }
 
@@ -74,8 +72,7 @@ public class SchedulesController : SpotifyControllerBase
         if (nextRun is null)
         {
             ModelState.AddModelError(string.Empty, "Could not compute the next run time. Please check your schedule settings.");
-            var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
-            ViewBag.Playlists = playlists ?? [];
+            ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
             return View(form);
         }
 
@@ -132,6 +129,18 @@ public class SchedulesController : SpotifyControllerBase
             schedule!.Id, schedule.UserId, schedule.PlaylistIds.Count);
 
         return RedirectToAction(nameof(Index));
+    }
+
+    // A schedule re-shuffles playlists in place, so only playlists the user can edit
+    // (the ones they own) are valid targets — mirrors Shuffle/BulkAlbumSave.
+    private async Task<List<Playlist>> GetEditablePlaylistsAsync(string accessToken)
+    {
+        var playlists = await SpotifyAuth.GetUserPlaylistsAsync(accessToken);
+        if (playlists is null)
+            return [];
+
+        var profile = await SpotifyAuth.GetUserProfileAsync(accessToken);
+        return FilterToOwnedPlaylists(playlists, profile);
     }
 
     private async Task<(ScheduledShuffle? Schedule, IActionResult? Error)> FindOwnedScheduleAsync(int id)

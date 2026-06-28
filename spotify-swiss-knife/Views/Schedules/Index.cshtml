@@ -122,18 +122,101 @@
     }
 </section>
 
+<div class="entity-detail-backdrop" id="deleteConfirmBackdrop" hidden
+     role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+    <div class="entity-detail-modal confirm-modal">
+        <div class="entity-detail-header">
+            <h2 class="entity-detail-header-title" id="deleteConfirmTitle">Delete schedule?</h2>
+            <button type="button" class="entity-detail-close" id="deleteConfirmClose" aria-label="Cancel deletion">&#x2715;</button>
+        </div>
+        <div class="entity-detail-body">
+            <p class="confirm-modal-message" id="deleteConfirmMessage"></p>
+        </div>
+        <div class="confirm-modal-footer">
+            <button type="button" class="shuffle-submit" id="deleteConfirmCancel">Cancel</button>
+            <button type="button" class="shuffle-submit btn-danger" id="deleteConfirmOk">Delete</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         window.DateFmt.localizePending();
 
-        // Confirm before destructive delete actions
+        var backdrop   = document.getElementById('deleteConfirmBackdrop');
+        var msgEl      = document.getElementById('deleteConfirmMessage');
+        var cancelBtn  = document.getElementById('deleteConfirmCancel');
+        var closeBtn   = document.getElementById('deleteConfirmClose');
+        var okBtn      = document.getElementById('deleteConfirmOk');
+
+        var pendingForm   = null;
+        var previousFocus = null;
+
+        var focusable = [closeBtn, cancelBtn, okBtn];
+
+        function openModal(form, message) {
+            pendingForm   = form;
+            previousFocus = document.activeElement;
+            msgEl.textContent = message;
+            backdrop.removeAttribute('hidden');
+            cancelBtn.focus();
+        }
+
+        function closeModal() {
+            backdrop.setAttribute('hidden', '');
+            pendingForm = null;
+            if (previousFocus) {
+                previousFocus.focus();
+            }
+        }
+
+        // Intercept all delete form submits via the data-confirm button
         document.querySelectorAll('button[data-confirm]').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
-                if (!window.confirm(btn.dataset.confirm)) {
-                    e.preventDefault();
-                }
+                e.preventDefault();
+                openModal(btn.closest('form'), btn.dataset.confirm);
             });
+        });
+
+        // Confirm: submit the pending form
+        okBtn.addEventListener('click', function () {
+            closeModal();
+            if (pendingForm) {
+                pendingForm.submit();
+            }
+        });
+
+        // Cancel via button or close-X
+        cancelBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click',  closeModal);
+
+        // Cancel via backdrop click (but not inside the modal panel)
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) {
+                closeModal();
+            }
+        });
+
+        // Cancel via Escape; trap Tab focus inside the dialog
+        backdrop.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeModal();
+                return;
+            }
+
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                var current = document.activeElement;
+                var idx     = focusable.indexOf(current);
+                if (e.shiftKey) {
+                    idx = (idx - 1 + focusable.length) % focusable.length;
+                } else {
+                    idx = (idx + 1) % focusable.length;
+                }
+                focusable[idx].focus();
+            }
         });
     });
     </script>
