@@ -66,18 +66,33 @@ ul, ol {
     margin: 0 auto;
 }
 
-/* Services pages break out of the centered 1200px content column and span the
-   full body width. Scoped to these page classes so Library/About stay capped.
-   The 100vw breakout is safe because .app-scroll-area has overflow-x: hidden.
+/* Services pages break out of the centered 1200px content column. They grow to
+   80% of the viewport on wide screens, but never below the old 1200px column
+   (clamp floor) and never to full bleed (100vw cap). Scoped to these page
+   classes so Library/About stay capped. The breakout is safe because
+   .app-scroll-area has overflow-x: hidden. The margin is exactly half the width
+   clamp (calc(50% - width/2)), so the box stays centered at every viewport.
    Padding mirrors the desktop .app-content gutter so edges line up. */
 .library-page.shuffle-page,
 .library-page.bulk-save-page {
     max-width: none;
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    width: clamp(1200px, 80vw, 100vw);
+    margin-left: calc(50% - clamp(600px, 40vw, 50vw));
+    margin-right: calc(50% - clamp(600px, 40vw, 50vw));
     padding-left: 2rem;
     padding-right: 2rem;
+}
+
+/* Below the desktop breakpoint .app-content drops its 1200px cap and fills the
+   viewport, so the Services pages full-bleed too — this also avoids the 1200px
+   clamp floor overflowing narrow screens. */
+@media (max-width: 1024px) {
+    .library-page.shuffle-page,
+    .library-page.bulk-save-page {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+    }
 }
 
 /* The shuffle form is otherwise capped at 44rem for readable inputs; on the
