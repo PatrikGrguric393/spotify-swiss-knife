@@ -8,8 +8,14 @@ public class ScheduledShuffle
 {
     public int Id { get; set; }
 
-    // Spotify user ID — links to SpotifyToken.SpotifyUserId.
+    // The owning user. For a Spotify schedule this is the Spotify user ID (links to
+    // SpotifyToken.SpotifyUserId); for a local schedule it is the local Identity user ID.
     public string UserId { get; set; } = string.Empty;
+
+    // True when this schedule shuffles local-library playlists (no Spotify token needed); false
+    // when it shuffles the owner's live Spotify playlists. Determines which path the background
+    // ShuffleSchedulerService takes, and scopes a user's schedule list to their own source.
+    public bool IsLocal { get; set; }
 
     // Parallel lists: PlaylistNames[i] is the display name for PlaylistIds[i]. Stored as
     // PostgreSQL text[] columns. Order is preserved and the two arrays stay index-aligned.

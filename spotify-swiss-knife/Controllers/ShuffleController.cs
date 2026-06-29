@@ -12,7 +12,7 @@ namespace spotify_swiss_knife.Controllers;
 // Spotify), while a local-account user shuffles the local library's playlists in the database.
 // RequireSpotifyAuth gates the page, and ResolvePlaylistsAsync decides which source applies.
 [Route("shuffle")]
-[RequireSpotifyAuth]
+[RequireServiceAuth]
 public class ShuffleController : SpotifyControllerBase
 {
     private readonly PlaylistRepository _playlistRepository;
@@ -103,31 +103,20 @@ public class ShuffleController : SpotifyControllerBase
     private (string Message, DateTime ShuffledAt) ExecuteShuffleMultiple(List<Playlist> playlists)
     {
         int totalTracks = 0, totalMoved = 0;
+        var shuffledAt = DateTime.UtcNow;
 
         foreach (var playlist in playlists)
         {
-            var originalItems = playlist.Tracks.Items.ToList();
-            var shuffledItems = PlaylistShuffler.Shuffle(originalItems);
-
-            var originalPositions = originalItems
-                .Select((item, index) => new { item.Track.Id, index })
-                .ToDictionary(e => e.Id, e => e.index);
-
-            var moved = shuffledItems
-                .Select((item, index) => new { item.Track.Id, index })
-                .Count(e => originalPositions.TryGetValue(e.Id, out var orig) && orig != e.index);
-
-            playlist.Tracks.Items = shuffledItems;
-            playlist.LastShuffled = DateTime.UtcNow;
-            totalTracks += shuffledItems.Count;
-            totalMoved += moved;
+            var result = LocalPlaylistShuffle.ShuffleAndSave(_playlistRepository, playlist);
+            totalTracks += result.TrackCount;
+            totalMoved += result.MovedCount;
+            shuffledAt = result.ShuffledAt;
 
             _logger.LogInformation(
                 "Local shuffle completed for playlist {PlaylistId} ({Name}). Tracks: {Tracks}, moved: {Moved}.",
-                playlist.Id, playlist.Name, shuffledItems.Count, moved);
+                playlist.Id, playlist.Name, result.TrackCount, result.MovedCount);
         }
 
-        var shuffledAt = DateTime.UtcNow;
         var message = playlists.Count == 1
             ? $"Shuffle completed for '{playlists[0].Name}'. Tracks: {totalTracks}, moved: {totalMoved}."
             : $"Shuffled {playlists.Count} playlists. Tracks: {totalTracks}, moved: {totalMoved}.";

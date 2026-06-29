@@ -37,6 +37,7 @@ public class ShuffleSchedulerService : BackgroundService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SpotifyDbContext>();
         var spotifyAuth = scope.ServiceProvider.GetRequiredService<SpotifyAuthService>();
+        var playlistRepository = scope.ServiceProvider.GetRequiredService<PlaylistRepository>();
 
         var now = DateTimeOffset.UtcNow;
         var due = await db.ScheduledShuffles
@@ -45,7 +46,7 @@ public class ShuffleSchedulerService : BackgroundService
 
         foreach (var schedule in due)
         {
-            await RunScheduleAsync(schedule, db, spotifyAuth, now, ct);
+            await RunScheduleAsync(schedule, db, spotifyAuth, playlistRepository, now, ct);
         }
     }
 
@@ -53,11 +54,18 @@ public class ShuffleSchedulerService : BackgroundService
         ScheduledShuffle schedule,
         SpotifyDbContext db,
         SpotifyAuthService spotifyAuth,
+        PlaylistRepository playlistRepository,
         DateTimeOffset now,
         CancellationToken ct)
     {
         try
         {
+            if (schedule.IsLocal)
+            {
+                RunLocalSchedule(schedule, playlistRepository, ct);
+                return;
+            }
+
             var accessToken = await spotifyAuth.GetValidAccessTokenAsync(schedule.UserId);
             if (accessToken is null)
             {
@@ -102,6 +110,34 @@ public class ShuffleSchedulerService : BackgroundService
             schedule.LastRunAt = now;
             AdvanceNextRun(schedule, now);
             await db.SaveChangesAsync(ct);
+        }
+    }
+
+    // Shuffles each local-library playlist in the schedule in place, persisting the new order.
+    // Mirrors the Spotify branch: one playlist's failure (e.g. it was deleted) is logged and
+    // skipped without aborting the rest. No Spotify token is involved.
+    private void RunLocalSchedule(
+        ScheduledShuffle schedule,
+        PlaylistRepository playlistRepository,
+        CancellationToken ct)
+    {
+        foreach (var playlistId in schedule.PlaylistIds)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var playlist = playlistRepository.GetById(playlistId);
+            if (playlist is null)
+            {
+                _logger.LogWarning(
+                    "Scheduled shuffle {Id} skipped local playlist {PlaylistId}: not found.",
+                    schedule.Id, playlistId);
+                continue;
+            }
+
+            var result = LocalPlaylistShuffle.ShuffleAndSave(playlistRepository, playlist);
+            _logger.LogInformation(
+                "Scheduled shuffle {Id} completed for local playlist {PlaylistId}. Tracks: {Tracks}, moved: {Moved}.",
+                schedule.Id, playlistId, result.TrackCount, result.MovedCount);
         }
     }
 
