@@ -242,6 +242,15 @@
         var panelOriginalParent = panel.parentNode;
         var panelNextSibling    = panel.nextSibling;
 
+        // Single source of truth for the bottom-sheet breakpoint: resolve the
+        // exact same query the CSS @media (max-width: 480px) uses. A window.innerWidth
+        // check can disagree with the CSS layout viewport at the edge (scrollbar
+        // width, zoom, device-pixel-ratio rounding); when CSS rendered the sheet
+        // but JS skipped the reparent, the panel stayed trapped in .app-scroll-area
+        // and the backdrop painted over it (shadowed, unclickable).
+        var sheetQuery = window.matchMedia('(max-width: 480px)');
+        function isSheet() { return sheetQuery.matches; }
+
         var state = {
             hour:   clampInt(root.getAttribute('data-hour'), 23),
             minute: clampInt(root.getAttribute('data-minute'), 59)
@@ -384,7 +393,7 @@
         }
 
         function reposition() {
-            if (window.innerWidth <= 480) { return; }   // mobile: CSS bottom-sheet handles it
+            if (isSheet()) { return; }   // mobile: CSS bottom-sheet handles it
             var rect = panel.getBoundingClientRect();
             var vph = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
             if (rect.bottom > vph) {
@@ -397,7 +406,13 @@
         }
 
         function open() {
-            if (window.innerWidth <= 480) { document.body.appendChild(panel); }
+            // Escape the panel out of .app-scroll-area to <body>, appending the
+            // backdrop first and the panel last so the panel wins on document
+            // order as well as z-index. Driven by the same query as the CSS sheet.
+            if (isSheet()) {
+                document.body.appendChild(backdrop);
+                document.body.appendChild(panel);
+            }
             panel.hidden = false;
             backdrop.hidden = false;
             trigger.setAttribute('aria-expanded', 'true');

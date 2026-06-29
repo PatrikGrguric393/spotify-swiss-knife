@@ -1900,6 +1900,14 @@ body.entity-detail-open .app-scroll-area {
     align-items: stretch;
 }
 
+.schedule-actions > form {
+    display: flex;
+}
+
+.schedule-actions > form > .shuffle-submit {
+    width: 100%;
+}
+
 .schedule-days {
     display: flex;
     flex-wrap: wrap;

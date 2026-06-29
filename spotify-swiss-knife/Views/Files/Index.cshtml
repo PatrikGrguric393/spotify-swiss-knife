@@ -36,6 +36,30 @@
     </div>
 </div>
 
+<div id="delete-confirm-backdrop"
+     class="entity-detail-backdrop"
+     hidden
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="delete-confirm-title">
+    <div class="entity-detail-modal confirm-modal">
+        <div class="entity-detail-header">
+            <h2 id="delete-confirm-title">Delete file</h2>
+            <button class="entity-detail-close"
+                    id="delete-confirm-close"
+                    type="button"
+                    aria-label="Close">&times;</button>
+        </div>
+        <div class="entity-detail-body">
+            <p class="confirm-modal-message" id="delete-confirm-message"></p>
+        </div>
+        <div class="confirm-modal-footer">
+            <button class="btn" id="delete-confirm-cancel" type="button">Cancel</button>
+            <button class="btn btn-danger" id="delete-confirm-ok" type="button">Delete</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         const antiforgeryToken = () =>
@@ -53,19 +77,122 @@
             return window.DateFmt.formatTimestamp(iso);
         }
 
+        // ── Delete confirmation modal ────────────────────────────────────────
+
+        const _dcBackdrop  = document.getElementById('delete-confirm-backdrop');
+        const _dcMessage   = document.getElementById('delete-confirm-message');
+        const _dcClose     = document.getElementById('delete-confirm-close');
+        const _dcCancel    = document.getElementById('delete-confirm-cancel');
+        const _dcOk        = document.getElementById('delete-confirm-ok');
+
+        // Focusable elements inside the modal (order determines Tab cycle).
+        const _dcFocusable = [_dcOk, _dcCancel, _dcClose];
+
+        let _dcResolve = null;
+
+        function _dcHide() {
+            _dcBackdrop.hidden = true;
+            document.body.classList.remove('entity-detail-open');
+            if (_dcResolve) {
+                const r = _dcResolve;
+                _dcResolve = null;
+                r(false);
+            }
+        }
+
+        function showDeleteConfirm(msg) {
+            _dcMessage.textContent = msg;
+            _dcOk.textContent = 'Delete';
+            _dcOk.disabled = false;
+            _dcBackdrop.hidden = false;
+            document.body.classList.add('entity-detail-open');
+
+            // Focus the Delete button so the destructive action requires
+            // deliberate Tab-away; also satisfies focus-trap on open.
+            _dcOk.focus();
+
+            return new Promise(resolve => {
+                _dcResolve = resolve;
+            });
+        }
+
+        // Confirm (Delete) button
+        _dcOk.addEventListener('click', () => {
+            if (_dcResolve) {
+                const r = _dcResolve;
+                _dcResolve = null;
+                r(true);
+            }
+        });
+
+        // Cancel and close (×) buttons
+        _dcClose.addEventListener('click',  _dcHide);
+        _dcCancel.addEventListener('click', _dcHide);
+
+        // Clicking the backdrop outside the modal shell closes it
+        _dcBackdrop.addEventListener('click', e => {
+            if (e.target === _dcBackdrop) _dcHide();
+        });
+
+        // Escape key cancels
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && !_dcBackdrop.hidden) {
+                e.preventDefault();
+                _dcHide();
+            }
+        });
+
+        // Focus trap: Tab cycles only among _dcFocusable while the modal is open
+        _dcBackdrop.addEventListener('keydown', e => {
+            if (e.key !== 'Tab') return;
+            const focused = document.activeElement;
+            const idx = _dcFocusable.indexOf(focused);
+            const len = _dcFocusable.length;
+            if (e.shiftKey) {
+                e.preventDefault();
+                _dcFocusable[(idx <= 0 ? len : idx) - 1].focus();
+            } else {
+                e.preventDefault();
+                _dcFocusable[(idx + 1) % len].focus();
+            }
+        });
+
+        // ── Delete file action ───────────────────────────────────────────────
+
         async function deleteFile(id, confirmMsg) {
-            if (!confirm(confirmMsg || 'Delete this file?')) return;
+            const confirmed = await showDeleteConfirm(confirmMsg || 'Delete this file?');
+            if (!confirmed) return;
+
+            // Loading state on the Delete button while the request is in flight.
+            _dcOk.textContent = 'Deleting…';
+            _dcOk.disabled = true;
+            _dcCancel.disabled = true;
+            _dcClose.disabled = true;
+
             try {
                 const res = await fetch(`/files/${id}`, {
                     method: 'DELETE',
                     headers: { 'RequestVerificationToken': antiforgeryToken() }
                 });
                 if (!res.ok) throw new Error('Delete failed.');
+
+                // Success — hide the modal and refresh the list.
+                _dcBackdrop.hidden = true;
+                document.body.classList.remove('entity-detail-open');
                 loadFiles();
             } catch (e) {
-                alert(e.message);
+                // On error: restore buttons and keep the modal open so the user
+                // can retry or cancel without losing context.
+                _dcOk.textContent = 'Delete';
+                _dcOk.disabled = false;
+                _dcCancel.disabled = false;
+                _dcClose.disabled = false;
+                _dcMessage.textContent = 'Error: ' + e.message + ' — ' + (confirmMsg || 'Delete this file?');
+                _dcOk.focus();
             }
         }
+
+        // ── File list ────────────────────────────────────────────────────────
 
         let allFiles = [];
 
