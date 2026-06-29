@@ -2113,6 +2113,9 @@ body.entity-detail-open .app-scroll-area {
        it is always fully visible regardless of screen height. The inline
        day wheel (.daywheel-panel) is intentionally excluded. */
     #timeWheelPanel {
+        /* Re-declare so variables survive reparenting to <body>. */
+        --tw-row: 2.75rem;
+        --tw-rows: 5;
         position: fixed;
         top: auto;
         left: 50%;
@@ -2149,6 +2152,7 @@ body.entity-detail-open .app-scroll-area {
 /* Short viewports: trim visible rows so the sheet + Done always fit. */
 @media (max-width: 480px) and (max-height: 560px) {
     .timewheel { --tw-rows: 3; }
+    #timeWheelPanel { --tw-rows: 3; }
 }
 
 /* Frequency segmented selector */
