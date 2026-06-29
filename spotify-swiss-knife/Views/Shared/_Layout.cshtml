@@ -70,6 +70,7 @@
                                 {
                                     <li><a asp-controller="Account" asp-action="Users" class="nav-submenu-link @(currentController == "Account" && currentAction == "Users" ? "active" : string.Empty)">Users</a></li>
                                 }
+                                <li><a asp-controller="Account" asp-action="ChangePassword" class="nav-submenu-link @(currentController == "Account" && currentAction == "ChangePassword" ? "active" : string.Empty)">Change password</a></li>
                                 <li>
                                     <form asp-controller="Account" asp-action="Logout" method="post" class="nav-submenu-logout-form">
                                         @Html.AntiForgeryToken()

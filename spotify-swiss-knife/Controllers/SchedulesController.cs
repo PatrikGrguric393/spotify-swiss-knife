@@ -96,6 +96,86 @@ public class SchedulesController : SpotifyControllerBase
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet("{id:int}/edit")]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var (userId, accessToken) = await GetSpotifyCredentialsAsync();
+        if (userId is null || accessToken is null)
+            return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
+
+        var schedule = await _db.ScheduledShuffles
+            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+        if (schedule is null)
+            return NotFound();
+
+        // The stored cron is UTC; decode it into the form's fields as UTC values. The view
+        // localizes the day/time to the viewer's timezone, the mirror image of how Create
+        // converts local input to UTC via CreateScheduleForm.ToCronExpression.
+        var decoded = CronScheduleDecoder.Decode(schedule.CronExpression);
+        var form = new EditScheduleForm
+        {
+            Id = schedule.Id,
+            PlaylistIds = schedule.PlaylistIds,
+            PlaylistNames = schedule.PlaylistNames,
+            Frequency = decoded.Frequency,
+            DaysOfWeek = decoded.DaysOfWeek.ToList(),
+            DayOfMonth = decoded.DayOfMonth,
+            TimeUtc = $"{decoded.Hour:D2}:{decoded.Minute:D2}",
+        };
+
+        // Signals the view that the seeded day/time fields are UTC and must be converted to the
+        // viewer's local timezone on load. A POST re-render (validation failure) does NOT set this,
+        // because by then the fields already hold the user's local selection.
+        ViewBag.LocalizeFromUtc = true;
+        ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
+        return View(form);
+    }
+
+    [HttpPost("{id:int}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, [FromForm] EditScheduleForm form)
+    {
+        var (userId, accessToken) = await GetSpotifyCredentialsAsync();
+        if (userId is null || accessToken is null)
+            return RedirectToSpotifyLogin(Url.Action(nameof(Index)));
+
+        var schedule = await _db.ScheduledShuffles
+            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+        if (schedule is null)
+            return NotFound();
+
+        form.Id = id;
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
+            return View(form);
+        }
+
+        var cron = form.ToCronExpression();
+        var nextRun = ShuffleSchedulerService.ComputeNextRun(cron, DateTimeOffset.UtcNow);
+        if (nextRun is null)
+        {
+            ModelState.AddModelError(string.Empty, "Could not compute the next run time. Please check your schedule settings.");
+            ViewBag.Playlists = await GetEditablePlaylistsAsync(accessToken);
+            return View(form);
+        }
+
+        schedule.PlaylistIds = form.PlaylistIds;
+        schedule.PlaylistNames = form.PlaylistNames;
+        schedule.CronExpression = cron;
+        // Re-anchor the next run to the new schedule. A disabled schedule keeps the value but
+        // won't fire until re-enabled.
+        schedule.NextRunAt = nextRun;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Schedule {Id} updated by {UserId} for {Count} playlist(s) [{PlaylistIds}]; cron \"{Cron}\", next run {NextRun}.",
+            schedule.Id, userId, schedule.PlaylistIds.Count, string.Join(", ", schedule.PlaylistIds), cron, nextRun);
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost("{id:int}/toggle")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int id)

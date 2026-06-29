@@ -21,4 +21,8 @@ fi
 [ -n "${SPOTIFY_CLIENT_SECRET:-}" ] && export Spotify__ClientSecret="${SPOTIFY_CLIENT_SECRET}"
 [ -n "${SPOTIFY_REDIRECT_URI:-}" ]  && export Spotify__RedirectUri="${SPOTIFY_REDIRECT_URI}"
 
+# Seed admin credentials. The app skips creation if the account already exists.
+[ -n "${ADMIN_EMAIL:-}" ]    && export SeedAdmin__Email="${ADMIN_EMAIL}"
+[ -n "${ADMIN_PASSWORD:-}" ] && export SeedAdmin__Password="${ADMIN_PASSWORD}"
+
 exec dotnet spotify-swiss-knife.dll

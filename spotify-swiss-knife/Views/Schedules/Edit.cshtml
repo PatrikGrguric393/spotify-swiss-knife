@@ -1,10 +1,14 @@
 @using spotify_swiss_knife.Models
-@model spotify_swiss_knife.Models.FormModels.CreateScheduleForm
+@model spotify_swiss_knife.Models.FormModels.EditScheduleForm
 
 @{
-    ViewData["Title"] = "New Scheduled Shuffle";
-    ViewData["SubmitLabel"] = "Create schedule";
+    ViewData["Title"] = "Edit scheduled shuffle";
+    ViewData["SubmitLabel"] = "Save changes";
     var playlists = (ViewBag.Playlists as IEnumerable<spotify_swiss_knife.Models.Playlist>) ?? Enumerable.Empty<spotify_swiss_knife.Models.Playlist>();
+    // Only the initial Edit GET seeds the fields with UTC values that need localizing.
+    // Create renders "false"; an Edit POST re-render also renders "false" because the
+    // fields already hold the user's local selection.
+    var localizeFromUtc = (ViewBag.LocalizeFromUtc as bool?) == true ? "true" : "false";
 }
 
 @section Head {
@@ -13,13 +17,14 @@
 }
 
 <section class="library-page shuffle-page">
-    <h1>New Scheduled Shuffle</h1>
+    <h1>Edit scheduled shuffle</h1>
 
-    <section class="shuffle-panel" aria-labelledby="createScheduleTitle">
-        <h2 id="createScheduleTitle" class="shuffle-panel-title">Configure schedule</h2>
+    <section class="shuffle-panel" aria-labelledby="editScheduleTitle">
+        <h2 id="editScheduleTitle" class="shuffle-panel-title">Configure schedule</h2>
 
-        <form method="post" action="@Url.Action("Create", "Schedules")" class="shuffle-form" data-utc-seed="false">
+        <form method="post" action="@Url.Action("Edit", "Schedules", new { id = Model.Id })" class="shuffle-form" data-utc-seed="@localizeFromUtc">
             @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
             @await Html.PartialAsync("_ScheduleFormFields", Model)
         </form>
     </section>

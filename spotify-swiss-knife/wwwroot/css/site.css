@@ -1148,7 +1148,9 @@ body.entity-detail-open .app-scroll-area {
     }
 
     .entity-table td.cell-actions {
+        display: grid;
         grid-template-columns: 1fr;
+        gap: 0.4rem;
         padding-top: 0.6rem;
     }
 
@@ -1785,6 +1787,28 @@ body.entity-detail-open .app-scroll-area {
 
 .marquee-placeholder.is-overflowing .marquee-placeholder-track {
     animation: marquee-placeholder-scroll 12s linear infinite;
+}
+
+/* ── cell-actions: equal-width, evenly spaced action buttons ─────────────── */
+.cell-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+/* The <form> wrapper around the Delete button must behave as a flex child
+   that fills equally alongside the Edit <a>. */
+.cell-actions .btn,
+.cell-actions .delete-form {
+    flex: 1;
+    margin: 0; /* gap on the container takes over from the default btn margin */
+}
+
+/* The button inside the form must fill the form's full width so both
+   rendered buttons end up the same size. */
+.cell-actions .delete-form .btn {
+    width: 100%;
 }
 
 .btn-danger {
