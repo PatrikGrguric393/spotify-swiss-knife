@@ -2088,7 +2088,7 @@ body.entity-detail-open .app-scroll-area {
         display: block;
         position: fixed;
         inset: 0;
-        z-index: 999;
+        z-index: 1049;          /* was 999 */
         background: rgba(0, 0, 0, 0.7);
     }
     .timewheel-backdrop[hidden] { display: none; }
@@ -2104,13 +2104,14 @@ body.entity-detail-open .app-scroll-area {
         bottom: 0;
         width: max-content;
         max-width: min(90vw, 20rem);
-        z-index: 1000;
+        z-index: 1050;          /* was 1000 — must beat any ancestor stacking context */
         max-height: 90vh;
         max-height: 90dvh;          /* avoids mobile URL-bar overlap */
         display: flex;
         flex-direction: column;
         padding: 0.8rem 0.7rem calc(0.8rem + env(safe-area-inset-bottom));
         border-width: 2px 0 0;       /* top edge only when full-width */
+        overflow: hidden;
     }
 
     /* Restore hidden behaviour: the ID selector (specificity 100) would

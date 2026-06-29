@@ -378,6 +378,7 @@
         }
 
         function reposition() {
+            if (window.innerWidth <= 480) { return; }   // mobile: CSS bottom-sheet handles it
             var rect = panel.getBoundingClientRect();
             var vph = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
             if (rect.bottom > vph) {
