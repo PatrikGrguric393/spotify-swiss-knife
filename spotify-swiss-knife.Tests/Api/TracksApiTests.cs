@@ -124,6 +124,17 @@ public class TracksApiTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Delete_AsEditor_ReturnsForbidden()
+    {
+        // Editors may create/update but DELETE is Admin-only.
+        var client = await CreateClientAsAsync("Editor");
+
+        var response = await client.DeleteAsync($"{BaseUrl}/{MissingId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
     // ---------- Create ----------
 
     [Fact]

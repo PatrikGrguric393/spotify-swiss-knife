@@ -23,6 +23,12 @@
     margin-bottom: 20px;
 }
 
+/* Space the status banner from the first form field (does not affect the
+   shared .shuffle-notice component used by the shuffle feature). */
+.form-container .shuffle-notice {
+    margin-bottom: 20px;
+}
+
 .form-actions {
     display: flex;
     gap: 10px;

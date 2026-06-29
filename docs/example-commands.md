@@ -4,16 +4,29 @@ Copy/paste `curl` snippets for the local-library CRUD API. They assume `bash`, `
 
 `GET` endpoints are anonymous. Writes (`POST`/`PUT`) require an **Admin** or **Editor** token; `DELETE` requires **Admin**. Replace `THE_ID` with a real id (the `GET` lists return ids).
 
+For a runnable end-to-end walk through the full CRUD lifecycle and the authorization rules, see [`example-crud.sh`](example-crud.sh):
+
+```bash
+# Defaults target https://ssk.grghomelab.me; override via env vars.
+BASE=https://ssk.grghomelab.me ./docs/example-crud.sh
+```
+
 ## Setup
 
 ```bash
 BASE=https://ssk.grghomelab.me
 
 # Authenticate and capture a bearer token for the write/delete calls below.
+# Admin can do everything (including DELETE).
 TOKEN=$(curl -s -X POST "$BASE/api/auth/token" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin@ssk.local","password":"Admin123!"}' | jq -r .access_token)
+  -d '{"username":"admin@ssk.grghomelab.me","password":"Password1admin"}' | jq -r .access_token)
 echo "$TOKEN"
+
+# Optional: an Editor token can create/update (POST/PUT) but cannot DELETE (-> 403).
+# TOKEN=$(curl -s -X POST "$BASE/api/auth/token" \
+#   -H 'Content-Type: application/json' \
+#   -d '{"username":"editor@ssk.grghomelab.me","password":"Password1editor"}' | jq -r .access_token)
 ```
 
 ## Artists

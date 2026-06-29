@@ -104,7 +104,7 @@ REST API controllers inherit from `ApiControllerBase` (`[ApiController]`). All r
 
 **Authentication:** The `api/` surface authenticates exclusively via **JWT bearer tokens** (scheme `Bearer`); the Identity (`SSKAuth`) cookie is no longer accepted on `api/` routes. Obtain a token from `POST /api/auth/token` and send it as the `Authorization: Bearer <access_token>` header. Tokens are HS256-signed with a key generated on first run and persisted in the `JwtSigningKeys` table.
 
-**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]` and need no token. POST/PUT/DELETE endpoints require a bearer token whose holder has the `Admin` or `Editor` role — unauthenticated callers receive `401`, authenticated callers without the required role receive `403`.
+**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]` and need no token. POST and PUT require a bearer token whose holder has the `Admin` or `Editor` role; DELETE is restricted to `Admin`. In all cases unauthenticated callers receive `401` and authenticated callers without the required role receive `403`.
 
 **Search (`?q=`):** The collection `GetAll` endpoints accept an optional `q` term. A match is returned when the entity's **name contains `q`** (case-insensitive substring) **or** the entity's **`Id` equals `q` exactly** (case-insensitive). This lets the same endpoint serve both free-text searches and exact-ID lookups; passing a known resource id returns just that resource.
 

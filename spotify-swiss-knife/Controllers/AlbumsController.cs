@@ -332,7 +332,8 @@ public class AlbumsController : LibraryControllerBase
             a.Name,
             Artists = string.Join(", ", a.Artists.Select(ar => ar.Name)),
             ReleaseDate = a.ReleaseDate,
-            a.HasCover
+            a.HasCover,
+            CoverFileName = a.CoverImageFileName
         }).ToList());
     }
 
