@@ -374,9 +374,12 @@
     margin-bottom: 0;
 }
 
-/* Override Dropzone's full-width defaults for the single-image cover tile */
-.album-cover-dropzone {
-    border: 1px solid #0f0;
+/* Override Dropzone's full-width defaults for the single-image cover tile.
+   Selectors are chained with the base .dropzone class so they out-specify
+   Dropzone v5's own stylesheet (injected via @section Head, so it loads after
+   validation.css); a single-class override would tie and lose to source order. */
+.dropzone.album-cover-dropzone {
+    border: 2px solid #0f0;
     border-radius: 0;
     background: #000;
     color: #0f0;
@@ -392,19 +395,19 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.album-cover-dropzone:hover,
-.album-cover-dropzone.dz-drag-hover {
+.dropzone.album-cover-dropzone:hover,
+.dropzone.album-cover-dropzone.dz-drag-hover {
     border-color: #0ff;
     box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
-.album-cover-dropzone:focus-visible {
+.dropzone.album-cover-dropzone:focus-visible {
     outline: 2px solid #83ffcf;
     outline-offset: 1px;
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
-.album-cover-dropzone .dz-message {
+.dropzone.album-cover-dropzone .dz-message {
     margin: 0;
     color: #0f0;
     font-size: 0.875rem;
@@ -413,12 +416,12 @@
 }
 
 /* This is a staging control, not an uploader: hide all upload chrome */
-.album-cover-dropzone .dz-preview {
+.dropzone.album-cover-dropzone .dz-preview {
     display: none;
 }
 
 @media (max-width: 768px) {
-    .album-cover-dropzone {
+    .dropzone.album-cover-dropzone {
         width: 100%;
         min-height: 120px;
         font-size: 0.85rem;

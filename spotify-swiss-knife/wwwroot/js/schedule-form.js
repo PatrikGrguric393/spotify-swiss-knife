@@ -236,6 +236,12 @@
         document.body.appendChild(backdrop);
         backdrop.addEventListener('pointerdown', function () { close(false); });
 
+        // For the mobile bottom-sheet the panel must live in <body>, not inside
+        // .app-scroll-area (z-index:1 stacking context), or the body-level backdrop
+        // (z-index:1049) paints on top of it regardless of the panel's own z-index.
+        var panelOriginalParent = panel.parentNode;
+        var panelNextSibling    = panel.nextSibling;
+
         var state = {
             hour:   clampInt(root.getAttribute('data-hour'), 23),
             minute: clampInt(root.getAttribute('data-minute'), 59)
@@ -391,6 +397,7 @@
         }
 
         function open() {
+            if (window.innerWidth <= 480) { document.body.appendChild(panel); }
             panel.hidden = false;
             backdrop.hidden = false;
             trigger.setAttribute('aria-expanded', 'true');
@@ -411,6 +418,9 @@
         function close(focusTrigger) {
             if (panel.hidden) { return; }
             panel.hidden = true;
+            if (panel.parentNode === document.body) {
+                panelOriginalParent.insertBefore(panel, panelNextSibling);
+            }
             backdrop.hidden = true;
             trigger.setAttribute('aria-expanded', 'false');
             panel.style.top = '';
@@ -422,7 +432,7 @@
             if (focusTrigger) { trigger.focus(); }
         }
 
-        function onOutside(e) { if (!root.contains(e.target)) { close(false); } }
+        function onOutside(e) { if (!root.contains(e.target) && !panel.contains(e.target)) { close(false); } }
         function onDocKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(true); } }
 
         trigger.addEventListener('click', function () {

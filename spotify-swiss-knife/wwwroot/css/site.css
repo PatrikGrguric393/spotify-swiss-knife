@@ -1641,8 +1641,12 @@ body.entity-detail-open .app-scroll-area {
     line-height: 1.4;
 }
 
-.files-dropzone {
-    border: 1px solid #0f0;
+/* Selectors are chained with the base .dropzone class (e.g.
+   .dropzone.files-dropzone) so they out-specify Dropzone v5's own stylesheet.
+   That sheet is injected via @section Head and therefore loads AFTER site.css;
+   single-class overrides would tie on specificity and lose to source order. */
+.dropzone.files-dropzone {
+    border: 2px solid #0f0;
     border-radius: 0;
     background: #000;
     color: #0f0;
@@ -1652,19 +1656,19 @@ body.entity-detail-open .app-scroll-area {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.files-dropzone:hover,
-.files-dropzone.dz-drag-hover {
+.dropzone.files-dropzone:hover,
+.dropzone.files-dropzone.dz-drag-hover {
     border-color: #0ff;
     box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
-.files-dropzone:focus-visible {
+.dropzone.files-dropzone:focus-visible {
     outline: 2px solid #83ffcf;
     outline-offset: 1px;
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
-.files-dropzone .dz-message {
+.dropzone.files-dropzone .dz-message {
     margin: 0;
     color: #0f0;
     font-size: 0.875rem;
@@ -1672,56 +1676,60 @@ body.entity-detail-open .app-scroll-area {
     line-height: 1.4;
 }
 
-.files-dropzone .dz-preview .dz-filename span,
-.files-dropzone .dz-preview .dz-size span {
+.dropzone.files-dropzone .dz-preview .dz-filename span,
+.dropzone.files-dropzone .dz-preview .dz-size span {
     background: #030303;
     color: #0f0;
     border: 1px solid #0f0;
 }
 
-.files-dropzone .dz-preview .dz-progress {
+.dropzone.files-dropzone .dz-preview .dz-progress {
     border: 1px solid #0f0;
 }
 
-.files-dropzone .dz-preview .dz-progress .dz-upload {
+.dropzone.files-dropzone .dz-preview .dz-progress .dz-upload {
     background: #0f0;
 }
 
-.files-dropzone .dz-preview .dz-success-mark svg path,
-.files-dropzone .dz-preview .dz-success-mark svg ellipse {
+.dropzone.files-dropzone .dz-preview .dz-success-mark svg path,
+.dropzone.files-dropzone .dz-preview .dz-success-mark svg ellipse {
     fill: #0f0;
 }
 
-.files-dropzone .dz-preview .dz-error-message {
-    background: #1a0000;
+.dropzone.files-dropzone .dz-preview .dz-error-message {
+    background: rgba(255, 0, 0, 0.1);
     color: #ff8f8f;
     border: 1px solid #ff5f5f;
 }
 
-.files-dropzone .dz-preview .dz-error-message:after {
+.dropzone.files-dropzone .dz-preview .dz-error-message:after {
     border-bottom-color: #ff5f5f;
 }
 
-.files-dropzone .dz-preview.dz-error .dz-error-mark svg path,
-.files-dropzone .dz-preview.dz-error .dz-error-mark svg ellipse {
+.dropzone.files-dropzone .dz-preview.dz-error .dz-error-mark svg path,
+.dropzone.files-dropzone .dz-preview.dz-error .dz-error-mark svg ellipse {
     fill: #ff5f5f;
 }
 
-.files-dropzone .dz-preview a.dz-remove {
+.dropzone.files-dropzone .dz-preview a.dz-remove {
     color: #0f0;
     border: 1px solid #0f0;
     background: #000;
+    padding: 0.38rem 0.6rem;
+    line-height: 1.15;
+    font-size: 0.92rem;
     margin-top: 0.4rem;
+    transition: background-color 0.12s ease, color 0.12s ease;
 }
 
-.files-dropzone .dz-preview a.dz-remove:hover {
+.dropzone.files-dropzone .dz-preview a.dz-remove:hover {
     background: #0f0;
     color: #000;
     text-decoration: none;
 }
 
 @media (max-width: 768px) {
-    .files-dropzone {
+    .dropzone.files-dropzone {
         min-height: 100px;
         padding: 1rem;
         font-size: 0.85rem;
