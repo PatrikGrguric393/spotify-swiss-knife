@@ -1887,9 +1887,9 @@ body.entity-detail-open .app-scroll-area {
 
 .schedule-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.5rem;
-    align-items: center;
+    align-items: stretch;
 }
 
 .schedule-days {
