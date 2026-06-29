@@ -2136,9 +2136,8 @@ body.entity-detail-open .app-scroll-area {
 
     /* Columns take the remaining height and scroll internally. */
     #timeWheelPanel .timewheel-columns {
-        flex: 1 1 auto;
-        min-height: var(--tw-row);
-        max-height: calc(var(--tw-row) * var(--tw-rows));
+        flex: 0 0 calc(var(--tw-row) * var(--tw-rows));
+        height: calc(var(--tw-row) * var(--tw-rows));
     }
 
     /* Keep Done pinned and always reachable below the wheel. */
