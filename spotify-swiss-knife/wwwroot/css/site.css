@@ -2099,9 +2099,11 @@ body.entity-detail-open .app-scroll-area {
     #timeWheelPanel {
         position: fixed;
         top: auto;
-        left: 0;
-        right: 0;
+        left: 50%;
+        transform: translateX(-50%);
         bottom: 0;
+        width: max-content;
+        max-width: min(90vw, 20rem);
         z-index: 1000;
         max-height: 90vh;
         max-height: 90dvh;          /* avoids mobile URL-bar overlap */
@@ -2110,6 +2112,10 @@ body.entity-detail-open .app-scroll-area {
         padding: 0.8rem 0.7rem calc(0.8rem + env(safe-area-inset-bottom));
         border-width: 2px 0 0;       /* top edge only when full-width */
     }
+
+    /* Restore hidden behaviour: the ID selector (specificity 100) would
+       otherwise override .timewheel-panel[hidden] { display: none } (20). */
+    #timeWheelPanel[hidden] { display: none; }
 
     /* Columns take the remaining height and scroll internally. */
     #timeWheelPanel .timewheel-columns {

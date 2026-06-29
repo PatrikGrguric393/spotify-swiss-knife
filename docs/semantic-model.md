@@ -11,8 +11,10 @@
 	- `Name:string`
 	- `ReleaseDate:string`
 	- `ReleaseDatePrecision:string`
-	- `Label:string`
+	- `Label:string?`
 	- `Popularity:int`
+	- `CoverImageFileName:string?` (locally uploaded cover; bytes on disk, null when none uploaded)
+	- `CoverImageContentType:string?`
 	- `ExternalUrls_Spotify:string` (owned)
 - Related tables:
 	- `AlbumImages` via `Images`
@@ -24,6 +26,7 @@
 - Columns:
 	- `Id:string`
 	- `Name:string`
+	- `DeletedAt:DateTime?` (soft-delete marker; null means active, set keeps the row but treats the artist as removed)
 	- `ExternalUrls_Spotify:string` (owned)
 - Related tables:
 	- `AlbumArtists` (M-M join with `Albums`)
@@ -138,8 +141,8 @@
 - Columns:
 	- `Id:int`
 	- `UserId:string` (index; Spotify account id, links logically to `SpotifyTokens.SpotifyUserId`)
-	- `PlaylistId:string`
-	- `PlaylistName:string`
+	- `PlaylistIds:List<string>` (PostgreSQL `text[]`; one schedule can cover multiple playlists)
+	- `PlaylistNames:List<string>` (PostgreSQL `text[]`; index-aligned display names for `PlaylistIds`)
 	- `CronExpression:string` (standard 5-field cron, UTC)
 	- `IsEnabled:bool`
 	- `LastRunAt:DateTimeOffset?`

@@ -1,4 +1,10 @@
 (function () {
+    // Prevent album-form-datepicker.js auto-init from running before this module
+    // can call initDateRange with the correct onSelect callback. Without this,
+    // initDpcWrappers is called twice (once with null, once with onSelect), adding
+    // two click listeners per trigger — causing the panel to open and immediately close.
+    if (window.Dpc) window.Dpc.selfInit = true;
+
     function renderRows(rows) {
         var tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
