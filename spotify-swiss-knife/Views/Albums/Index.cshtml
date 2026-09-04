@@ -85,7 +85,7 @@
                     TotalTracks = album.TotalTracks,
                     album.Label,
                     album.Popularity,
-                    Cover = album.HasCover ? Url.Action("AlbumCover", "Albums", new { id = album.Id }) : null
+                    Cover = album.HasCover ? Url.Action("AlbumCover", "Albums", new { id = album.Id, v = album.CoverImageFileName }) : null
                 };
 
                 <tr tabindex="0" data-details-id="@detailsId" data-entity-type="Album" aria-label="View details for @album.Name">
@@ -94,7 +94,7 @@
                             @if (album.HasCover)
                             {
                                 <img class="album-row-thumb"
-                                     src="@Url.Action("AlbumCover", "Albums", new { id = album.Id })"
+                                     src="@Url.Action("AlbumCover", "Albums", new { id = album.Id, v = album.CoverImageFileName })"
                                      alt="" loading="lazy" />
                             }
                             else

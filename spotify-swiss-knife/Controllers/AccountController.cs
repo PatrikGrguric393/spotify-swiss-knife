@@ -125,6 +125,47 @@ public class AccountController : Controller
         return LocalRedirect(returnUrl ?? "/");
     }
 
+    [HttpGet("password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword()
+    {
+        if (await HttpContext.IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
+
+        return View(new UserChangePasswordForm());
+    }
+
+    [HttpPost("password")]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(UserChangePasswordForm model)
+    {
+        if (await HttpContext.IsSpotifyConnectedAsync())
+            return RedirectToChooserForSpotifyConflict();
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+            return RedirectToAction("Login");
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Failed password change for {UserId}: {Errors}.",
+                user.Id, string.Join("; ", result.Errors.Select(e => e.Code)));
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+            return View(model);
+        }
+
+        await _signInManager.RefreshSignInAsync(user);
+        _logger.LogInformation("User changed their password: {UserId}.", user.Id);
+        TempData["PasswordMessage"] = "Your password has been changed.";
+        return RedirectToAction(nameof(ChangePassword));
+    }
+
     [HttpPost("logout")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
@@ -232,6 +273,9 @@ public class AccountController : Controller
 
             await AssignSingleRoleAsync(user, model.Role);
         }
+
+        if (user.Id == _userManager.GetUserId(User))
+            await _signInManager.RefreshSignInAsync(user);
 
         _logger.LogInformation("Admin {Admin} updated user {UserId} ({Email}), role set to {Role}.",
             LogScrub.Email(_userManager.GetUserName(User)), user.Id, LogScrub.Email(user.Email), model.Role);

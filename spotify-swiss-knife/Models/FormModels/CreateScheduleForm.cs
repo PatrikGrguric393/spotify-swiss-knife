@@ -8,7 +8,7 @@ namespace spotify_swiss_knife.Models.FormModels;
 /// the UTC cron string that gets stored. <see cref="Validate"/> enforces the per-frequency day
 /// rules.
 /// </summary>
-public sealed class CreateScheduleForm : IValidatableObject
+public class CreateScheduleForm : IValidatableObject
 {
     // Selected playlists. PlaylistNames[i] is the display name for PlaylistIds[i]; the two
     // lists are posted as parallel hidden fields and stay index-aligned. At least one is required

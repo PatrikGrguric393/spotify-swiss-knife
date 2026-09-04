@@ -1,0 +1,195 @@
+@using spotify_swiss_knife.Models
+@model spotify_swiss_knife.Models.FormModels.CreateScheduleForm
+
+@*
+    Shared inner markup for the schedule create/edit forms. Rendered INSIDE each
+    parent view's own <form> (Create.cshtml, Edit.cshtml), which supplies the
+    method/action, the anti-forgery token, and (for Edit) the hidden Id. This
+    partial owns only the fields that are identical between the two flows.
+
+    Parameters via ViewData:
+      ViewData["SubmitLabel"] - text on the submit button (e.g. "Create schedule"
+                                or "Save changes"). Defaults to "Save".
+
+    EditScheduleForm derives from CreateScheduleForm, so this partial binds for
+    both. Behaviour (including the day/time wheels and timezone conversion) lives
+    in wwwroot/js/schedule-form.js, referenced once per parent view.
+*@
+
+@{
+    var submitLabel = (ViewData["SubmitLabel"] as string) ?? "Save";
+}
+
+<div id="selectedPlaylistInputs"></div>
+
+<div class="shuffle-form-row shuffle-playlist-row">
+    <span class="shuffle-form-label" id="schedulePlaylistLabel">Playlist</span>
+
+    <div class="shuffle-playlist-panel-wrap">
+        <section class="bulk-save-panel shuffle-playlist-panel" aria-labelledby="schedulePlaylistLabel">
+            <div class="bulk-save-panel-head">
+                <span class="bulk-save-count" id="schedulePlaylistCount" aria-live="polite">No playlists selected</span>
+            </div>
+
+            <div class="search-box bulk-save-search">
+                <label for="schedulePlaylistSearch" class="visually-hidden">Search your playlists</label>
+                <div class="search-input-wrap">
+                    <input id="schedulePlaylistSearch"
+                           type="search"
+                           class="search-input"
+                           placeholder="Search your playlists..."
+                           autocomplete="off"
+                           aria-label="Search your playlists"
+                           aria-controls="schedulePlaylistTableBody" />
+                    <button type="button" class="search-clear-btn" id="schedulePlaylistSearchClear" hidden aria-label="Clear search">
+                        <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+                <span class="search-status bulk-save-search-status" id="schedulePlaylistSearchStatus" aria-live="polite"></span>
+            </div>
+
+            <div class="table-wrap bulk-save-table-wrap shuffle-table-wrap">
+                <table class="entity-table bulk-save-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Cover</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Tracks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedulePlaylistTableBody">
+                    </tbody>
+                </table>
+                <p class="bulk-save-empty" id="schedulePlaylistEmpty">No playlists found.</p>
+            </div>
+        </section>
+    </div>
+
+    <span class="shuffle-validation" asp-validation-for="PlaylistIds"></span>
+</div>
+
+<div class="shuffle-form-row">
+    <span class="shuffle-form-label" id="frequencyLabel">Frequency</span>
+    <div class="freq-seg" role="radiogroup" aria-labelledby="frequencyLabel" id="freqGroup">
+        @{
+            var freqs = new[] {
+                new { Val = "Daily",        Label = "Daily" },
+                new { Val = "Weekly",       Label = "Weekly" },
+                new { Val = "Monthly",      Label = "Monthly" },
+                new { Val = "CustomWeekly", Label = "Custom weekly" }
+            };
+            var currentFreq = (Model.Frequency ?? ShuffleFrequency.Weekly).ToString();
+        }
+        @foreach (var f in freqs)
+        {
+            <label class="freq-seg-opt">
+                <input type="radio" name="Frequency" value="@f.Val"
+                       @(currentFreq == f.Val ? "checked" : null) />
+                <span class="freq-seg-text">@f.Label</span>
+            </label>
+        }
+    </div>
+    <span class="shuffle-validation" asp-validation-for="Frequency"></span>
+</div>
+
+<fieldset class="shuffle-form-row day-fieldset" id="dayOfWeekField">
+    <legend class="shuffle-form-label" id="dowLabel">Days of week</legend>
+    <p class="day-hint" id="dowHint" aria-live="polite"></p>
+    <div class="schedule-days" id="scheduleDays" role="group" aria-labelledby="dowLabel">
+        @{
+            var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+            for (int d = 0; d <= 6; d++)
+            {
+                var isChecked = Model.DaysOfWeek != null && Model.DaysOfWeek.Contains(d);
+                <label class="shuffle-checkbox">
+                    <input type="checkbox" name="DaysOfWeek" value="@d" @(isChecked ? "checked" : null) />
+                    @dayNames[d]
+                </label>
+            }
+        }
+    </div>
+    <span class="shuffle-validation" asp-validation-for="DaysOfWeek"></span>
+</fieldset>
+
+<fieldset class="shuffle-form-row day-fieldset" id="dayOfMonthField" hidden>
+    <legend class="shuffle-form-label" id="domLabel">Day of month</legend>
+    <p class="day-hint">Runs on this calendar day each month.</p>
+
+    <div class="timewheel daywheel" id="dayWheel" data-day="@(Model.DayOfMonth?.ToString() ?? "1")">
+        <div class="timewheel-panel daywheel-panel" role="group" aria-labelledby="domLabel">
+            <div class="timewheel-columns">
+                <div class="timewheel-col" data-unit="day" data-min="1" data-max="31"
+                     role="listbox" tabindex="0" aria-label="Day of month (1 to 31)"
+                     aria-activedescendant="dw-day-1">
+                    <div class="timewheel-track" data-track></div>
+                </div>
+                <div class="timewheel-band" aria-hidden="true"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="DayOfMonth" id="DayOfMonth"
+           value="@(Model.DayOfMonth?.ToString() ?? "1")" />
+    <span class="shuffle-validation" asp-validation-for="DayOfMonth"></span>
+</fieldset>
+
+<div class="shuffle-form-row">
+    @{
+        var timeParts = (Model.TimeUtc ?? "08:00").Split(':');
+        var hourValue = timeParts.Length > 0 ? timeParts[0] : "08";
+        var minuteValue = timeParts.Length > 1 ? timeParts[1] : "00";
+    }
+    <span class="shuffle-form-label" id="timeUtcLabel">Time (your local time)</span>
+
+    <div class="timewheel" id="timeWheel"
+         data-hour="@hourValue" data-minute="@minuteValue">
+        <button type="button" class="timewheel-trigger" id="timeWheelTrigger"
+                aria-haspopup="dialog" aria-expanded="false"
+                aria-labelledby="timeUtcLabel timeWheelValue">
+            <span class="timewheel-trigger-value" id="timeWheelValue">@hourValue:@minuteValue</span>
+            <span class="timewheel-trigger-caret" aria-hidden="true">▾</span>
+        </button>
+
+        <div class="timewheel-panel" id="timeWheelPanel" role="dialog"
+             aria-label="Choose time" hidden>
+            <div class="timewheel-columns">
+                <div class="timewheel-col" data-unit="hour" data-max="23"
+                     role="listbox" tabindex="0" aria-label="Hour (00 to 23)"
+                     aria-activedescendant="tw-hour-@hourValue">
+                    <div class="timewheel-track" data-track></div>
+                </div>
+                <span class="timewheel-sep" aria-hidden="true">:</span>
+                <div class="timewheel-col" data-unit="minute" data-max="59"
+                     role="listbox" tabindex="0" aria-label="Minute (00 to 59)"
+                     aria-activedescendant="tw-minute-@minuteValue">
+                    <div class="timewheel-track" data-track></div>
+                </div>
+                <div class="timewheel-band" aria-hidden="true"></div>
+            </div>
+            <div class="timewheel-actions">
+                <button type="button" class="timewheel-done" id="timeWheelDone">Done</button>
+            </div>
+        </div>
+
+        <span class="schedule-time-zone" id="scheduleTimeZone" hidden></span>
+        <span class="schedule-time-utc-hint" id="scheduleTimeUtcHint" aria-live="polite" hidden></span>
+        <input asp-for="TimeUtc" type="hidden" />
+        <input type="hidden" name="TimezoneOffsetMinutes" id="TimezoneOffsetMinutes" />
+    </div>
+    <span class="shuffle-validation" asp-validation-for="TimeUtc"></span>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="shuffle-notice shuffle-notice-error" role="alert" aria-labelledby="scheduleValidationTitle">
+        <h3 id="scheduleValidationTitle" class="shuffle-notice-title">Please fix the following errors</h3>
+        <div asp-validation-summary="ModelOnly" class="shuffle-notice-text"></div>
+    </div>
+}
+
+<div class="shuffle-form-actions">
+    <div class="schedule-form-buttons">
+        <button type="submit" class="shuffle-submit">@submitLabel</button>
+        <a href="@Url.Action("Index", "Schedules")" class="shuffle-submit schedule-cancel-link">Cancel</a>
+    </div>
+</div>

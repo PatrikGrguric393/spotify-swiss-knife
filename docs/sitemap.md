@@ -20,6 +20,7 @@
 | /account/denied           | AccountController | Denied                                          | Shared/_Layout.cshtml, Account/Denied.cshtml      |
 | /account/users            | AccountController | Users `[Admin]`                                 | Shared/_Layout.cshtml, Account/Users.cshtml       |
 | /account/users/{id}/edit  | AccountController | GET -> EditUser, POST -> EditUser(...) `[Admin]` | Shared/_Layout.cshtml, Account/EditUser.cshtml    |
+| /account/password         | AccountController | GET -> ChangePassword, POST -> ChangePassword(...) `[Authorize]` | Shared/_Layout.cshtml, Account/ChangePassword.cshtml |
 | /account/users/{id}/delete| AccountController | POST -> DeleteUser `[Admin]`                    | — (redirect to /account/users)                    |
 
 > Role assignment is performed through `POST /account/users/{id}/edit` (the user edit form), not a separate endpoint.
@@ -35,7 +36,7 @@
 
 ### Library — `/lib`
 
-Library list controllers (`Tracks`, `Albums`, `Artists`, `Playlists`) carry a class-level `[Authorize(Roles = "Admin,Editor")]`; the index, search, cover, and validation actions are `[AllowAnonymous]`, so listing and search are public while create/edit/delete require the `Admin` or `Editor` role.
+Library list controllers (`Tracks`, `Albums`, `Artists`, `Playlists`) carry a class-level `[Authorize(Roles = "Admin,Editor")]`; the index, search, cover, and validation actions are `[AllowAnonymous]`, so listing and search are public while create and edit require the `Admin` or `Editor` role; delete is restricted to `Admin`.
 
 The `search` actions return JSON and filter the cached library by name/metadata (case-insensitive substring); the date and duration query parameters narrow the result set further.
 
@@ -45,24 +46,24 @@ The `search` actions return JSON and filter the cached library by name/metadata 
 | /lib/tracks               | TracksController   | Index                                                     | Shared/_Layout.cshtml, Tracks/Index.cshtml            |
 | /lib/tracks/create        | TracksController   | GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Tracks/Create.cshtml           |
 | /lib/tracks/edit/{id}     | TracksController   | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Tracks/Edit.cshtml             |
-| /lib/tracks/delete/{id}   | TracksController   | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Tracks/Delete.cshtml           |
+| /lib/tracks/delete/{id}   | TracksController   | GET -> Delete, POST -> DeleteConfirmed `[Admin]`          | Shared/_Layout.cshtml, Tracks/Delete.cshtml           |
 | /lib/tracks/search        | TracksController   | SearchTracks(q, durationMin, durationMax)                 | — (JSON)                                              |
 | /lib/albums               | AlbumsController   | Index                                                     | Shared/_Layout.cshtml, Albums/Index.cshtml            |
 | /lib/albums/create        | AlbumsController   | GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Albums/Create.cshtml           |
 | /lib/albums/edit/{id}     | AlbumsController   | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Albums/Edit.cshtml             |
-| /lib/albums/delete/{id}   | AlbumsController   | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Albums/Delete.cshtml           |
+| /lib/albums/delete/{id}   | AlbumsController   | GET -> Delete, POST -> DeleteConfirmed `[Admin]`          | Shared/_Layout.cshtml, Albums/Delete.cshtml           |
 | /lib/albums/cover/{id}    | AlbumsController   | AlbumCover                                                | — (image stream)                                      |
 | /lib/albums/search        | AlbumsController   | SearchAlbums(q, dateFrom, dateTo)                         | — (JSON)                                              |
 | /lib/artists              | ArtistsController  | Index                                                     | Shared/_Layout.cshtml, Artists/Index.cshtml           |
-| /lib/artists/create       | ArtistsController  | GET -> Create, POST -> Create(...) `[Admin,Editor]`       | Shared/_Layout.cshtml, Artists/Create.cshtml          |
+| /lib/artists/create       | ArtistsController  | GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Artists/Create.cshtml          |
 | /lib/artists/edit/{id}    | ArtistsController  | GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Artists/Edit.cshtml            |
-| /lib/artists/delete/{id}  | ArtistsController  | GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Artists/Delete.cshtml          |
+| /lib/artists/delete/{id}  | ArtistsController  | GET -> Delete, POST -> DeleteConfirmed `[Admin]`          | Shared/_Layout.cshtml, Artists/Delete.cshtml          |
 | /lib/artists/search       | ArtistsController  | SearchArtists(q)                                          | — (JSON)                                              |
 | /lib/artists/validate-name| ArtistsController  | ValidateArtistName(q, excludeId)                          | — (JSON)                                              |
 | /lib/playlists            | PlaylistsController| Index                                                     | Shared/_Layout.cshtml, Playlists/Index.cshtml         |
 | /lib/playlists/create     | PlaylistsController| GET -> Create, POST -> CreatePost `[Admin,Editor]`        | Shared/_Layout.cshtml, Playlists/Create.cshtml        |
 | /lib/playlists/edit/{id}  | PlaylistsController| GET -> Edit, POST -> EditPost `[Admin,Editor]`            | Shared/_Layout.cshtml, Playlists/Edit.cshtml          |
-| /lib/playlists/delete/{id}| PlaylistsController| GET -> Delete, POST -> DeleteConfirmed `[Admin,Editor]`   | Shared/_Layout.cshtml, Playlists/Delete.cshtml        |
+| /lib/playlists/delete/{id}| PlaylistsController| GET -> Delete, POST -> DeleteConfirmed `[Admin]`          | Shared/_Layout.cshtml, Playlists/Delete.cshtml        |
 | /lib/playlists/search     | PlaylistsController| SearchPlaylists(q, dateFrom, dateTo)                      | — (JSON)                                              |
 
 ### Scheduled shuffles — `SchedulesController` (`/schedules`)
@@ -73,6 +74,7 @@ Every action requires a connected Spotify account (the `SpotifyConnect` scheme i
 | ------------------------ | ------------------ | --------------------------------- | ------------------------------------------------ |
 | /schedules               | SchedulesController | Index                             | Shared/_Layout.cshtml, Schedules/Index.cshtml    |
 | /schedules/create        | SchedulesController | GET -> Create, POST -> Create(...)| Shared/_Layout.cshtml, Schedules/Create.cshtml   |
+| /schedules/{id}/edit     | SchedulesController | GET -> Edit, POST -> Edit(...)    | Shared/_Layout.cshtml, Schedules/Edit.cshtml     |
 | /schedules/{id}/toggle   | SchedulesController | POST -> Toggle                    | — (redirect to /schedules)                       |
 | /schedules/{id}/delete   | SchedulesController | POST -> Delete                    | — (redirect to /schedules)                       |
 
@@ -104,7 +106,7 @@ REST API controllers inherit from `ApiControllerBase` (`[ApiController]`). All r
 
 **Authentication:** The `api/` surface authenticates exclusively via **JWT bearer tokens** (scheme `Bearer`); the Identity (`SSKAuth`) cookie is no longer accepted on `api/` routes. Obtain a token from `POST /api/auth/token` and send it as the `Authorization: Bearer <access_token>` header. Tokens are HS256-signed with a key generated on first run and persisted in the `JwtSigningKeys` table.
 
-**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]` and need no token. POST/PUT/DELETE endpoints require a bearer token whose holder has the `Admin` or `Editor` role — unauthenticated callers receive `401`, authenticated callers without the required role receive `403`.
+**Authorization:** GET endpoints (`GetAll` and `GetById`) are `[AllowAnonymous]` and need no token. POST and PUT require a bearer token whose holder has the `Admin` or `Editor` role; DELETE is restricted to `Admin`. In all cases unauthenticated callers receive `401` and authenticated callers without the required role receive `403`.
 
 **Search (`?q=`):** The collection `GetAll` endpoints accept an optional `q` term. A match is returned when the entity's **name contains `q`** (case-insensitive substring) **or** the entity's **`Id` equals `q` exactly** (case-insensitive). This lets the same endpoint serve both free-text searches and exact-ID lookups; passing a known resource id returns just that resource.
 

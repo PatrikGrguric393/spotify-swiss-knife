@@ -66,32 +66,29 @@ ul, ol {
     margin: 0 auto;
 }
 
-/* Services pages break out of the centered 1200px content column. They grow to
-   80% of the viewport on wide screens, but never below the old 1200px column
-   (clamp floor) and never to full bleed (100vw cap). Scoped to these page
-   classes so Library/About stay capped. The breakout is safe because
-   .app-scroll-area has overflow-x: hidden. The margin is exactly half the width
-   clamp (calc(50% - width/2)), so the box stays centered at every viewport.
-   Padding mirrors the desktop .app-content gutter so edges line up. */
-.library-page.shuffle-page,
-.library-page.bulk-save-page {
-    max-width: none;
-    width: clamp(1200px, 80vw, 100vw);
-    margin-left: calc(50% - clamp(600px, 40vw, 50vw));
-    margin-right: calc(50% - clamp(600px, 40vw, 50vw));
-    padding-left: 2rem;
-    padding-right: 2rem;
-}
+/* Services pages break out of the centered 1200px content column — but ONLY
+   above 1200px viewport width, where the breakout is a pure wide-screen
+   enhancement. They grow to 80% of the viewport, floored at the old 1200px
+   column (clamp floor) and capped at full bleed (100vw). The margin is exactly
+   half the width clamp (calc(50% - width/2)), so the box stays centered.
+   Padding mirrors the desktop .app-content gutter so edges line up.
 
-/* Below the desktop breakpoint .app-content drops its 1200px cap and fills the
-   viewport, so the Services pages full-bleed too — this also avoids the 1200px
-   clamp floor overflowing narrow screens. */
-@media (max-width: 1024px) {
+   This is gated at min-width:1201px on purpose. At <=1200px the breakout is
+   dropped entirely and these pages flow as a normal centered .library-page
+   column (max-width:1200px; margin:0 auto; gutter from .app-content padding).
+   That avoids BOTH failure modes: (a) the clamp's 1200px floor overflowing any
+   viewport narrower than 1200px, and (b) a 100vw child being ~scrollbar-width
+   wider than the real content area (.app-scroll-area has a classic scrollbar),
+   which would clip its right edge under the scrollbar gutter. */
+@media (min-width: 1201px) {
     .library-page.shuffle-page,
     .library-page.bulk-save-page {
-        width: 100vw;
-        margin-left: calc(50% - 50vw);
-        margin-right: calc(50% - 50vw);
+        max-width: none;
+        width: clamp(1200px, 80vw, 100vw);
+        margin-left: calc(50% - clamp(600px, 40vw, 50vw));
+        margin-right: calc(50% - clamp(600px, 40vw, 50vw));
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 }
 
@@ -1071,13 +1068,6 @@ body.entity-detail-open .app-scroll-area {
         font-size: 0.95rem;
     }
 
-    /* Tighter gutter for the full-bleed Services pages on narrow screens. */
-    .library-page.shuffle-page,
-    .library-page.bulk-save-page {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
     .table-wrap {
         margin-top: 1rem;
         overflow-x: clip;
@@ -1148,7 +1138,9 @@ body.entity-detail-open .app-scroll-area {
     }
 
     .entity-table td.cell-actions {
+        display: grid;
         grid-template-columns: 1fr;
+        gap: 0.4rem;
         padding-top: 0.6rem;
     }
 
@@ -1639,8 +1631,12 @@ body.entity-detail-open .app-scroll-area {
     line-height: 1.4;
 }
 
-.files-dropzone {
-    border: 1px solid #0f0;
+/* Selectors are chained with the base .dropzone class (e.g.
+   .dropzone.files-dropzone) so they out-specify Dropzone v5's own stylesheet.
+   That sheet is injected via @section Head and therefore loads AFTER site.css;
+   single-class overrides would tie on specificity and lose to source order. */
+.dropzone.files-dropzone {
+    border: 2px solid #0f0;
     border-radius: 0;
     background: #000;
     color: #0f0;
@@ -1650,19 +1646,19 @@ body.entity-detail-open .app-scroll-area {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.files-dropzone:hover,
-.files-dropzone.dz-drag-hover {
+.dropzone.files-dropzone:hover,
+.dropzone.files-dropzone.dz-drag-hover {
     border-color: #0ff;
     box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
-.files-dropzone:focus-visible {
+.dropzone.files-dropzone:focus-visible {
     outline: 2px solid #83ffcf;
     outline-offset: 1px;
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
-.files-dropzone .dz-message {
+.dropzone.files-dropzone .dz-message {
     margin: 0;
     color: #0f0;
     font-size: 0.875rem;
@@ -1670,56 +1666,60 @@ body.entity-detail-open .app-scroll-area {
     line-height: 1.4;
 }
 
-.files-dropzone .dz-preview .dz-filename span,
-.files-dropzone .dz-preview .dz-size span {
+.dropzone.files-dropzone .dz-preview .dz-filename span,
+.dropzone.files-dropzone .dz-preview .dz-size span {
     background: #030303;
     color: #0f0;
     border: 1px solid #0f0;
 }
 
-.files-dropzone .dz-preview .dz-progress {
+.dropzone.files-dropzone .dz-preview .dz-progress {
     border: 1px solid #0f0;
 }
 
-.files-dropzone .dz-preview .dz-progress .dz-upload {
+.dropzone.files-dropzone .dz-preview .dz-progress .dz-upload {
     background: #0f0;
 }
 
-.files-dropzone .dz-preview .dz-success-mark svg path,
-.files-dropzone .dz-preview .dz-success-mark svg ellipse {
+.dropzone.files-dropzone .dz-preview .dz-success-mark svg path,
+.dropzone.files-dropzone .dz-preview .dz-success-mark svg ellipse {
     fill: #0f0;
 }
 
-.files-dropzone .dz-preview .dz-error-message {
-    background: #1a0000;
+.dropzone.files-dropzone .dz-preview .dz-error-message {
+    background: rgba(255, 0, 0, 0.1);
     color: #ff8f8f;
     border: 1px solid #ff5f5f;
 }
 
-.files-dropzone .dz-preview .dz-error-message:after {
+.dropzone.files-dropzone .dz-preview .dz-error-message:after {
     border-bottom-color: #ff5f5f;
 }
 
-.files-dropzone .dz-preview.dz-error .dz-error-mark svg path,
-.files-dropzone .dz-preview.dz-error .dz-error-mark svg ellipse {
+.dropzone.files-dropzone .dz-preview.dz-error .dz-error-mark svg path,
+.dropzone.files-dropzone .dz-preview.dz-error .dz-error-mark svg ellipse {
     fill: #ff5f5f;
 }
 
-.files-dropzone .dz-preview a.dz-remove {
+.dropzone.files-dropzone .dz-preview a.dz-remove {
     color: #0f0;
     border: 1px solid #0f0;
     background: #000;
+    padding: 0.38rem 0.6rem;
+    line-height: 1.15;
+    font-size: 0.92rem;
     margin-top: 0.4rem;
+    transition: background-color 0.12s ease, color 0.12s ease;
 }
 
-.files-dropzone .dz-preview a.dz-remove:hover {
+.dropzone.files-dropzone .dz-preview a.dz-remove:hover {
     background: #0f0;
     color: #000;
     text-decoration: none;
 }
 
 @media (max-width: 768px) {
-    .files-dropzone {
+    .dropzone.files-dropzone {
         min-height: 100px;
         padding: 1rem;
         font-size: 0.85rem;
@@ -1785,6 +1785,28 @@ body.entity-detail-open .app-scroll-area {
 
 .marquee-placeholder.is-overflowing .marquee-placeholder-track {
     animation: marquee-placeholder-scroll 12s linear infinite;
+}
+
+/* ── cell-actions: equal-width, evenly spaced action buttons ─────────────── */
+.cell-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+/* The <form> wrapper around the Delete button must behave as a flex child
+   that fills equally alongside the Edit <a>. */
+.cell-actions .btn,
+.cell-actions .delete-form {
+    flex: 1;
+    margin: 0; /* gap on the container takes over from the default btn margin */
+}
+
+/* The button inside the form must fill the form's full width so both
+   rendered buttons end up the same size. */
+.cell-actions .delete-form .btn {
+    width: 100%;
 }
 
 .btn-danger {
@@ -1863,9 +1885,17 @@ body.entity-detail-open .app-scroll-area {
 
 .schedule-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.5rem;
-    align-items: center;
+    align-items: stretch;
+}
+
+.schedule-actions > form {
+    display: flex;
+}
+
+.schedule-actions > form > .shuffle-submit {
+    width: 100%;
 }
 
 .schedule-days {
@@ -2064,7 +2094,7 @@ body.entity-detail-open .app-scroll-area {
         display: block;
         position: fixed;
         inset: 0;
-        z-index: 999;
+        z-index: 1049;          /* was 999 */
         background: rgba(0, 0, 0, 0.7);
     }
     .timewheel-backdrop[hidden] { display: none; }
@@ -2073,25 +2103,34 @@ body.entity-detail-open .app-scroll-area {
        it is always fully visible regardless of screen height. The inline
        day wheel (.daywheel-panel) is intentionally excluded. */
     #timeWheelPanel {
+        /* Re-declare so variables survive reparenting to <body>. */
+        --tw-row: 2.75rem;
+        --tw-rows: 5;
         position: fixed;
         top: auto;
-        left: 0;
-        right: 0;
+        left: 50%;
+        transform: translateX(-50%);
         bottom: 0;
-        z-index: 1000;
+        width: max-content;
+        max-width: min(90vw, 20rem);
+        z-index: 1050;          /* was 1000 — must beat any ancestor stacking context */
         max-height: 90vh;
         max-height: 90dvh;          /* avoids mobile URL-bar overlap */
         display: flex;
         flex-direction: column;
         padding: 0.8rem 0.7rem calc(0.8rem + env(safe-area-inset-bottom));
         border-width: 2px 0 0;       /* top edge only when full-width */
+        overflow: hidden;
     }
+
+    /* Restore hidden behaviour: the ID selector (specificity 100) would
+       otherwise override .timewheel-panel[hidden] { display: none } (20). */
+    #timeWheelPanel[hidden] { display: none; }
 
     /* Columns take the remaining height and scroll internally. */
     #timeWheelPanel .timewheel-columns {
-        flex: 1 1 auto;
-        min-height: var(--tw-row);
-        max-height: calc(var(--tw-row) * var(--tw-rows));
+        flex: 0 0 calc(var(--tw-row) * var(--tw-rows));
+        height: calc(var(--tw-row) * var(--tw-rows));
     }
 
     /* Keep Done pinned and always reachable below the wheel. */
@@ -2103,6 +2142,7 @@ body.entity-detail-open .app-scroll-area {
 /* Short viewports: trim visible rows so the sheet + Done always fit. */
 @media (max-width: 480px) and (max-height: 560px) {
     .timewheel { --tw-rows: 3; }
+    #timeWheelPanel { --tw-rows: 3; }
 }
 
 /* Frequency segmented selector */

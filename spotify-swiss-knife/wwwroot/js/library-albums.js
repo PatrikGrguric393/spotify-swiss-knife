@@ -1,4 +1,10 @@
 (function () {
+    // Prevent album-form-datepicker.js auto-init from running before this module
+    // can call initDateRange with the correct onSelect callback. Without this,
+    // initDpcWrappers is called twice (once with null, once with onSelect), adding
+    // two click listeners per trigger — causing the panel to open and immediately close.
+    if (window.Dpc) window.Dpc.selfInit = true;
+
     function renderRows(rows) {
         var tbody = document.querySelector('.entity-table tbody');
         if (!tbody) return;
@@ -18,7 +24,7 @@
             if (r.hasCover) {
                 var thumb = document.createElement('img');
                 thumb.className = 'album-row-thumb';
-                thumb.src = '/lib/albums/cover/' + encodeURIComponent(r.id);
+                thumb.src = '/lib/albums/cover/' + encodeURIComponent(r.id) + (r.coverFileName ? '?v=' + encodeURIComponent(r.coverFileName) : '');
                 thumb.alt = '';
                 thumb.loading = 'lazy';
                 nameWrap.appendChild(thumb);
@@ -63,7 +69,7 @@
             script.type = 'application/json';
             script.id = detailsId;
             var detailData = { Name: r.name, Artists: r.artists, ReleaseDate: r.releaseDate };
-            if (r.hasCover) detailData.Cover = '/lib/albums/cover/' + encodeURIComponent(r.id);
+            if (r.hasCover) detailData.Cover = '/lib/albums/cover/' + encodeURIComponent(r.id) + (r.coverFileName ? '?v=' + encodeURIComponent(r.coverFileName) : '');
             script.textContent = JSON.stringify(detailData);
 
             tdActions.appendChild(edit);
@@ -106,7 +112,7 @@
                 var scroll = document.querySelector('.table-wrap');
                 var top = scroll ? scroll.scrollTop : 0;
                 renderRows(data.map(function(item) {
-                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate, hasCover: item.hasCover };
+                    return { id: item.id, name: item.name, artists: item.artists, releaseDate: item.releaseDate, hasCover: item.hasCover, coverFileName: item.coverFileName };
                 }));
                 if (scroll) scroll.scrollTop = top;
                 if (status) status.textContent = data.length === 0 ? 'No results' : '';

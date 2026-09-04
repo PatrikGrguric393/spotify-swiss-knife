@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Bulk Album Save";
+    var spotifyConnected = (await Context.AuthenticateAsync("SpotifyConnect")).Succeeded;
 }
 
 @section Head {
@@ -10,7 +11,7 @@
 
 <section class="library-page bulk-save-page">
     <h1>Bulk Album Save</h1>
-    <p>Search the Spotify catalog for albums, pick the playlists you want to add them to, and save every album to every selected playlist in one go.</p>
+    <p>@(spotifyConnected ? "Search the Spotify catalog for albums, pick the playlists you want to add them to, and save every album to every selected playlist in one go." : "Search your local album library for albums, pick the playlists you want to add them to, and save every album to every selected playlist in one go.")</p>
 
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
@@ -36,14 +37,14 @@
                     </div>
 
                     <div class="search-box bulk-save-search">
-                        <label for="albumSearch" class="visually-hidden">Search albums on Spotify</label>
+                        <label for="albumSearch" class="visually-hidden">@(spotifyConnected ? "Search albums on Spotify" : "Search albums in your library")</label>
                         <div class="search-input-wrap">
                             <input id="albumSearch"
                                    type="search"
                                    class="search-input"
-                                   placeholder="Search albums on Spotify..."
+                                   placeholder="@(spotifyConnected ? "Search albums on Spotify..." : "Search your album library...")"
                                    autocomplete="off"
-                                   aria-label="Search albums on Spotify"
+                                   aria-label="@(spotifyConnected ? "Search albums on Spotify" : "Search albums in your library")"
                                    aria-controls="albumTableBody" />
                             <button type="button" class="search-clear-btn" id="albumSearchClear" hidden aria-label="Clear search">
                                 <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 12 12"><line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
